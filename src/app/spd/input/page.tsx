@@ -9,6 +9,7 @@ import {
   createSpdPeserta,
   getRekeningList,
 } from "@/services/api";
+import { showToast } from "@/components/ui/Toast";
 
 type StaffRow = { nama: string; nip: string; pangkat: string; jabatan: string };
 
@@ -110,11 +111,11 @@ export default function SpdInputPage() {
   const handleSubmit = async () => {
     const validS = staffList.filter((s) => s.nama.trim() && s.nip.trim());
     if (!kegiatan || !tujuan || !tglBerangkat || !tglKembali) {
-      alert("Mohon lengkapi data detail perjalanan!");
+      showToast.error("Mohon lengkapi data detail perjalanan!");
       return;
     }
     if (validS.length < 1) {
-      alert("Minimal 1 staff harus diisi!");
+      showToast.error("Minimal 1 staff harus diisi!");
       return;
     }
     setLoading(true);
@@ -174,7 +175,7 @@ export default function SpdInputPage() {
         await createSpdPeserta({ detail_perjalanan_id: detailId, pegawai_id: participantIds });
       }
 
-      alert("Usulan SPD berhasil diajukan!");
+      showToast.success("Usulan SPD berhasil diajukan!");
       router.push("/spd");
     } catch (err: any) {
       const apiData = err?.response?.data;
@@ -184,7 +185,7 @@ export default function SpdInputPage() {
         err?.message ||
         "Unknown error";
       console.error(`[STEP: ${step}] Error:`, JSON.stringify(apiData, null, 2));
-      alert(`Gagal di step: ${step}\n\nError: ${apiMsg}`);
+      showToast.error(`Gagal di step: ${step} - ${apiMsg}`);
     } finally {
       setLoading(false);
     }

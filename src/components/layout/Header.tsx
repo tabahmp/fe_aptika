@@ -39,7 +39,7 @@ export default function Header({ title, subtitle, showBrand = false }: HeaderPro
   const profileMenuItems = [
     {
       label: "Profil Saya",
-      onClick: () => router.push(isAdmin ? "/admin/users" : "/dashboard"),
+      onClick: () => router.push("/profile"),
       icon: <User size={14} />,
     },
     {

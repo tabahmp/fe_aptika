@@ -11,6 +11,22 @@ import {
 } from "@/services/api";
 import { Pagination } from "@/components/ui/Pagination";
 import { RichTextEditor, FormattedContentViewer } from "@/components/ui/RichTextEditor";
+import { showToast } from "@/components/ui/Toast";
+import ConfirmModal from "@/components/ui/ConfirmModal";
+
+const getSeverityBadge = (level?: string) => {
+  const norm = (level || "").toLowerCase();
+  if (norm.includes("kritis") || norm.includes("critical")) {
+    return "bg-purple-100 text-purple-800 border border-purple-200";
+  }
+  if (norm.includes("tinggi") || norm.includes("high")) {
+    return "bg-red-100 text-red-700 border border-red-200";
+  }
+  if (norm.includes("sedang") || norm.includes("medium")) {
+    return "bg-amber-100 text-amber-700 border border-amber-200";
+  }
+  return "bg-emerald-100 text-emerald-700 border border-emerald-200";
+};
 
 const formatDate = (dateString?: string) => {
   if (!dateString) return "-";
@@ -111,14 +127,29 @@ export default function KerentananPage() {
     }
   }, [currentPage, search, statusFilter, viewState]);
 
-  const handleDelete = async (id: number) => {
-    if (confirm("Apakah Anda yakin ingin menghapus Peringatan Kerentanan ini?")) {
-      try {
-        await deleteKerentanan(id);
-        fetchData();
-      } catch (error) {
-        alert("Gagal menghapus data");
-      }
+  // Delete Modal State
+  const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDeleteClick = (id: number) => {
+    setDeleteId(id);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteId) return;
+    setIsDeleting(true);
+    try {
+      await deleteKerentanan(deleteId);
+      showToast.success("Peringatan kerentanan berhasil dihapus.");
+      fetchData();
+    } catch (error: any) {
+      showToast.error(error?.response?.data?.message || "Gagal menghapus data kerentanan.");
+    } finally {
+      setIsDeleting(false);
+      setIsDeleteModalOpen(false);
+      setDeleteId(null);
     }
   };
 
@@ -149,6 +180,11 @@ export default function KerentananPage() {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (!aplikasi.trim()) {
+      showToast.error("Nama aplikasi wajib diisi.");
+      return;
+    }
+
     try {
       const payload = {
         aplikasi,
@@ -162,15 +198,17 @@ export default function KerentananPage() {
 
       if (formMode === "create") {
         await createKerentanan(payload);
+        showToast.success("Peringatan kerentanan berhasil ditambahkan.");
       } else if (formMode === "edit" && selectedId) {
         await updateKerentanan(selectedId, payload);
+        showToast.success("Peringatan kerentanan berhasil diperbarui.");
       }
 
       setViewState("list");
       fetchData();
     } catch (error: any) {
       const serverMsg = error?.response?.data?.message || (error?.response?.data?.errors ? Object.values(error.response.data.errors).flat().join(", ") : null);
-      alert(`Gagal menyimpan data: ${serverMsg || error?.message || "Terjadi kesalahan pada server"}`);
+      showToast.error(`Gagal menyimpan data: ${serverMsg || error?.message || "Terjadi kesalahan pada server"}`);
       console.error("Save error:", error);
     }
   };
@@ -539,7 +577,7 @@ export default function KerentananPage() {
                           <Edit size={15} />
                         </button>
                         <button
-                          onClick={() => handleDelete(item.id)}
+                          onClick={() => handleDeleteClick(item.id)}
                           className="p-1.5 text-slate-500 hover:text-red-600 rounded-lg hover:bg-slate-100"
                           title="Hapus"
                         >
@@ -561,6 +599,15 @@ export default function KerentananPage() {
           onPageChange={setCurrentPage}
         />
       </div>
+
+      <ConfirmModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={handleConfirmDelete}
+        title="Hapus Data Kerentanan"
+        message="Apakah Anda yakin ingin menghapus peringatan kerentanan ini? Data yang dihapus tidak dapat dikembalikan."
+        loading={isDeleting}
+      />
     </div>
   );
 }

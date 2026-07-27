@@ -10,6 +10,8 @@ import {
 import { getNotaDinasList, deleteNotaDinas, createNotaDinas, updateNotaDinas, exportNotaDinas } from "@/services/api";
 import { Pagination } from "@/components/ui/Pagination";
 import { RichTextEditor, FormattedContentViewer } from "@/components/ui/RichTextEditor";
+import { showToast } from "@/components/ui/Toast";
+import ConfirmModal from "@/components/ui/ConfirmModal";
 
 const formatDate = (dateString?: string) => {
   if (!dateString) return "-";
@@ -186,16 +188,42 @@ export default function NotaDinasPage() {
     setViewState("form");
   };
 
+  // Delete Modal State
+  const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDeleteClick = (id: number) => {
+    setDeleteId(id);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteId) return;
+    setIsDeleting(true);
+    try {
+      await deleteNotaDinas(deleteId);
+      showToast.success("Data Nota Dinas berhasil dihapus.");
+      fetchData();
+    } catch (err: any) {
+      showToast.error(err?.response?.data?.message || "Gagal menghapus data Nota Dinas.");
+    } finally {
+      setIsDeleting(false);
+      setIsDeleteModalOpen(false);
+      setDeleteId(null);
+    }
+  };
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (selectedKepada.length === 0) {
-      alert("Silakan pilih minimal satu unit kerja pada field 'Kepada'");
+      showToast.error("Silakan pilih minimal satu unit kerja pada field 'Kepada'");
       return;
     }
 
     if (lampiranFile && lampiranFile.size > 5 * 1024 * 1024) {
-      alert("Ukuran file lampiran tidak boleh melebihi 5MB");
+      showToast.error("Ukuran file lampiran tidak boleh melebihi 5MB");
       return;
     }
 
@@ -218,14 +246,17 @@ export default function NotaDinasPage() {
 
       if (formMode === "create") {
         await createNotaDinas(payload);
+        showToast.success("Nota Dinas berhasil dibuat dan dikirim.");
       } else if (formMode === "edit" && selectedId) {
         await updateNotaDinas(selectedId, payload);
+        showToast.success("Nota Dinas berhasil diperbarui.");
       }
 
       setViewState("list");
       fetchData();
     } catch (error: any) {
-      alert("Gagal menyimpan data. Pastikan semua field telah diisi dengan benar.");
+      const msg = error?.response?.data?.message || "Gagal menyimpan data. Pastikan semua field wajib telah diisi.";
+      showToast.error(msg);
       console.error(error);
     }
   };
@@ -1040,7 +1071,7 @@ export default function NotaDinasPage() {
                           <Edit size={15} />
                         </button>
                         <button
-                          onClick={() => handleDelete(item.id)}
+                          onClick={() => handleDeleteClick(item.id)}
                           className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                           title="Hapus"
                         >
@@ -1067,6 +1098,14 @@ export default function NotaDinasPage() {
         )}
       </div>
 
+      <ConfirmModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={handleConfirmDelete}
+        title="Hapus Nota Dinas"
+        message="Apakah Anda yakin ingin menghapus dokumen Nota Dinas ini? Data yang dihapus tidak dapat dikembalikan."
+        loading={isDeleting}
+      />
     </div>
   );
 }
