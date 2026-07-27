@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { 
   TriangleAlert, Eye, Edit, Trash2, Plus, Search, Download, 
-  ArrowLeft, Printer
+  ArrowLeft, Printer, Paperclip, FileText, X
 } from "lucide-react";
 import { 
   getKerentananList, deleteKerentanan, createKerentanan, 
@@ -96,6 +96,9 @@ export default function KerentananPage() {
   const [deskripsi, setDeskripsi] = useState("");
   const [tanggal, setTanggal] = useState("");
   const [status, setStatus] = useState("DRAF");
+  const [lampiranFile, setLampiranFile] = useState<File | null>(null);
+  const [existingLampiran, setExistingLampiran] = useState<{ nama: string; url: string } | null>(null);
+  const [hapusLampiran, setHapusLampiran] = useState(false);
 
   const fetchData = async () => {
     setLoading(true);
@@ -164,6 +167,13 @@ export default function KerentananPage() {
       setDeskripsi(data.deskripsi || "");
       setTanggal(data.tanggal ? data.tanggal.split("T")[0] : "");
       setStatus(data.status || "DRAF");
+      setLampiranFile(null);
+      setHapusLampiran(false);
+      if (data.lampiran && data.lampiran_nama) {
+        setExistingLampiran({ nama: data.lampiran_nama, url: data.lampiran_url || "" });
+      } else {
+        setExistingLampiran(null);
+      }
     } else {
       setSelectedId(null);
       setAplikasi("");
@@ -173,6 +183,9 @@ export default function KerentananPage() {
       setDeskripsi("");
       setTanggal(new Date().toISOString().split("T")[0]);
       setStatus("DRAF");
+      setLampiranFile(null);
+      setExistingLampiran(null);
+      setHapusLampiran(false);
     }
     setViewState("form");
   };
@@ -186,21 +199,26 @@ export default function KerentananPage() {
     }
 
     try {
-      const payload = {
-        aplikasi,
-        url,
-        tingkat_kerentanan: tingkatKerentanan,
-        perihal,
-        deskripsi,
-        tanggal,
-        status,
-      };
+      const formData = new FormData();
+      formData.append("aplikasi", aplikasi);
+      formData.append("url", url);
+      formData.append("tingkat_kerentanan", tingkatKerentanan);
+      formData.append("perihal", perihal);
+      formData.append("deskripsi", deskripsi);
+      formData.append("tanggal", tanggal);
+      formData.append("status", status);
+      if (lampiranFile) {
+        formData.append("lampiran", lampiranFile);
+      }
+      if (hapusLampiran) {
+        formData.append("hapus_lampiran", "1");
+      }
 
       if (formMode === "create") {
-        await createKerentanan(payload);
+        await createKerentanan(formData);
         showToast.success("Peringatan kerentanan berhasil ditambahkan.");
       } else if (formMode === "edit" && selectedId) {
-        await updateKerentanan(selectedId, payload);
+        await updateKerentanan(selectedId, formData);
         showToast.success("Peringatan kerentanan berhasil diperbarui.");
       }
 
@@ -323,7 +341,7 @@ export default function KerentananPage() {
                     <tr className="align-top">
                       <td className="py-0.5 font-normal">Lampiran</td>
                       <td className="text-center">:</td>
-                      <td className="py-0.5 font-normal">{previewItem.lampiran || "1 (satu) Berkas"}</td>
+                      <td className="py-0.5 font-normal">{previewItem.lampiran_nama ? "1 (satu) Berkas" : (previewItem.lampiran || "1 (satu) Berkas")}</td>
                     </tr>
                     <tr className="align-top">
                       <td className="py-0.5 font-normal">Hal</td>
@@ -518,6 +536,36 @@ export default function KerentananPage() {
               </div>
             </div>
 
+              {/* Section C: LAMPIRAN BUKTI (if file attached) */}
+              {previewItem.lampiran_nama && (
+                <div className="mb-6 text-xs text-slate-900 leading-relaxed font-sans">
+                  <h3 className="font-bold text-xs text-slate-900 mb-3 uppercase">
+                    C. LAMPIRAN BUKTI:
+                  </h3>
+                  <div className="border border-slate-300 rounded-lg p-4 bg-slate-50/50">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <FileText size={20} className="text-red-600" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-slate-800 text-xs truncate">{previewItem.lampiran_nama}</p>
+                        <p className="text-[10px] text-slate-500 mt-0.5">Dokumen bukti pendukung kerentanan</p>
+                      </div>
+                      {previewItem.lampiran_url && (
+                        <a
+                          href={previewItem.lampiran_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="print:hidden flex items-center gap-1.5 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-[10px] font-bold transition-colors shadow-sm"
+                        >
+                          <Download size={12} /> Unduh
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
             {/* Signature & TTE Box on Attachment */}
             <div className="flex justify-end mt-8">
               <div className="text-center w-80 text-xs text-slate-900 font-sans">
@@ -656,6 +704,99 @@ export default function KerentananPage() {
               <option value="TERKIRIM">TERKIRIM</option>
               <option value="TERSOLUSIKAN">TERSOLUSIKAN</option>
             </select>
+          </div>
+
+          {/* Lampiran / Attachment */}
+          <div>
+            <label className="block text-xs font-bold text-slate-700 mb-1">
+              <Paperclip size={13} className="inline mr-1 -mt-0.5" />
+              Lampiran (Bukti / Dokumen Pendukung)
+            </label>
+            
+            {/* Existing lampiran display */}
+            {existingLampiran && !hapusLampiran && !lampiranFile && (
+              <div className="flex items-center gap-2 mb-2 p-2.5 bg-blue-50 border border-blue-200 rounded-xl">
+                <FileText size={16} className="text-blue-600 flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-semibold text-blue-800 truncate">{existingLampiran.nama}</p>
+                  <p className="text-[10px] text-blue-500">File terlampir saat ini</p>
+                </div>
+                {existingLampiran.url && (
+                  <a
+                    href={existingLampiran.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[10px] font-semibold text-blue-600 hover:text-blue-800 px-2 py-1 bg-blue-100 rounded-lg"
+                  >
+                    Lihat
+                  </a>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setHapusLampiran(true)}
+                  className="p-1 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                  title="Hapus lampiran"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            )}
+
+            {/* Removed lampiran notice */}
+            {hapusLampiran && !lampiranFile && (
+              <div className="flex items-center gap-2 mb-2 p-2.5 bg-amber-50 border border-amber-200 rounded-xl">
+                <p className="text-xs text-amber-700 flex-1">Lampiran akan dihapus saat disimpan.</p>
+                <button
+                  type="button"
+                  onClick={() => setHapusLampiran(false)}
+                  className="text-[10px] font-semibold text-amber-600 hover:text-amber-800 px-2 py-1 bg-amber-100 rounded-lg"
+                >
+                  Batal
+                </button>
+              </div>
+            )}
+
+            {/* New file selected */}
+            {lampiranFile && (
+              <div className="flex items-center gap-2 mb-2 p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl">
+                <FileText size={16} className="text-emerald-600 flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-semibold text-emerald-800 truncate">{lampiranFile.name}</p>
+                  <p className="text-[10px] text-emerald-500">{(lampiranFile.size / 1024 / 1024).toFixed(2)} MB</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLampiranFile(null);
+                    setHapusLampiran(false);
+                  }}
+                  className="p-1 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                  title="Hapus file baru"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            )}
+
+            {/* File input */}
+            <div className="relative">
+              <input
+                type="file"
+                accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg,.zip,.rar"
+                onChange={(e) => {
+                  const file = e.target.files?.[0] || null;
+                  if (file) {
+                    setLampiranFile(file);
+                    setHapusLampiran(false);
+                  }
+                  e.target.value = "";
+                }}
+                className="w-full text-xs px-3 py-2.5 rounded-xl border border-dashed border-slate-300 bg-slate-50 hover:bg-slate-100 focus:outline-none focus:border-red-500 transition-colors cursor-pointer file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-red-600 file:text-white file:cursor-pointer hover:file:bg-red-700"
+              />
+              <p className="text-[10px] text-slate-400 mt-1">
+                Format: PDF, DOC, DOCX, XLS, XLSX, PNG, JPG, ZIP, RAR. Maksimal 10MB.
+              </p>
+            </div>
           </div>
 
           <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
