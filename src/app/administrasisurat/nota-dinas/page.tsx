@@ -544,33 +544,7 @@ export default function NotaDinasPage() {
                 })()}
               </div>
 
-              {/* Attached file download block if available */}
-              {(previewItem.lampiran || previewItem.lampiran_url) && (
-                <div className="mt-4 p-4 border border-blue-100 bg-blue-50/50 rounded-xl flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center">
-                      <FileText size={18} />
-                    </div>
-                    <div>
-                      <p className="text-xs font-bold text-slate-800">File Lampiran Terlampir</p>
-                      <p className="text-[11px] text-slate-500 truncate max-w-md">
-                        {previewItem.lampiran ? previewItem.lampiran.split("/").pop() : "Dokumen Lampiran"}
-                      </p>
-                    </div>
-                  </div>
-                  {previewItem.lampiran_url && (
-                    <a
-                      href={previewItem.lampiran_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors"
-                    >
-                      <Download size={13} />
-                      Unduh File
-                    </a>
-                  )}
-                </div>
-              )}
+
             </div>
 
             {/* Page number footer */}
