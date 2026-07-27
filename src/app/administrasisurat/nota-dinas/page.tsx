@@ -489,36 +489,32 @@ export default function NotaDinasPage() {
           {/* PAGE 2: The Attachment (Isi Lampiran) */}
           <div className="w-[210mm] min-h-[297mm] bg-white p-[25mm] shadow-lg border border-slate-200 relative flex flex-col justify-between print:shadow-none print:border-none print:p-[20mm] print:w-full print:min-h-0 print:h-auto print:mx-auto">
             <div>
-              {/* Rahasia / Sifat badge in top right */}
-              <div className="flex justify-end mb-6">
-                <span className="bg-red-600 text-white font-bold text-xs uppercase px-4 py-1.5 rounded shadow-sm tracking-wider">
-                  {previewItem.sifat_surat}
-                </span>
-              </div>
-
-              {/* Attachment Header Metadata */}
-              <div className="text-xs text-slate-800 mb-6 flex flex-col gap-1.5 font-sans border-b border-slate-200 pb-4">
-                <div className="grid grid-cols-6">
-                  <span className="font-semibold col-span-2">LAMPIRAN</span>
-                  <span className="col-span-4">: NOTA DINAS {previewItem.dari}</span>
+              {/* Attachment Header Metadata (Right-aligned, official government format) */}
+              <div className="flex justify-end mb-8 font-sans text-xs text-slate-900">
+                <div className="w-auto max-w-[380px]">
+                  <p className="font-normal text-slate-900 mb-1 leading-tight">
+                    Lampiran I Nota Dinas
+                  </p>
+                  <table className="text-xs text-slate-900 border-collapse">
+                    <tbody>
+                      <tr className="align-top">
+                        <td className="pr-4 py-0.5 font-normal text-slate-900">Nomor</td>
+                        <td className="pr-2 py-0.5 text-center font-normal text-slate-900">:</td>
+                        <td className="py-0.5 font-normal text-slate-900">{previewItem.nomor_surat}</td>
+                      </tr>
+                      <tr className="align-top">
+                        <td className="pr-4 py-0.5 font-normal text-slate-900">Tanggal</td>
+                        <td className="pr-2 py-0.5 text-center font-normal text-slate-900">:</td>
+                        <td className="py-0.5 font-normal text-slate-900">{formatDate(previewItem.tanggal_surat)}</td>
+                      </tr>
+                      <tr className="align-top">
+                        <td className="pr-4 py-0.5 font-normal text-slate-900">Hal</td>
+                        <td className="pr-2 py-0.5 text-center font-normal text-slate-900">:</td>
+                        <td className="py-0.5 font-normal text-slate-900 leading-snug">{previewItem.perihal}</td>
+                      </tr>
+                    </tbody>
+                  </table>
                 </div>
-                <div className="grid grid-cols-6">
-                  <span className="font-semibold col-span-2">NOMOR</span>
-                  <span className="col-span-4">: {previewItem.nomor_surat}</span>
-                </div>
-                <div className="grid grid-cols-6">
-                  <span className="font-semibold col-span-2">TANGGAL</span>
-                  <span className="col-span-4">: {formatDate(previewItem.tanggal_surat)}</span>
-                </div>
-                <div className="grid grid-cols-6">
-                  <span className="font-semibold col-span-2">HAL</span>
-                  <span className="col-span-4 font-bold text-slate-900">: {previewItem.perihal}</span>
-                </div>
-              </div>
-
-              {/* Blue Banner Title */}
-              <div className="bg-blue-600 text-white rounded-lg p-3 text-xs font-bold shadow-sm mb-6 text-center tracking-wide">
-                {previewItem.perihal}
               </div>
 
               {/* Section Header */}
