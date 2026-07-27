@@ -85,7 +85,7 @@ export default function Sidebar() {
       {/* Hamburger Toggle Button for Mobile/Tablet */}
       {!isOpenMobile && (
         <button
-          className="fixed top-4 left-4 z-50 flex items-center justify-center lg:hidden w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 text-white shadow-md hover:bg-slate-800 transition-all duration-200"
+          className="fixed top-4 left-4 z-50 flex items-center justify-center lg:hidden w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 text-white shadow-md hover:bg-slate-800 transition-all duration-200 print:hidden"
           onClick={() => setOpenMobile(true)}
           aria-label="Toggle Menu"
         >
@@ -96,7 +96,7 @@ export default function Sidebar() {
       {/* Overlay Backdrop for Mobile/Tablet */}
       {isOpenMobile && (
         <div
-          className="fixed inset-0 z-40 bg-slate-950/40 backdrop-blur-sm lg:hidden transition-opacity duration-200"
+          className="fixed inset-0 z-40 bg-slate-950/40 backdrop-blur-sm lg:hidden transition-opacity duration-200 print:hidden"
           onClick={() => setOpenMobile(false)}
         />
       )}
@@ -106,6 +106,7 @@ export default function Sidebar() {
         fixed inset-y-0 left-0 z-40 flex flex-col h-screen
         bg-[#0b2146] text-white border-r border-slate-800
         transition-all duration-300 ease-in-out lg:translate-x-0 lg:sticky lg:top-0 lg:flex-shrink-0
+        print:hidden
         ${isCollapsed ? "w-[76px]" : "w-[260px]"}
         ${isOpenMobile ? "translate-x-0" : "-translate-x-full"}
       `}>

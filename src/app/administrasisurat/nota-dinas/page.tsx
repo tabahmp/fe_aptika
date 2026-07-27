@@ -369,10 +369,10 @@ export default function NotaDinasPage() {
         </div>
 
         {/* Document Rendered Container */}
-        <div className="flex flex-col items-center gap-8 py-4 print:gap-0 print:py-0">
+        <div className="flex flex-col items-center gap-8 py-4 print:gap-0 print:py-0 print:block print:w-full">
           
           {/* PAGE 1: The Memo */}
-          <div className="w-[210mm] min-h-[297mm] bg-white p-[25mm] shadow-lg border border-slate-200 relative flex flex-col justify-between print:shadow-none print:border-none print:p-[20mm]">
+          <div className="w-[210mm] min-h-[297mm] bg-white p-[25mm] shadow-lg border border-slate-200 relative flex flex-col justify-between print:shadow-none print:border-none print:p-[20mm] print:w-full print:min-h-0 print:h-auto print:mx-auto print-page-break">
             <div>
               {/* Kop Surat */}
               <div className="flex items-center border-b-[3px] border-double border-slate-900 pb-3 mb-5">
@@ -487,7 +487,7 @@ export default function NotaDinasPage() {
           </div>
 
           {/* PAGE 2: The Attachment (Isi Lampiran) */}
-          <div className="w-[210mm] min-h-[297mm] bg-white p-[25mm] shadow-lg border border-slate-200 relative flex flex-col justify-between print:shadow-none print:border-none print:p-[20mm]">
+          <div className="w-[210mm] min-h-[297mm] bg-white p-[25mm] shadow-lg border border-slate-200 relative flex flex-col justify-between print:shadow-none print:border-none print:p-[20mm] print:w-full print:min-h-0 print:h-auto print:mx-auto">
             <div>
               {/* Rahasia / Sifat badge in top right */}
               <div className="flex justify-end mb-6">
