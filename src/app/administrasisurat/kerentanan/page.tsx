@@ -248,11 +248,13 @@ export default function KerentananPage() {
   if (viewState === "preview" && previewItem) {
     return (
       <div suppressHydrationWarning className="flex flex-col gap-6 max-w-[1200px] mx-auto font-sans bg-slate-100 min-h-screen p-4 md:p-6 pb-20 print:p-0 print:bg-white">
+        {/* Top bar (Hidden when printing) */}
         <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 print:hidden">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setViewState("list")}
               className="p-2 hover:bg-slate-100 rounded-lg transition-colors text-slate-600"
+              title="Kembali ke Daftar"
             >
               <ArrowLeft size={18} />
             </button>
@@ -264,77 +266,289 @@ export default function KerentananPage() {
           <div className="flex items-center gap-3">
             <button
               onClick={() => window.print()}
-              className="flex items-center gap-1.5 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all"
+              className="flex items-center gap-1.5 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-sm transition-all"
             >
               <Printer size={14} /> Cetak Surat
+            </button>
+            <button
+              onClick={() => setViewState("list")}
+              className="text-xs text-slate-500 hover:text-slate-800 font-bold transition-colors"
+            >
+              Kembali
             </button>
           </div>
         </div>
 
-        {/* Printable Paper */}
-        <div className="w-[210mm] min-h-[297mm] bg-white p-[25mm] shadow-lg border border-slate-200 mx-auto relative flex flex-col justify-between print:shadow-none print:border-none print:p-[20mm]">
-          <div>
-            <div className="flex items-center border-b-[3px] border-double border-slate-900 pb-3 mb-5">
-              <div className="flex-grow text-center">
-                <h3 className="font-bold text-lg text-slate-900 tracking-wide">PEMERINTAH PROVINSI JAWA BARAT</h3>
-                <h4 className="font-extrabold text-xl text-slate-900 tracking-wider">DINAS KOMUNIKASI DAN INFORMATIKA</h4>
-                <p className="text-xs text-slate-600 mt-0.5">Jl. H. Juanda No. 28, Citarum, Bandung, Jawa Barat 40115</p>
+        {/* Printable Multi-Page Document Container */}
+        <div className="flex flex-col items-center gap-8 py-4 print:gap-0 print:py-0 print:block print:w-full">
+          
+          {/* PAGE 1: Surat Utama */}
+          <div className="w-[210mm] min-h-[297mm] bg-white p-[25mm] shadow-lg border border-slate-200 mx-auto relative flex flex-col justify-between print:shadow-none print:border-none print:p-[20mm] print:w-full print:min-h-0 print:h-auto print:mx-auto print-page-break font-sans">
+            <div>
+              {/* Kop Surat Pemprov Jabar */}
+              <div className="flex items-center border-b-[3px] border-double border-slate-900 pb-3 mb-6">
+                {/* SVG Logo Pemprov Jawa Barat */}
+                <div className="w-16 h-16 mr-4 flex-shrink-0 flex items-center justify-center">
+                  <svg className="w-14 h-14" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M50 5 L85 25 L85 65 C85 80, 65 92, 50 95 C35 92, 15 80, 15 65 L15 25 Z" fill="#1b5e20" />
+                    <path d="M50 12 L78 30 L78 63 C78 75, 62 85, 50 88 C38 85, 22 75, 22 63 L22 30 Z" fill="#ffeb3b" />
+                    <circle cx="50" cy="50" r="18" fill="#1565c0" />
+                    <path d="M50 35 L50 65 M35 50 L65 50" stroke="white" strokeWidth="4" />
+                  </svg>
+                </div>
+                <div className="flex-1 text-center font-sans">
+                  <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">PEMERINTAH DAERAH PROVINSI JAWA BARAT</h3>
+                  <h2 className="text-sm font-extrabold text-slate-900 uppercase tracking-wide">DINAS KOMUNIKASI DAN INFORMATIKA</h2>
+                  <p className="text-[10px] text-slate-700">Jalan Tamansari No. 55 Telepon (022) 2502898 Faksimile (022) 2511505</p>
+                  <p className="text-[10px] text-slate-700">website : http://diskominfo.jabarprov.go.id ; email : diskominfo@jabarprov.go.id</p>
+                  <p className="text-[10px] font-bold text-slate-800 tracking-widest uppercase">B A N D U N G   40132</p>
+                </div>
+              </div>
+
+              {/* Date and Destination Header */}
+              <div className="flex justify-between items-start mb-6 text-xs text-slate-900 font-sans">
+                {/* Left Column: Metadata */}
+                <table className="text-xs text-slate-900 border-collapse">
+                  <tbody>
+                    <tr className="align-top">
+                      <td className="w-20 py-0.5 font-normal">Nomor</td>
+                      <td className="w-3 py-0.5 text-center">:</td>
+                      <td className="py-0.5 font-normal">{previewItem.nomor_surat || "…/KOM.03.01.08/APTIKA"}</td>
+                    </tr>
+                    <tr className="align-top">
+                      <td className="py-0.5 font-normal">Sifat</td>
+                      <td className="text-center">:</td>
+                      <td className="py-0.5 font-normal capitalize">{previewItem.sifat_surat || "Penting"}</td>
+                    </tr>
+                    <tr className="align-top">
+                      <td className="py-0.5 font-normal">Lampiran</td>
+                      <td className="text-center">:</td>
+                      <td className="py-0.5 font-normal">{previewItem.lampiran || "1 (satu) Berkas"}</td>
+                    </tr>
+                    <tr className="align-top">
+                      <td className="py-0.5 font-normal">Hal</td>
+                      <td className="text-center">:</td>
+                      <td className="py-0.5 font-bold text-slate-900 max-w-[240px] leading-tight">
+                        {previewItem.perihal || `Pemberitahuan Kerentanan Aplikasi (${previewItem.tingkat_kerentanan || "Sensitive Data Exposure"})`}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+
+                {/* Right Column: Date & Kepada */}
+                <div className="text-left max-w-[260px] text-xs text-slate-900 leading-snug space-y-1">
+                  <p className="mb-2 text-xs text-slate-900">
+                    Bandung, {formatDate(previewItem.tanggal)}
+                  </p>
+                  <p>Kepada</p>
+                  <p className="font-semibold">Yth. {previewItem.tujuan || "Direktur Rumah Sakit Jiwa"}</p>
+                  <p className="pl-4">Provinsi Jawa Barat</p>
+                  <p className="pt-1">di</p>
+                  <p className="tracking-widest font-bold pl-4">T E M P A T</p>
+                </div>
+              </div>
+
+              {/* Letter Content Body */}
+              <div className="text-xs text-slate-900 leading-relaxed text-justify space-y-4 font-sans">
+                <p>
+                  Dalam upaya meningkatkan keamanan informasi, Kami telah melaksanakan kegiatan monitoring proaktif terhadap aplikasi sub domain jabarprov.go.id milik Perangkat Daerah di lingkungan Pemerintah Daerah Provinsi Jawa Barat. Berdasarkan hasil kegiatan tersebut kami menemukan kerentanan <span className="font-semibold">{previewItem.tingkat_kerentanan || "Sensitive Data Exposure"}</span> yaitu kondisi ketika data sensitif, khususnya data pribadi pengguna atau individu dapat diakses tanpa pembatasan yang memadai oleh pihak yang tidak berwenang. Rincian hasil temuan dimaksud dijelaskan sebagaimana terlampir.
+                </p>
+                <p>
+                  Guna menjaga keamanan data dan memastikan perlindungan informasi pribadi sesuai amanat Undang-Undang No. 27 Tahun 2022 tentang Pelindungan Data Pribadi, agar Saudara melakukan perbaikan dalam waktu 14 (empat belas) hari kerja terhadap temuan kerentanan tersebut dan melaporkan kembali hasil perbaikan sesuai dengan rekomendasi terlampir. Untuk koordinasi dan informasi lebih lanjut dapat menghubungi narahubung Sdr. Mohammad Ibrohim, S.Kom., M.Kom. (Hp/WA .08121328930).
+                </p>
+                <p>
+                  Demikian disampaikan, atas perhatian dan kerja samanya diucapkan terima kasih.
+                </p>
               </div>
             </div>
 
-            <div className="text-center my-6">
-              <h2 className="font-bold text-base text-red-700 uppercase underline decoration-2 underline-offset-4">
-                PEMBERITAHUAN KERENTANAN KEAMANAN (VULNERABILITY ADVISORY)
-              </h2>
-              <p className="text-xs text-slate-700 mt-1">Nomor: {previewItem.nomor_surat}</p>
+            {/* Bottom Signature & Tembusan */}
+            <div>
+              <div className="flex justify-end mt-8">
+                <div className="text-center w-80 text-xs text-slate-900 font-sans">
+                  <p className="font-bold uppercase leading-tight">
+                    KEPALA DINAS KOMUNIKASI DAN INFORMATIKA
+                  </p>
+                  <p className="font-bold uppercase leading-tight mb-3">
+                    PROVINSI JAWA BARAT,
+                  </p>
+
+                  {/* TTE Box matching PDF */}
+                  <div className="my-3 border border-slate-400 rounded-lg p-2.5 bg-slate-50/40 flex items-center gap-3 text-left">
+                    <div className="w-10 h-10 flex-shrink-0 flex items-center justify-center bg-blue-100/50 rounded">
+                      <svg className="w-8 h-8" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M50 5 L85 25 L85 65 C85 80, 65 92, 50 95 C35 92, 15 80, 15 65 L15 25 Z" fill="#1565c0" />
+                        <circle cx="50" cy="50" r="14" fill="#ffeb3b" />
+                      </svg>
+                    </div>
+                    <div className="text-[9px] leading-tight text-slate-800">
+                      <p className="text-[8px] text-slate-500">Ditandatangani secara elektronik oleh:</p>
+                      <p className="font-bold uppercase text-[9px] mt-0.5">KEPALA DINAS KOMUNIKASI DAN INFORMATIKA</p>
+                      <p className="font-bold uppercase text-[9px]">PROVINSI JAWA BARAT</p>
+                      <p className="font-bold mt-1 text-[9.5px]">MAS ADI KOMAR, S.STP., M.Tr.A.P</p>
+                      <p className="text-slate-600 text-[8.5px]">Pembina TK.I</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Tembusan Footer */}
+              <div className="mt-6 text-xs text-slate-900 border-t border-slate-200 pt-3 font-sans">
+                <p>Tembusan : {previewItem.tembusan || "Kepala Dinas Kesehatan Provinsi Jawa Barat"}</p>
+              </div>
             </div>
+          </div>
 
-            <div className="text-xs text-slate-800 space-y-3 leading-relaxed">
-              <div className="grid grid-cols-[140px_10px_1fr] gap-1">
-                <span className="font-semibold">Aplikasi Terdampak</span>
-                <span>:</span>
-                <span className="font-bold">{previewItem.aplikasi}</span>
-              </div>
-              <div className="grid grid-cols-[140px_10px_1fr] gap-1">
-                <span className="font-semibold">URL / Domain</span>
-                <span>:</span>
-                <span className="text-blue-600 underline">{previewItem.url || "-"}</span>
-              </div>
-              <div className="grid grid-cols-[140px_10px_1fr] gap-1">
-                <span className="font-semibold">Tingkat Kerentanan</span>
-                <span>:</span>
-                <span className="font-bold text-red-600">{previewItem.tingkat_kerentanan}</span>
-              </div>
-              <div className="grid grid-cols-[140px_10px_1fr] gap-1">
-                <span className="font-semibold">Tanggal Ditemukan</span>
-                <span>:</span>
-                <span>{formatDate(previewItem.tanggal)}</span>
-              </div>
-              <div className="grid grid-cols-[140px_10px_1fr] gap-1">
-                <span className="font-semibold">Perihal</span>
-                <span>:</span>
-                <span>{previewItem.perihal}</span>
+          {/* PAGE 2: Lampiran Rincian & Rekomendasi */}
+          <div className="w-[210mm] min-h-[297mm] bg-white p-[25mm] shadow-lg border border-slate-200 mx-auto relative flex flex-col justify-between print:shadow-none print:border-none print:p-[20mm] print:w-full print:min-h-0 print:h-auto print:mx-auto font-sans">
+            <div>
+              {/* Attachment Header Metadata (Right-aligned) */}
+              <div className="flex justify-end mb-8 font-sans text-xs text-slate-900">
+                <div className="w-auto max-w-[420px]">
+                  <p className="font-normal text-slate-900 mb-1 leading-tight">
+                    LAMPIRAN : SURAT KEPALA DINAS KOMUNIKASI DAN INFORMATIKA PROVINSI JAWA BARAT
+                  </p>
+                  <table className="text-xs text-slate-900 border-collapse">
+                    <tbody>
+                      <tr className="align-top">
+                        <td className="pr-4 py-0.5 font-normal">Nomor</td>
+                        <td className="pr-2 py-0.5 text-center">:</td>
+                        <td className="py-0.5 font-normal">{previewItem.nomor_surat || "…/KOM.03.01.08/APTIKA"}</td>
+                      </tr>
+                      <tr className="align-top">
+                        <td className="pr-4 py-0.5 font-normal">Tanggal</td>
+                        <td className="pr-2 py-0.5 text-center">:</td>
+                        <td className="py-0.5 font-normal">{formatDate(previewItem.tanggal)}</td>
+                      </tr>
+                      <tr className="align-top">
+                        <td className="pr-4 py-0.5 font-normal">Hal</td>
+                        <td className="pr-2 py-0.5 text-center">:</td>
+                        <td className="py-0.5 font-normal leading-snug">{previewItem.perihal || "Pemberitahuan kerentanan aplikasi"}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
               </div>
 
-              <div className="pt-4 border-t border-slate-200 mt-4">
-                <h4 className="font-bold text-sm text-slate-900 mb-2">Deskripsi & Imbauan Penanganan:</h4>
-                <div className="bg-red-50 p-4 rounded-lg border border-red-200 font-sans text-xs text-slate-800">
-                  <FormattedContentViewer content={previewItem.deskripsi || "Segera lakukan patching dan langkah mitigasi sesuai prosedur."} />
+              {/* Section A: RINCIAN TEMUAN KERENTANAN */}
+              <div className="mb-6">
+                <h3 className="font-bold text-xs text-slate-900 mb-3 uppercase">
+                  A. RINCIAN TEMUAN KERENTANAN
+                </h3>
+                
+                {previewItem.deskripsi ? (
+                  <div className="mb-4">
+                    <FormattedContentViewer content={previewItem.deskripsi} />
+                  </div>
+                ) : (
+                  <div className="space-y-3 text-xs text-slate-900 leading-relaxed text-justify">
+                    <p>
+                      <span className="font-semibold">{previewItem.tingkat_kerentanan || "Sensitive Data Exposure"}</span> merupakan kondisi ketika data sensitif, khususnya data pribadi pengguna atau individu dapat diakses tanpa pembatasan yang memadai, sehingga data tersebut berpotensi dapat diakses oleh pihak yang tidak berwenang. Data sensitif yang dimaksud dapat mencakup dokumen yang berisi informasi seperti Nomor Induk Kependudukan (NIK), Nomor Induk Pegawai (NIP), Alamat, maupun informasi sensitif lainnya yang dapat dikategorikan sebagai Personally Identifiable Information (PII).
+                    </p>
+                    <p>
+                      Pada temuan kerentanan ini, aplikasi/website <span className="font-semibold">{previewItem.url || previewItem.aplikasi}</span> menampilkan tautan menuju dokumen atau platform penyimpanan publik yang memuat informasi rincian teknis, nilai kontrak, hingga data pribadi seperti NIP dan NIK.
+                    </p>
+                  </div>
+                )}
+
+                {/* Table DAFTAR TEMUAN KERENTANAN */}
+                <div className="my-6">
+                  <h4 className="font-bold text-xs text-slate-900 text-center uppercase mb-3 tracking-wider">
+                    DAFTAR TEMUAN KERENTANAN
+                  </h4>
+                  <table className="w-full text-xs text-left border-collapse border border-slate-900">
+                    <thead>
+                      <tr className="bg-slate-100 border-b border-slate-900 font-bold text-slate-900">
+                        <th className="px-2 py-1.5 text-center border-r border-slate-900 w-10">No</th>
+                        <th className="px-3 py-1.5 border-r border-slate-900">Nama Aplikasi/Website</th>
+                        <th className="px-3 py-1.5 border-r border-slate-900">URL</th>
+                        <th className="px-3 py-1.5 border-r border-slate-900">Kerentanan</th>
+                        <th className="px-3 py-1.5">Pemilik Aplikasi</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-900">
+                      <tr>
+                        <td className="px-2 py-2 text-center border-r border-slate-900">1.</td>
+                        <td className="px-3 py-2 border-r border-slate-900 font-medium">{previewItem.aplikasi || "Rumah Sakit Jiwa (RSJ)"}</td>
+                        <td className="px-3 py-2 border-r border-slate-900 text-blue-700 underline break-all">{previewItem.url || "rsj.jabarprov.go.id"}</td>
+                        <td className="px-3 py-2 border-r border-slate-900 font-semibold">{previewItem.tingkat_kerentanan || "Sensitive Data Exposure"}</td>
+                        <td className="px-3 py-2 font-medium">{previewItem.pemilik_aplikasi || previewItem.tujuan || "Dinas Kesehatan"}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Section B: REKOMENDASI */}
+              <div className="mb-6 text-xs text-slate-900 leading-relaxed font-sans">
+                <h3 className="font-bold text-xs text-slate-900 mb-3 uppercase">
+                  B. REKOMENDASI:
+                </h3>
+                <p className="mb-3">Beberapa rekomendasi teknis yang dapat dilakukan, antara lain:</p>
+                <div className="space-y-3 pl-4">
+                  <div>
+                    <p className="font-semibold mb-1">1) {previewItem.tingkat_kerentanan || "Sensitive Data Exposure"}</p>
+                    <ol className="list-[lower-alpha] pl-5 space-y-1.5 text-justify">
+                      <li>
+                        Melakukan pembatasan akses folder pada direktori penyimpanan menjadi <span className="italic font-semibold">restricted</span> dan hanya dibagikan kepada akun Perangkat Daerah/Perusahaan atau pihak yang berwenang serta telah terverifikasi, dan tidak membuka akses publik secara penuh;
+                      </li>
+                      <li>
+                        Melakukan klasifikasi dan inventarisasi terhadap dokumen yang mengandung informasi data sensitif agar tidak dapat diakses secara bebas oleh publik sesuai dengan Undang-Undang No. 27 Tahun 2022 tentang Pelindungan Data Pribadi.
+                      </li>
+                    </ol>
+                  </div>
+                  <div>
+                    <p className="font-semibold mb-1">2) Serta menerapkan beberapa hal berikut ini:</p>
+                    <ol className="list-[lower-alpha] pl-5 space-y-1.5 text-justify">
+                      <li>
+                        Jika aplikasi yang dibangun khusus untuk keperluan internal Perangkat Daerah Provinsi Jawa Barat sebaiknya hanya dapat diakses melalui Jaringan Intra Pemerintah Daerah Provinsi Jawa Barat (JIP);
+                      </li>
+                      <li>
+                        Menerapkan kebijakan syarat penggunaan kata sandi dengan menggunakan minimal 12 karakter yang mengandung:
+                        <ul className="list-[lower-roman] pl-6 pt-1 space-y-0.5">
+                          <li>1 (satu) huruf kapital;</li>
+                          <li>1 (satu) huruf nonkapital;</li>
+                          <li>1 (satu) angka;</li>
+                          <li>1 (satu) karakter spesial.</li>
+                        </ul>
+                      </li>
+                    </ol>
+                  </div>
                 </div>
               </div>
             </div>
+
+            {/* Signature & TTE Box on Attachment */}
+            <div className="flex justify-end mt-8">
+              <div className="text-center w-80 text-xs text-slate-900 font-sans">
+                <p className="font-bold uppercase leading-tight">
+                  KEPALA DINAS KOMUNIKASI DAN INFORMATIKA
+                </p>
+                <p className="font-bold uppercase leading-tight mb-3">
+                  PROVINSI JAWA BARAT,
+                </p>
+
+                {/* TTE Box */}
+                <div className="my-3 border border-slate-400 rounded-lg p-2.5 bg-slate-50/40 flex items-center gap-3 text-left">
+                  <div className="w-10 h-10 flex-shrink-0 flex items-center justify-center bg-blue-100/50 rounded">
+                    <svg className="w-8 h-8" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M50 5 L85 25 L85 65 C85 80, 65 92, 50 95 C35 92, 15 80, 15 65 L15 25 Z" fill="#1565c0" />
+                      <circle cx="50" cy="50" r="14" fill="#ffeb3b" />
+                    </svg>
+                  </div>
+                  <div className="text-[9px] leading-tight text-slate-800">
+                    <p className="text-[8px] text-slate-500">Ditandatangani secara elektronik oleh:</p>
+                    <p className="font-bold uppercase text-[9px] mt-0.5">KEPALA DINAS KOMUNIKASI DAN INFORMATIKA</p>
+                    <p className="font-bold uppercase text-[9px]">PROVINSI JAWA BARAT</p>
+                    <p className="font-bold mt-1 text-[9.5px]">MAS ADI KOMAR, S.STP., M.Tr.A.P</p>
+                    <p className="text-slate-600 text-[8.5px]">Pembina TK.I</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
           </div>
 
-          <div className="flex justify-end pt-10">
-            <div className="text-center text-xs">
-              <p>Bandung, {formatDate(previewItem.tanggal)}</p>
-              <p className="font-bold mt-1">Tim Keamanan Informasi (CSIRT)</p>
-              <div className="h-16 flex items-center justify-center text-slate-400 italic">
-                [Tanda Tangan Elektronik]
-              </div>
-              <p className="font-bold underline">Diskominfo Jawa Barat</p>
-            </div>
-          </div>
         </div>
       </div>
     );
