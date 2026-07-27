@@ -50,31 +50,31 @@ export default function Modal({
       {/* Modal Box */}
       <div
         className={`
-          relative w-full ${sizeClasses[size]} bg-white rounded-2xl shadow-xl border border-slate-100
+          relative w-full ${sizeClasses[size]} bg-white dark:bg-[#0d1d36] rounded-2xl shadow-xl border border-slate-100 dark:border-slate-800
           overflow-hidden flex flex-col max-h-[90vh] z-10 animate-in fade-in zoom-in-95 duration-200
         `}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
-          <h3 className="text-base font-bold text-slate-900">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-800">
+          <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">
             {title || "Konfirmasi"}
           </h3>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-colors"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
           >
             <X size={18} />
           </button>
         </div>
 
         {/* Content */}
-        <div className="flex-1 px-6 py-5 overflow-y-auto text-sm text-slate-600 leading-relaxed scrollbar-hide">
+        <div className="flex-1 px-6 py-5 overflow-y-auto text-sm text-slate-600 dark:text-slate-300 leading-relaxed scrollbar-hide">
           {children}
         </div>
 
         {/* Footer */}
         {footer && (
-          <div className="flex items-center justify-end gap-3 px-6 py-4 bg-slate-50 border-t border-slate-100">
+          <div className="flex items-center justify-end gap-3 px-6 py-4 bg-slate-50 dark:bg-[#081326] border-t border-slate-100 dark:border-slate-800">
             {footer}
           </div>
         )}

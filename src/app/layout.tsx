@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import ToastProvider from "@/components/ui/Toast";
 import { QueryProvider } from "@/components/providers/QueryProvider";
+import { ThemeProvider } from "@/components/providers/ThemeProvider";
 
 export const metadata: Metadata = {
   title: "APTIKA Tools",
@@ -15,10 +16,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="id" suppressHydrationWarning>
-      <body className="antialiased" suppressHydrationWarning>
+      <body className="antialiased bg-[#f8fafc] text-slate-800" suppressHydrationWarning>
         <QueryProvider>
-          {children}
-          <ToastProvider />
+          <ThemeProvider>
+            {children}
+            <ToastProvider />
+          </ThemeProvider>
         </QueryProvider>
       </body>
     </html>

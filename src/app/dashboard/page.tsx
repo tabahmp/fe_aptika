@@ -3,13 +3,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
-  Network,
   FileText,
   Layers,
-  Cpu,
-  LayoutTemplate,
-  Smartphone,
-  Database,
   Briefcase,
   Users,
   UserCog,
@@ -42,13 +37,13 @@ export default function Homepage() {
 
   const cards = [
     {
-      id: "integrasi-interoperabilitas",
-      title: "1. Integrasi Interoperabilitas",
-      desc: "Format standar integrasi data dan koordinasi interoperabilitas sistem antar instansi pemerintah.",
-      icon: <Network size={22} className="text-blue-600" />,
-      iconBg: "bg-blue-100",
-      actionText: "Buka Interoperabilitas",
-      actionColor: "text-blue-600",
+      id: "iki-report",
+      title: "1. IKI Report",
+      desc: "Layanan rekapitulasi data IKI Aptika (Integrasi Interoperabilitas, Pengelolaan Aplikasi, Rekayasa Aplikasi, Sidebar Jabar, Smart Jabar, Sada Jabar).",
+      icon: <Layers size={22} className="text-purple-600" />,
+      iconBg: "bg-purple-100",
+      actionText: "Buka IKI Report",
+      actionColor: "text-purple-600",
       path: "/integrasiinteroperabilitas/dashboard",
     },
     {
@@ -62,58 +57,8 @@ export default function Homepage() {
       path: "/administrasisurat",
     },
     {
-      id: "pengelolaan-aplikasi",
-      title: "3. Pengelolaan Aplikasi",
-      desc: "Platform inventarisasi, pengelolaan domain, dan pemantauan status sistem aplikasi.",
-      icon: <Layers size={22} className="text-purple-600" />,
-      iconBg: "bg-purple-100",
-      actionText: "Kelola Aplikasi",
-      actionColor: "text-purple-600",
-      path: "/pengelolaanaplikasi/dashboard",
-    },
-    {
-      id: "rekayasa-aplikasi",
-      title: "4. Rekayasa Aplikasi",
-      desc: "Layanan perancangan, pengembangan, dan rekapitulasi replikasi perangkat lunak.",
-      icon: <Cpu size={22} className="text-cyan-600" />,
-      iconBg: "bg-cyan-100",
-      actionText: "Lihat Rekap",
-      actionColor: "text-cyan-600",
-      path: "/rekayasaaplikasi/dashboard",
-    },
-    {
-      id: "sidebar-jabar",
-      title: "5. Sidebar Jabar",
-      desc: "Manajemen dan konfigurasi komponen navigasi standar ekosistem Jabar Digital.",
-      icon: <LayoutTemplate size={22} className="text-emerald-600" />,
-      iconBg: "bg-emerald-100",
-      actionText: "Buka Sidebar Jabar",
-      actionColor: "text-emerald-600",
-      path: "/sidebarjabar/dashboard",
-    },
-    {
-      id: "smart-jabar",
-      title: "6. Smart Jabar",
-      desc: "Ekosistem layanan digital pintar terintegrasi Pemerintah Provinsi Jawa Barat.",
-      icon: <Smartphone size={22} className="text-indigo-600" />,
-      iconBg: "bg-indigo-100",
-      actionText: "Akses Smart Jabar",
-      actionColor: "text-indigo-600",
-      path: "/smartjabar/dashboard",
-    },
-    {
-      id: "sada-jabar",
-      title: "7. Sada Jabar",
-      desc: "Pusat repositori data tunggal, analisis statistik, dan visualisasi data Aptika.",
-      icon: <Database size={22} className="text-rose-600" />,
-      iconBg: "bg-rose-100",
-      actionText: "Buka Sada Jabar",
-      actionColor: "text-rose-600",
-      path: "/sadajabar/dashboard",
-    },
-    {
       id: "manajemen-tugas-digital",
-      title: "8. Manajemen Tugas Digital",
+      title: "3. Manajemen Tugas Digital",
       desc: "Monitoring penugasan, alur kerja digital, dan manajemen penyelesaian tugas tim.",
       icon: <Briefcase size={22} className="text-teal-600" />,
       iconBg: "bg-teal-100",
@@ -123,7 +68,7 @@ export default function Homepage() {
     },
     {
       id: "magang",
-      title: "9. Magang",
+      title: "4. Magang",
       desc: "Pengelolaan data peserta magang, presensi, penugasan, dan administrasi magang Aptika.",
       icon: <Users size={22} className="text-orange-600" />,
       iconBg: "bg-orange-100",
@@ -135,7 +80,7 @@ export default function Homepage() {
       ? [
           {
             id: "manajemen-user",
-            title: "10. Manajemen User",
+            title: "5. Manajemen User",
             desc: "Pengelolaan akun pengguna, hak akses, peranan (role), dan status keaktifan user dalam sistem APTIKA.",
             icon: <UserCog size={22} className="text-violet-600" />,
             iconBg: "bg-violet-100",
@@ -182,42 +127,42 @@ export default function Homepage() {
         </div>
       </div>
 
-      {/* Title Section (Frosted Glass Transparent Style) */}
-      <div className="bg-white/50 backdrop-blur-md rounded-2xl p-6 shadow-sm border border-white/70">
-        <h2 className="text-[22px] font-bold text-blue-700 mb-2">
+      {/* Title Section (Frosted Glass Style) */}
+      <div className="bg-white/50 dark:bg-[#071733]/90 backdrop-blur-md rounded-2xl p-6 shadow-sm border border-white/70 dark:border-slate-800">
+        <h2 className="text-[22px] font-bold text-blue-700 dark:text-blue-400 mb-2">
           Pilih Modul Service
         </h2>
-        <p className="text-sm text-slate-600 font-medium">
+        <p className="text-sm text-slate-600 dark:text-slate-300 font-medium">
           Silakan pilih modul layanan yang ingin Anda kelola untuk mengakses dashboard dan fitur terkait.
         </p>
       </div>
 
-      {/* Grid of Service Button Cards (Frosted Glass Kaca Transparent Cards) */}
+      {/* Grid of Service Button Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {cards.map((card) => (
           <div
             key={card.id}
             onClick={() => router.push(card.path)}
-            className="bg-white/45 backdrop-blur-md rounded-2xl p-6 shadow-md border border-white/70 flex flex-col cursor-pointer hover:bg-white/75 hover:shadow-xl hover:border-blue-400/60 transition-all duration-200 group h-full relative overflow-hidden"
+            className="bg-white/45 dark:bg-[#071733]/80 backdrop-blur-md rounded-2xl p-6 shadow-md border border-white/70 dark:border-slate-800 flex flex-col cursor-pointer hover:bg-white/75 dark:hover:bg-[#0b2146] hover:shadow-xl hover:border-blue-400/60 dark:hover:border-blue-500/60 transition-all duration-200 group h-full relative overflow-hidden"
           >
             <div className="flex items-center justify-between mb-5">
               <div
-                className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-sm border border-white/80 ${card.iconBg}`}
+                className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-sm border border-white/80 dark:border-slate-700/80 ${card.iconBg}`}
               >
                 {card.icon}
               </div>
               {card.badge && (
-                <span className="px-2.5 py-1 rounded-full bg-violet-100 text-violet-700 font-extrabold text-[10px] tracking-wider uppercase border border-violet-200 shadow-sm">
+                <span className="px-2.5 py-1 rounded-full bg-violet-100 dark:bg-violet-950/80 text-violet-700 dark:text-violet-300 font-extrabold text-[10px] tracking-wider uppercase border border-violet-200 dark:border-violet-800 shadow-sm">
                   {card.badge}
                 </span>
               )}
             </div>
 
-            <h3 className="text-base font-extrabold text-slate-800 mb-3 group-hover:text-blue-700 transition-colors">
+            <h3 className="text-base font-extrabold text-slate-800 dark:text-white mb-3 group-hover:text-blue-700 dark:group-hover:text-blue-400 transition-colors">
               {card.title}
             </h3>
 
-            <p className="text-[13px] text-slate-600 leading-relaxed flex-grow font-semibold">
+            <p className="text-[13px] text-slate-600 dark:text-slate-300 leading-relaxed flex-grow font-semibold">
               {card.desc}
             </p>
 
@@ -236,4 +181,3 @@ export default function Homepage() {
     </div>
   );
 }
-

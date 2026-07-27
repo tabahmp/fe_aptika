@@ -210,21 +210,21 @@ export default function DashboardPengelolaan() {
 
   const S = {
     page: { fontFamily: "'Plus Jakarta Sans', sans-serif", padding: "28px" } as React.CSSProperties,
-    card: { backgroundColor: "white", borderRadius: "14px", border: "1px solid #e2e8f0", padding: "20px 24px", marginBottom: "20px", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" } as React.CSSProperties,
+    card: { backgroundColor: "var(--bg-card)", borderRadius: "14px", border: "1px solid var(--border-color)", padding: "20px 24px", marginBottom: "20px", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" } as React.CSSProperties,
     badge: (color = "#fbbf24") => ({ display: "block", backgroundColor: color, color: color === "#fbbf24" ? "#78350f" : "white", fontSize: "11px", fontWeight: "700", padding: "10px 14px", borderRadius: "6px", letterSpacing: "0.5px", marginBottom: "14px", textAlign: "center" as const }) as React.CSSProperties,
-    chartTitle: { fontSize: "12px", fontWeight: "700", color: "#0f172a", textAlign: "center" as const, textTransform: "uppercase" as const, lineHeight: 1.6, marginBottom: "14px" } as React.CSSProperties,
+    chartTitle: { fontSize: "12px", fontWeight: "700", color: "var(--text-primary)", textAlign: "center" as const, textTransform: "uppercase" as const, lineHeight: 1.6, marginBottom: "14px" } as React.CSSProperties,
     table: { width: "100%", borderCollapse: "collapse" as const, fontSize: "11px" } as React.CSSProperties,
-    th: { backgroundColor: "#f8fafc", border: "1px solid #e2e8f0", padding: "6px 8px", fontWeight: "700", color: "#475569", textAlign: "center" as const, fontSize: "10px" } as React.CSSProperties,
-    thL: { backgroundColor: "#f8fafc", border: "1px solid #e2e8f0", padding: "6px 8px", fontWeight: "700", color: "#475569", textAlign: "left" as const, fontSize: "10px" } as React.CSSProperties,
-    thG: (color: string) => ({ backgroundColor: color, border: "1px solid #e2e8f0", padding: "6px 8px", fontWeight: "700", color: "white", textAlign: "center" as const, fontSize: "10px", letterSpacing: "0.3px" }) as React.CSSProperties,
-    td: { border: "1px solid #e2e8f0", padding: "6px 8px", textAlign: "center" as const, color: "#334155", fontSize: "11px" } as React.CSSProperties,
-    tdL: { border: "1px solid #e2e8f0", padding: "6px 8px", color: "#334155", fontSize: "11px" } as React.CSSProperties,
+    th: { backgroundColor: "var(--bg-primary)", border: "1px solid var(--border-color)", padding: "6px 8px", fontWeight: "700", color: "var(--text-secondary)", textAlign: "center" as const, fontSize: "10px" } as React.CSSProperties,
+    thL: { backgroundColor: "var(--bg-primary)", border: "1px solid var(--border-color)", padding: "6px 8px", fontWeight: "700", color: "var(--text-secondary)", textAlign: "left" as const, fontSize: "10px" } as React.CSSProperties,
+    thG: (color: string) => ({ backgroundColor: color, border: "1px solid var(--border-color)", padding: "6px 8px", fontWeight: "700", color: "white", textAlign: "center" as const, fontSize: "10px", letterSpacing: "0.3px" }) as React.CSSProperties,
+    td: { border: "1px solid var(--border-color)", padding: "6px 8px", textAlign: "center" as const, color: "var(--text-primary)", fontSize: "11px" } as React.CSSProperties,
+    tdL: { border: "1px solid var(--border-color)", padding: "6px 8px", color: "var(--text-primary)", fontSize: "11px" } as React.CSSProperties,
     grid2: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" } as React.CSSProperties,
   };
 
-  const xAxis = { tick: { fontSize: 10, fill: "#64748b" }, axisLine: false as const, tickLine: false as const };
-  const yAxis = { tick: { fontSize: 10, fill: "#64748b" }, axisLine: false as const, tickLine: false as const };
-  const tip = { fontSize: 11, borderRadius: 8, border: "1px solid #e2e8f0" };
+  const xAxis = { tick: { fontSize: 10, fill: "#94a3b8" }, axisLine: false as const, tickLine: false as const };
+  const yAxis = { tick: { fontSize: 10, fill: "#94a3b8" }, axisLine: false as const, tickLine: false as const };
+  const tip = { fontSize: 11, borderRadius: 8, border: "1px solid var(--border-color)", backgroundColor: "var(--bg-card)", color: "var(--text-primary)" };
 
 
   return (
@@ -234,13 +234,13 @@ export default function DashboardPengelolaan() {
 
         {/* HEADER */}
         <div style={{
-          background: "rgba(15, 23, 42, 0.03)",
-          border: "1px solid rgba(226, 232, 240, 0.8)",
+          background: "var(--bg-card)",
+          border: "1px solid var(--border-color)",
           padding: "12px 20px",
           borderRadius: "12px",
           marginBottom: "20px",
         }}>
-          <span style={{ fontSize: "15px", fontWeight: "700", color: "#0f172a", letterSpacing: "-0.3px" }}>
+          <span style={{ fontSize: "15px", fontWeight: "700", color: "var(--text-primary)", letterSpacing: "-0.3px" }}>
             {TEAM_LABEL}
           </span>
         </div>

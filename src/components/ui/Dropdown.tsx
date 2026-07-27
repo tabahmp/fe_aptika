@@ -53,20 +53,20 @@ export default function Dropdown({
           type="button"
           onClick={() => setIsOpen(!isOpen)}
           className={`
-            inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-slate-700 bg-white
-            border border-slate-200 rounded-lg shadow-sm hover:bg-slate-50 outline-none transition-all
+            inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-[#0d1d36]
+            border border-slate-200 dark:border-slate-700/80 rounded-lg shadow-sm hover:bg-slate-50 dark:hover:bg-slate-800 outline-none transition-all
           `}
         >
           {label}
-          <ChevronDown size={14} className={`text-slate-400 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+          <ChevronDown size={14} className={`text-slate-400 dark:text-slate-400 transition-transform ${isOpen ? "rotate-180" : ""}`} />
         </button>
       )}
 
       {/* Menu overlay */}
       {isOpen && (
         <div className={`
-          absolute z-50 mt-1.5 w-48 rounded-xl border border-slate-100 bg-white shadow-lg ring-1 ring-slate-900/5
-          divide-y divide-slate-50 overflow-hidden outline-none animate-in fade-in slide-in-from-top-1 duration-150
+          absolute z-50 mt-1.5 w-48 rounded-xl border border-slate-100 dark:border-slate-700/80 bg-white dark:bg-[#0d1d36] shadow-lg ring-1 ring-slate-900/5
+          divide-y divide-slate-50 dark:divide-slate-800 overflow-hidden outline-none animate-in fade-in slide-in-from-top-1 duration-150
           ${alignClasses}
         `}>
           <div className="py-1">
@@ -83,14 +83,14 @@ export default function Dropdown({
                   flex items-center gap-2.5 w-full text-left px-4 py-2.5 text-xs font-medium tracking-wide
                   transition-colors select-none outline-none
                   ${item.disabled 
-                    ? "text-slate-300 cursor-not-allowed" 
+                    ? "text-slate-300 dark:text-slate-600 cursor-not-allowed" 
                     : item.destructive 
-                      ? "text-red-600 hover:bg-red-50/70"
-                      : "text-slate-600 hover:bg-slate-50 hover:text-slate-800"
+                      ? "text-red-600 dark:text-red-400 hover:bg-red-50/70 dark:hover:bg-red-950/40"
+                      : "text-slate-600 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-white"
                   }
                 `}
               >
-                {item.icon && <span className="text-slate-400 flex-shrink-0">{item.icon}</span>}
+                {item.icon && <span className="text-slate-400 dark:text-slate-400 flex-shrink-0">{item.icon}</span>}
                 <span className="flex-1">{item.label}</span>
               </button>
             ))}
