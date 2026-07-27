@@ -376,14 +376,9 @@ export default function NotaDinasPage() {
             <div>
               {/* Kop Surat */}
               <div className="flex items-center border-b-[3px] border-double border-slate-900 pb-3 mb-5">
-                {/* SVG Logo Pemprov Jawa Barat */}
+                {/* Logo Pemprov Jawa Barat */}
                 <div className="w-16 h-16 mr-4 flex-shrink-0 flex items-center justify-center">
-                  <svg className="w-14 h-14" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M50 5 L85 25 L85 65 C85 80, 65 92, 50 95 C35 92, 15 80, 15 65 L15 25 Z" fill="#1b5e20" />
-                    <path d="M50 12 L78 30 L78 63 C78 75, 62 85, 50 88 C38 85, 22 75, 22 63 L22 30 Z" fill="#ffeb3b" />
-                    <circle cx="50" cy="50" r="18" fill="#1565c0" />
-                    <path d="M50 35 L50 65 M35 50 L65 50" stroke="white" strokeWidth="4" />
-                  </svg>
+                  <img src="/logo-jabar.png" alt="Logo Jawa Barat" className="w-14 h-auto object-contain" />
                 </div>
                 <div className="flex-1 text-center font-sans">
                   <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wide">Pemerintah Provinsi Jawa Barat</h3>
