@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import Avatar from "@/components/ui/Avatar";
 import { useSidebarStore } from "@/store/useSidebarStore";
+import { useTaskStore } from "@/store/useTaskStore";
 
 const MENU_ITEMS = [
   {
@@ -94,6 +95,7 @@ export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { isCollapsed, isOpenMobile, toggleCollapsed, setOpenMobile, initStore } = useSidebarStore();
+  const { currentUser, loadCurrentUser } = useTaskStore();
   const [isAdmin, setIsAdmin] = useState(false);
   const [userName, setUserName] = useState("User");
 
@@ -103,6 +105,10 @@ export default function Sidebar() {
   const isAppGroupActive = appGroupKeys.includes(activeSegment);
 
   const [isAppGroupOpen, setIsAppGroupOpen] = useState(isAppGroupActive);
+
+  useEffect(() => {
+    loadCurrentUser();
+  }, [loadCurrentUser]);
 
   useEffect(() => {
     if (isAppGroupActive) {
@@ -376,7 +382,7 @@ export default function Sidebar() {
             onClick={() => router.push("/profile")}
             title="Ke Profil Saya"
           >
-            <Avatar name={userName} size="sm" />
+            <Avatar name={userName} src={currentUser?.avatar_url || currentUser?.avatar} size="sm" />
             {!isCollapsed && (
               <div className="flex-1 min-w-0">
                 <h4 className="text-xs font-bold text-[#0b2146] dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors truncate">{userName}</h4>

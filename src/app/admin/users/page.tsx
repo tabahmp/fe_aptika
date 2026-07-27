@@ -8,6 +8,7 @@ import Badge from "@/components/ui/Badge";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { showToast } from "@/components/ui/Toast";
 import ConfirmModal from "@/components/ui/ConfirmModal";
+import Avatar from "@/components/ui/Avatar";
 
 const S = {
   page: { fontFamily: "'Plus Jakarta Sans', sans-serif", padding: "28px" } as React.CSSProperties,
@@ -248,12 +249,17 @@ export default function UsersCrudPage() {
                   {users.map((u) => (
                     <tr key={u.id}>
                       <td style={S.td}>
-                        <div style={{ fontWeight: "600", color: "#0f172a" }}>{u.name}</div>
-                        {u.id === currentUser?.id && (
-                          <Badge variant="outline" className="text-[6px] !text-black border-black mt-1 uppercase px-1.5 py-0 font-bold bg-transparent">
-                            Akun Anda
-                          </Badge>
-                        )}
+                        <div className="flex items-center gap-3">
+                          <Avatar name={u.name} src={u.avatar_url || u.avatar} size="sm" />
+                          <div>
+                            <div style={{ fontWeight: "600", color: "#0f172a" }}>{u.name}</div>
+                            {u.id === currentUser?.id && (
+                              <Badge variant="outline" className="text-[6px] !text-black border-black mt-1 uppercase px-1.5 py-0 font-bold bg-transparent">
+                                Akun Anda
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
                       </td>
                       <td style={S.td}>{u.email}</td>
                       <td style={S.td}>

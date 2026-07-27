@@ -1,8 +1,8 @@
 import axios from "axios";
 
 export const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "https://beaptikatools.up.railway.app/api",
-  // baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api",
+  // baseURL: process.env.NEXT_PUBLIC_API_URL || "https://beaptikatools.up.railway.app/api",
+  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api",
 });
 
 // ✅ Auto-attach token ke setiap request
@@ -62,14 +62,23 @@ export const getProfile = async () => {
   }
 };
 
-export const updateProfile = async (data: {
+export const updateProfile = async (data: FormData | {
   name: string;
   email: string;
   position?: string;
   phone?: string;
   jabatan?: string;
   no_telp?: string;
+  avatar?: File | null;
+  remove_avatar?: boolean;
 }) => {
+  if (typeof FormData !== "undefined" && data instanceof FormData) {
+    const res = await api.post("/profile", data, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return res.data;
+  }
+
   try {
     const res = await api.patch("/profile", data);
     return res.data;
