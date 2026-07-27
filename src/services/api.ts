@@ -1340,12 +1340,18 @@ export const getKerentananById = async (id: number) => {
 };
 
 export const createKerentanan = async (payload: any) => {
-  const res = await api.post("/kerentanan", payload);
+  const res = await api.post("/kerentanan", payload, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
   return res.data;
 };
 
 export const updateKerentanan = async (id: number, payload: any) => {
-  const res = await api.put(`/kerentanan/${id}`, payload);
+  // Use POST with _method=PUT for file uploads in Laravel
+  payload.append("_method", "PUT");
+  const res = await api.post(`/kerentanan/${id}`, payload, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
   return res.data;
 };
 

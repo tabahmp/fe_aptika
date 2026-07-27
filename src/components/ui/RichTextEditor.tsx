@@ -11,6 +11,7 @@ import {
   AlignCenter,
   AlignRight,
   Link2,
+  Image as ImageIcon,
   Maximize2,
   Minimize2,
   X,
@@ -37,6 +38,7 @@ export function RichTextEditor({
 }: RichTextEditorProps) {
   const editorRef = useRef<HTMLDivElement>(null);
   const fullscreenEditorRef = useRef<HTMLDivElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
 
@@ -82,10 +84,48 @@ export function RichTextEditor({
     }
   };
 
+  const handleImageClick = () => {
+    const choice = confirm("Klik 'OK' untuk memilih berkas gambar/foto dari perangkat Anda, atau 'Cancel' untuk memasukkan URL Gambar.");
+    if (choice) {
+      imageInputRef.current?.click();
+    } else {
+      const url = prompt("Masukkan URL Gambar (misal: https://example.com/bukti.jpg):");
+      if (url) {
+        execCmd("insertImage", url);
+      }
+    }
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        alert("Ukuran file gambar maksimal 5MB");
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const base64 = event.target?.result as string;
+        if (base64) {
+          execCmd("insertImage", base64);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+    e.target.value = "";
+  };
+
   const minHeightPx = Math.max(rows * 24, 120);
 
   const toolbar = (
     <div className="bg-slate-100/90 border-b border-slate-200 px-3 py-2 flex flex-wrap items-center gap-1.5 text-slate-700 select-none">
+      <input
+        type="file"
+        ref={imageInputRef}
+        onChange={handleImageUpload}
+        accept="image/*"
+        className="hidden"
+      />
       {/* Group 1: Text Styling (B, I, U) */}
       <div className="flex items-center gap-0.5 bg-white border border-slate-200 rounded-lg p-0.5 shadow-sm">
         <button
@@ -168,15 +208,25 @@ export function RichTextEditor({
 
       <div className="w-px h-5 bg-slate-300 mx-1" />
 
-      {/* Group 4: Insert Link */}
-      <button
-        type="button"
-        onClick={handleLink}
-        title="🔗: Insert Link (Tambah Tautan)"
-        className="p-1.5 bg-white border border-slate-200 hover:bg-slate-100 hover:text-blue-600 rounded-lg text-slate-800 transition-colors shadow-sm"
-      >
-        <Link2 size={15} />
-      </button>
+      {/* Group 4: Insert Link & Insert Image */}
+      <div className="flex items-center gap-0.5 bg-white border border-slate-200 rounded-lg p-0.5 shadow-sm">
+        <button
+          type="button"
+          onClick={handleLink}
+          title="🔗: Insert Link (Tambah Tautan)"
+          className="p-1.5 hover:bg-slate-100 hover:text-blue-600 rounded text-slate-800 transition-colors"
+        >
+          <Link2 size={15} />
+        </button>
+        <button
+          type="button"
+          onClick={handleImageClick}
+          title="🖼️: Sisipkan / Unggah Gambar (Foto Bukti)"
+          className="p-1.5 hover:bg-slate-100 hover:text-blue-600 rounded text-slate-800 transition-colors"
+        >
+          <ImageIcon size={15} />
+        </button>
+      </div>
 
       <div className="flex-1" />
 
@@ -226,7 +276,7 @@ export function RichTextEditor({
             onBlur={() => setIsFocused(false)}
             onInput={() => handleInput(editorRef)}
             style={{ minHeight: `${minHeightPx}px` }}
-            className="w-full p-4 text-xs outline-none font-sans leading-relaxed text-slate-800 overflow-y-auto prose prose-sm max-w-none [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_a]:text-blue-600 [&_a]:underline"
+            className="w-full p-4 text-xs outline-none font-sans leading-relaxed text-slate-800 overflow-y-auto prose prose-sm max-w-none [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_a]:text-blue-600 [&_a]:underline [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-xl [&_img]:my-2 [&_img]:border [&_img]:border-slate-200 [&_img]:shadow-sm"
           />
         </div>
       </div>
@@ -259,7 +309,7 @@ export function RichTextEditor({
                 contentEditable
                 suppressContentEditableWarning
                 onInput={() => handleInput(fullscreenEditorRef)}
-                className="w-full h-full p-6 text-sm outline-none font-sans leading-relaxed text-slate-800 overflow-y-auto prose max-w-none [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_a]:text-blue-600 [&_a]:underline"
+                className="w-full h-full p-6 text-sm outline-none font-sans leading-relaxed text-slate-800 overflow-y-auto prose max-w-none [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_a]:text-blue-600 [&_a]:underline [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-xl [&_img]:my-2 [&_img]:border [&_img]:border-slate-200 [&_img]:shadow-sm"
               />
             </div>
             <div className="p-4 border-t border-slate-200 bg-slate-50 flex justify-end">
@@ -300,7 +350,7 @@ export function FormattedContentViewer({
 
   return (
     <div
-      className={`prose prose-sm max-w-none text-slate-800 leading-relaxed font-sans text-xs [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_a]:text-blue-600 [&_a]:underline ${className}`}
+      className={`prose prose-sm max-w-none text-slate-800 leading-relaxed font-sans text-xs [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_a]:text-blue-600 [&_a]:underline [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-xl [&_img]:my-3 [&_img]:border [&_img]:border-slate-200 [&_img]:shadow-sm ${className}`}
       dangerouslySetInnerHTML={{ __html: html }}
     />
   );

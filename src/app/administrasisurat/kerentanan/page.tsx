@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { 
   TriangleAlert, Eye, Edit, Trash2, Plus, Search, Download, 
-  ArrowLeft, Printer
+  ArrowLeft, Printer, Paperclip, FileText, X
 } from "lucide-react";
 import { 
   getKerentananList, deleteKerentanan, createKerentanan, 
@@ -94,6 +94,8 @@ export default function KerentananPage() {
   const [tingkatKerentanan, setTingkatKerentanan] = useState("Tinggi");
   const [perihal, setPerihal] = useState("");
   const [deskripsi, setDeskripsi] = useState("");
+  const [isiLampiran, setIsiLampiran] = useState("");
+  const [rekomendasi, setRekomendasi] = useState("");
   const [tanggal, setTanggal] = useState("");
   const [status, setStatus] = useState("DRAF");
 
@@ -162,6 +164,8 @@ export default function KerentananPage() {
       setTingkatKerentanan(data.tingkat_kerentanan || "Tinggi");
       setPerihal(data.perihal || "");
       setDeskripsi(data.deskripsi || "");
+      setIsiLampiran(data.isi_lampiran || "");
+      setRekomendasi(data.rekomendasi || "");
       setTanggal(data.tanggal ? data.tanggal.split("T")[0] : "");
       setStatus(data.status || "DRAF");
     } else {
@@ -171,6 +175,8 @@ export default function KerentananPage() {
       setTingkatKerentanan("Tinggi");
       setPerihal("Pemberitahuan Celah Keamanan (Vulnerability Advisory)");
       setDeskripsi("");
+      setIsiLampiran("");
+      setRekomendasi("");
       setTanggal(new Date().toISOString().split("T")[0]);
       setStatus("DRAF");
     }
@@ -186,21 +192,22 @@ export default function KerentananPage() {
     }
 
     try {
-      const payload = {
-        aplikasi,
-        url,
-        tingkat_kerentanan: tingkatKerentanan,
-        perihal,
-        deskripsi,
-        tanggal,
-        status,
-      };
+      const formData = new FormData();
+      formData.append("aplikasi", aplikasi);
+      formData.append("url", url);
+      formData.append("tingkat_kerentanan", tingkatKerentanan);
+      formData.append("perihal", perihal);
+      formData.append("deskripsi", deskripsi);
+      formData.append("isi_lampiran", isiLampiran);
+      formData.append("rekomendasi", rekomendasi);
+      formData.append("tanggal", tanggal);
+      formData.append("status", status);
 
       if (formMode === "create") {
-        await createKerentanan(payload);
+        await createKerentanan(formData);
         showToast.success("Peringatan kerentanan berhasil ditambahkan.");
       } else if (formMode === "edit" && selectedId) {
-        await updateKerentanan(selectedId, payload);
+        await updateKerentanan(selectedId, formData);
         showToast.success("Peringatan kerentanan berhasil diperbarui.");
       }
 
@@ -287,14 +294,9 @@ export default function KerentananPage() {
             <div>
               {/* Kop Surat Pemprov Jabar */}
               <div className="flex items-center border-b-[3px] border-double border-slate-900 pb-3 mb-6">
-                {/* SVG Logo Pemprov Jawa Barat */}
-                <div className="w-16 h-16 mr-4 flex-shrink-0 flex items-center justify-center">
-                  <svg className="w-14 h-14" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M50 5 L85 25 L85 65 C85 80, 65 92, 50 95 C35 92, 15 80, 15 65 L15 25 Z" fill="#1b5e20" />
-                    <path d="M50 12 L78 30 L78 63 C78 75, 62 85, 50 88 C38 85, 22 75, 22 63 L22 30 Z" fill="#ffeb3b" />
-                    <circle cx="50" cy="50" r="18" fill="#1565c0" />
-                    <path d="M50 35 L50 65 M35 50 L65 50" stroke="white" strokeWidth="4" />
-                  </svg>
+                {/* Logo Pemprov Jawa Barat */}
+                <div className="w-24 h-24 mr-4 flex-shrink-0 flex items-center justify-center">
+                  <img src="/logo-jabar.png" alt="Logo Jawa Barat" className="w-24 h-24 object-contain" />
                 </div>
                 <div className="flex-1 text-center font-sans">
                   <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">PEMERINTAH DAERAH PROVINSI JAWA BARAT</h3>
@@ -323,7 +325,7 @@ export default function KerentananPage() {
                     <tr className="align-top">
                       <td className="py-0.5 font-normal">Lampiran</td>
                       <td className="text-center">:</td>
-                      <td className="py-0.5 font-normal">{previewItem.lampiran || "1 (satu) Berkas"}</td>
+                      <td className="py-0.5 font-normal">{previewItem.lampiran_nama ? "1 (satu) Berkas" : (previewItem.lampiran || "1 (satu) Berkas")}</td>
                     </tr>
                     <tr className="align-top">
                       <td className="py-0.5 font-normal">Hal</td>
@@ -376,10 +378,7 @@ export default function KerentananPage() {
                   {/* TTE Box matching PDF */}
                   <div className="my-3 border border-slate-400 rounded-lg p-2.5 bg-slate-50/40 flex items-center gap-3 text-left">
                     <div className="w-10 h-10 flex-shrink-0 flex items-center justify-center bg-blue-100/50 rounded">
-                      <svg className="w-8 h-8" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M50 5 L85 25 L85 65 C85 80, 65 92, 50 95 C35 92, 15 80, 15 65 L15 25 Z" fill="#1565c0" />
-                        <circle cx="50" cy="50" r="14" fill="#ffeb3b" />
-                      </svg>
+                      <img src="/logo-jabar.png" alt="Logo Jawa Barat" className="w-8 h-auto object-contain" />
                     </div>
                     <div className="text-[9px] leading-tight text-slate-800">
                       <p className="text-[8px] text-slate-500">Ditandatangani secara elektronik oleh:</p>
@@ -477,6 +476,38 @@ export default function KerentananPage() {
                     </tbody>
                   </table>
                 </div>
+
+                {/* Evidence content / photos directly below table */}
+                {previewItem.isi_lampiran && (
+                  <div className="mt-4 mb-6">
+                    <FormattedContentViewer content={previewItem.isi_lampiran} />
+                  </div>
+                )}
+
+                {/* Attached file download link if file uploaded */}
+                {previewItem.lampiran_nama && (
+                  <div className="mt-4 mb-6 border border-slate-300 rounded-lg p-3 bg-slate-50/50">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <FileText size={18} className="text-red-600" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-slate-800 text-xs truncate">{previewItem.lampiran_nama}</p>
+                        <p className="text-[10px] text-slate-500">Berkas pendukung terlampir</p>
+                      </div>
+                      {previewItem.lampiran_url && (
+                        <a
+                          href={previewItem.lampiran_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="print:hidden flex items-center gap-1.5 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-[10px] font-bold transition-colors shadow-sm"
+                        >
+                          <Download size={12} /> Unduh
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Section B: REKOMENDASI */}
@@ -484,37 +515,43 @@ export default function KerentananPage() {
                 <h3 className="font-bold text-xs text-slate-900 mb-3 uppercase">
                   B. REKOMENDASI:
                 </h3>
-                <p className="mb-3">Beberapa rekomendasi teknis yang dapat dilakukan, antara lain:</p>
-                <div className="space-y-3 pl-4">
-                  <div>
-                    <p className="font-semibold mb-1">1) {previewItem.tingkat_kerentanan || "Sensitive Data Exposure"}</p>
-                    <ol className="list-[lower-alpha] pl-5 space-y-1.5 text-justify">
-                      <li>
-                        Melakukan pembatasan akses folder pada direktori penyimpanan menjadi <span className="italic font-semibold">restricted</span> dan hanya dibagikan kepada akun Perangkat Daerah/Perusahaan atau pihak yang berwenang serta telah terverifikasi, dan tidak membuka akses publik secara penuh;
-                      </li>
-                      <li>
-                        Melakukan klasifikasi dan inventarisasi terhadap dokumen yang mengandung informasi data sensitif agar tidak dapat diakses secara bebas oleh publik sesuai dengan Undang-Undang No. 27 Tahun 2022 tentang Pelindungan Data Pribadi.
-                      </li>
-                    </ol>
-                  </div>
-                  <div>
-                    <p className="font-semibold mb-1">2) Serta menerapkan beberapa hal berikut ini:</p>
-                    <ol className="list-[lower-alpha] pl-5 space-y-1.5 text-justify">
-                      <li>
-                        Jika aplikasi yang dibangun khusus untuk keperluan internal Perangkat Daerah Provinsi Jawa Barat sebaiknya hanya dapat diakses melalui Jaringan Intra Pemerintah Daerah Provinsi Jawa Barat (JIP);
-                      </li>
-                      <li>
-                        Menerapkan kebijakan syarat penggunaan kata sandi dengan menggunakan minimal 12 karakter yang mengandung:
-                        <ul className="list-[lower-roman] pl-6 pt-1 space-y-0.5">
-                          <li>1 (satu) huruf kapital;</li>
-                          <li>1 (satu) huruf nonkapital;</li>
-                          <li>1 (satu) angka;</li>
-                          <li>1 (satu) karakter spesial.</li>
-                        </ul>
-                      </li>
-                    </ol>
-                  </div>
-                </div>
+                {previewItem.rekomendasi ? (
+                  <FormattedContentViewer content={previewItem.rekomendasi} />
+                ) : (
+                  <>
+                    <p className="mb-3">Beberapa rekomendasi teknis yang dapat dilakukan, antara lain:</p>
+                    <div className="space-y-3 pl-4">
+                      <div>
+                        <p className="font-semibold mb-1">1) {previewItem.tingkat_kerentanan || "Sensitive Data Exposure"}</p>
+                        <ol className="list-[lower-alpha] pl-5 space-y-1.5 text-justify">
+                          <li>
+                            Melakukan pembatasan akses folder pada direktori penyimpanan menjadi <span className="italic font-semibold">restricted</span> dan hanya dibagikan kepada akun Perangkat Daerah/Perusahaan atau pihak yang berwenang serta telah terverifikasi, dan tidak membuka akses publik secara penuh;
+                          </li>
+                          <li>
+                            Melakukan klasifikasi dan inventarisasi terhadap dokumen yang mengandung informasi data sensitif agar tidak dapat diakses secara bebas oleh publik sesuai dengan Undang-Undang No. 27 Tahun 2022 tentang Pelindungan Data Pribadi.
+                          </li>
+                        </ol>
+                      </div>
+                      <div>
+                        <p className="font-semibold mb-1">2) Serta menerapkan beberapa hal berikut ini:</p>
+                        <ol className="list-[lower-alpha] pl-5 space-y-1.5 text-justify">
+                          <li>
+                            Jika aplikasi yang dibangun khusus untuk keperluan internal Perangkat Daerah Provinsi Jawa Barat sebaiknya hanya dapat diakses melalui Jaringan Intra Pemerintah Daerah Provinsi Jawa Barat (JIP);
+                          </li>
+                          <li>
+                            Menerapkan kebijakan syarat penggunaan kata sandi dengan menggunakan minimal 12 karakter yang mengandung:
+                            <ul className="list-[lower-roman] pl-6 pt-1 space-y-0.5">
+                              <li>1 (satu) huruf kapital;</li>
+                              <li>1 (satu) huruf nonkapital;</li>
+                              <li>1 (satu) angka;</li>
+                              <li>1 (satu) karakter spesial.</li>
+                            </ul>
+                          </li>
+                        </ol>
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
 
@@ -531,10 +568,7 @@ export default function KerentananPage() {
                 {/* TTE Box */}
                 <div className="my-3 border border-slate-400 rounded-lg p-2.5 bg-slate-50/40 flex items-center gap-3 text-left">
                   <div className="w-10 h-10 flex-shrink-0 flex items-center justify-center bg-blue-100/50 rounded">
-                    <svg className="w-8 h-8" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M50 5 L85 25 L85 65 C85 80, 65 92, 50 95 C35 92, 15 80, 15 65 L15 25 Z" fill="#1565c0" />
-                      <circle cx="50" cy="50" r="14" fill="#ffeb3b" />
-                    </svg>
+                    <img src="/logo-jabar.png" alt="Logo Jawa Barat" className="w-8 h-auto object-contain" />
                   </div>
                   <div className="text-[9px] leading-tight text-slate-800">
                     <p className="text-[8px] text-slate-500">Ditandatangani secara elektronik oleh:</p>
@@ -638,11 +672,27 @@ export default function KerentananPage() {
           </div>
 
           <RichTextEditor
-            label="Deskripsi Kerentanan & Langkah Mitigasi"
+            label="Rincian Temuan Kerentanan"
             rows={6}
             value={deskripsi}
             onChange={setDeskripsi}
-            placeholder="Jelaskan detail kerentanan (misal SQL Injection / XSS) dan panduan perbaikan..."
+            placeholder="Jelaskan detail rincian temuan kerentanan..."
+          />
+
+          <RichTextEditor
+            label="Lampiran Bukti Rincian Temuan Kerentanan"
+            rows={6}
+            value={isiLampiran}
+            onChange={setIsiLampiran}
+            placeholder="Tuliskan rincian bukti lampiran, tangkapan layar, foto, atau link berkas pendukung (misal: Google Drive)..."
+          />
+
+          <RichTextEditor
+            label="Rekomendasi"
+            rows={6}
+            value={rekomendasi}
+            onChange={setRekomendasi}
+            placeholder="Tuliskan rekomendasi teknis penanganan kerentanan di sini..."
           />
 
           <div>
