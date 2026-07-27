@@ -95,11 +95,9 @@ export default function KerentananPage() {
   const [perihal, setPerihal] = useState("");
   const [deskripsi, setDeskripsi] = useState("");
   const [isiLampiran, setIsiLampiran] = useState("");
+  const [rekomendasi, setRekomendasi] = useState("");
   const [tanggal, setTanggal] = useState("");
   const [status, setStatus] = useState("DRAF");
-  const [lampiranFile, setLampiranFile] = useState<File | null>(null);
-  const [existingLampiran, setExistingLampiran] = useState<{ nama: string; url: string } | null>(null);
-  const [hapusLampiran, setHapusLampiran] = useState(false);
 
   const fetchData = async () => {
     setLoading(true);
@@ -167,15 +165,9 @@ export default function KerentananPage() {
       setPerihal(data.perihal || "");
       setDeskripsi(data.deskripsi || "");
       setIsiLampiran(data.isi_lampiran || "");
+      setRekomendasi(data.rekomendasi || "");
       setTanggal(data.tanggal ? data.tanggal.split("T")[0] : "");
       setStatus(data.status || "DRAF");
-      setLampiranFile(null);
-      setHapusLampiran(false);
-      if (data.lampiran && data.lampiran_nama) {
-        setExistingLampiran({ nama: data.lampiran_nama, url: data.lampiran_url || "" });
-      } else {
-        setExistingLampiran(null);
-      }
     } else {
       setSelectedId(null);
       setAplikasi("");
@@ -184,11 +176,9 @@ export default function KerentananPage() {
       setPerihal("Pemberitahuan Celah Keamanan (Vulnerability Advisory)");
       setDeskripsi("");
       setIsiLampiran("");
+      setRekomendasi("");
       setTanggal(new Date().toISOString().split("T")[0]);
       setStatus("DRAF");
-      setLampiranFile(null);
-      setExistingLampiran(null);
-      setHapusLampiran(false);
     }
     setViewState("form");
   };
@@ -209,14 +199,9 @@ export default function KerentananPage() {
       formData.append("perihal", perihal);
       formData.append("deskripsi", deskripsi);
       formData.append("isi_lampiran", isiLampiran);
+      formData.append("rekomendasi", rekomendasi);
       formData.append("tanggal", tanggal);
       formData.append("status", status);
-      if (lampiranFile) {
-        formData.append("lampiran", lampiranFile);
-      }
-      if (hapusLampiran) {
-        formData.append("hapus_lampiran", "1");
-      }
 
       if (formMode === "create") {
         await createKerentanan(formData);
@@ -538,37 +523,43 @@ export default function KerentananPage() {
                 <h3 className="font-bold text-xs text-slate-900 mb-3 uppercase">
                   B. REKOMENDASI:
                 </h3>
-                <p className="mb-3">Beberapa rekomendasi teknis yang dapat dilakukan, antara lain:</p>
-                <div className="space-y-3 pl-4">
-                  <div>
-                    <p className="font-semibold mb-1">1) {previewItem.tingkat_kerentanan || "Sensitive Data Exposure"}</p>
-                    <ol className="list-[lower-alpha] pl-5 space-y-1.5 text-justify">
-                      <li>
-                        Melakukan pembatasan akses folder pada direktori penyimpanan menjadi <span className="italic font-semibold">restricted</span> dan hanya dibagikan kepada akun Perangkat Daerah/Perusahaan atau pihak yang berwenang serta telah terverifikasi, dan tidak membuka akses publik secara penuh;
-                      </li>
-                      <li>
-                        Melakukan klasifikasi dan inventarisasi terhadap dokumen yang mengandung informasi data sensitif agar tidak dapat diakses secara bebas oleh publik sesuai dengan Undang-Undang No. 27 Tahun 2022 tentang Pelindungan Data Pribadi.
-                      </li>
-                    </ol>
-                  </div>
-                  <div>
-                    <p className="font-semibold mb-1">2) Serta menerapkan beberapa hal berikut ini:</p>
-                    <ol className="list-[lower-alpha] pl-5 space-y-1.5 text-justify">
-                      <li>
-                        Jika aplikasi yang dibangun khusus untuk keperluan internal Perangkat Daerah Provinsi Jawa Barat sebaiknya hanya dapat diakses melalui Jaringan Intra Pemerintah Daerah Provinsi Jawa Barat (JIP);
-                      </li>
-                      <li>
-                        Menerapkan kebijakan syarat penggunaan kata sandi dengan menggunakan minimal 12 karakter yang mengandung:
-                        <ul className="list-[lower-roman] pl-6 pt-1 space-y-0.5">
-                          <li>1 (satu) huruf kapital;</li>
-                          <li>1 (satu) huruf nonkapital;</li>
-                          <li>1 (satu) angka;</li>
-                          <li>1 (satu) karakter spesial.</li>
-                        </ul>
-                      </li>
-                    </ol>
-                  </div>
-                </div>
+                {previewItem.rekomendasi ? (
+                  <FormattedContentViewer content={previewItem.rekomendasi} />
+                ) : (
+                  <>
+                    <p className="mb-3">Beberapa rekomendasi teknis yang dapat dilakukan, antara lain:</p>
+                    <div className="space-y-3 pl-4">
+                      <div>
+                        <p className="font-semibold mb-1">1) {previewItem.tingkat_kerentanan || "Sensitive Data Exposure"}</p>
+                        <ol className="list-[lower-alpha] pl-5 space-y-1.5 text-justify">
+                          <li>
+                            Melakukan pembatasan akses folder pada direktori penyimpanan menjadi <span className="italic font-semibold">restricted</span> dan hanya dibagikan kepada akun Perangkat Daerah/Perusahaan atau pihak yang berwenang serta telah terverifikasi, dan tidak membuka akses publik secara penuh;
+                          </li>
+                          <li>
+                            Melakukan klasifikasi dan inventarisasi terhadap dokumen yang mengandung informasi data sensitif agar tidak dapat diakses secara bebas oleh publik sesuai dengan Undang-Undang No. 27 Tahun 2022 tentang Pelindungan Data Pribadi.
+                          </li>
+                        </ol>
+                      </div>
+                      <div>
+                        <p className="font-semibold mb-1">2) Serta menerapkan beberapa hal berikut ini:</p>
+                        <ol className="list-[lower-alpha] pl-5 space-y-1.5 text-justify">
+                          <li>
+                            Jika aplikasi yang dibangun khusus untuk keperluan internal Perangkat Daerah Provinsi Jawa Barat sebaiknya hanya dapat diakses melalui Jaringan Intra Pemerintah Daerah Provinsi Jawa Barat (JIP);
+                          </li>
+                          <li>
+                            Menerapkan kebijakan syarat penggunaan kata sandi dengan menggunakan minimal 12 karakter yang mengandung:
+                            <ul className="list-[lower-roman] pl-6 pt-1 space-y-0.5">
+                              <li>1 (satu) huruf kapital;</li>
+                              <li>1 (satu) huruf nonkapital;</li>
+                              <li>1 (satu) angka;</li>
+                              <li>1 (satu) karakter spesial.</li>
+                            </ul>
+                          </li>
+                        </ol>
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
 
@@ -692,19 +683,27 @@ export default function KerentananPage() {
           </div>
 
           <RichTextEditor
-            label="Deskripsi Kerentanan & Langkah Mitigasi"
+            label="Rincian Temuan Kerentanan"
             rows={6}
             value={deskripsi}
             onChange={setDeskripsi}
-            placeholder="Jelaskan detail kerentanan (misal SQL Injection / XSS) dan panduan perbaikan..."
+            placeholder="Jelaskan detail rincian temuan kerentanan..."
           />
 
           <RichTextEditor
-            label="Isi Lampiran / Bukti Kerentanan"
+            label="Lampiran Bukti Rincian Temuan Kerentanan"
             rows={6}
             value={isiLampiran}
             onChange={setIsiLampiran}
-            placeholder="Tuliskan rincian bukti lampiran, tangkapan layar, atau link berkas pendukung (misal: Google Drive)..."
+            placeholder="Tuliskan rincian bukti lampiran, tangkapan layar, foto, atau link berkas pendukung (misal: Google Drive)..."
+          />
+
+          <RichTextEditor
+            label="Rekomendasi"
+            rows={6}
+            value={rekomendasi}
+            onChange={setRekomendasi}
+            placeholder="Tuliskan rekomendasi teknis penanganan kerentanan di sini..."
           />
 
           <div>
@@ -718,99 +717,6 @@ export default function KerentananPage() {
               <option value="TERKIRIM">TERKIRIM</option>
               <option value="TERSOLUSIKAN">TERSOLUSIKAN</option>
             </select>
-          </div>
-
-          {/* Lampiran / Attachment */}
-          <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">
-              <Paperclip size={13} className="inline mr-1 -mt-0.5" />
-              Lampiran (Bukti / Dokumen Pendukung)
-            </label>
-            
-            {/* Existing lampiran display */}
-            {existingLampiran && !hapusLampiran && !lampiranFile && (
-              <div className="flex items-center gap-2 mb-2 p-2.5 bg-blue-50 border border-blue-200 rounded-xl">
-                <FileText size={16} className="text-blue-600 flex-shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold text-blue-800 truncate">{existingLampiran.nama}</p>
-                  <p className="text-[10px] text-blue-500">File terlampir saat ini</p>
-                </div>
-                {existingLampiran.url && (
-                  <a
-                    href={existingLampiran.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-[10px] font-semibold text-blue-600 hover:text-blue-800 px-2 py-1 bg-blue-100 rounded-lg"
-                  >
-                    Lihat
-                  </a>
-                )}
-                <button
-                  type="button"
-                  onClick={() => setHapusLampiran(true)}
-                  className="p-1 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                  title="Hapus lampiran"
-                >
-                  <X size={14} />
-                </button>
-              </div>
-            )}
-
-            {/* Removed lampiran notice */}
-            {hapusLampiran && !lampiranFile && (
-              <div className="flex items-center gap-2 mb-2 p-2.5 bg-amber-50 border border-amber-200 rounded-xl">
-                <p className="text-xs text-amber-700 flex-1">Lampiran akan dihapus saat disimpan.</p>
-                <button
-                  type="button"
-                  onClick={() => setHapusLampiran(false)}
-                  className="text-[10px] font-semibold text-amber-600 hover:text-amber-800 px-2 py-1 bg-amber-100 rounded-lg"
-                >
-                  Batal
-                </button>
-              </div>
-            )}
-
-            {/* New file selected */}
-            {lampiranFile && (
-              <div className="flex items-center gap-2 mb-2 p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl">
-                <FileText size={16} className="text-emerald-600 flex-shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold text-emerald-800 truncate">{lampiranFile.name}</p>
-                  <p className="text-[10px] text-emerald-500">{(lampiranFile.size / 1024 / 1024).toFixed(2)} MB</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setLampiranFile(null);
-                    setHapusLampiran(false);
-                  }}
-                  className="p-1 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                  title="Hapus file baru"
-                >
-                  <X size={14} />
-                </button>
-              </div>
-            )}
-
-            {/* File input */}
-            <div className="relative">
-              <input
-                type="file"
-                accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg,.zip,.rar"
-                onChange={(e) => {
-                  const file = e.target.files?.[0] || null;
-                  if (file) {
-                    setLampiranFile(file);
-                    setHapusLampiran(false);
-                  }
-                  e.target.value = "";
-                }}
-                className="w-full text-xs px-3 py-2.5 rounded-xl border border-dashed border-slate-300 bg-slate-50 hover:bg-slate-100 focus:outline-none focus:border-red-500 transition-colors cursor-pointer file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-red-600 file:text-white file:cursor-pointer hover:file:bg-red-700"
-              />
-              <p className="text-[10px] text-slate-400 mt-1">
-                Format: PDF, DOC, DOCX, XLS, XLSX, PNG, JPG, ZIP, RAR. Maksimal 10MB.
-              </p>
-            </div>
           </div>
 
           <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
