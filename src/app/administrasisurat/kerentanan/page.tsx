@@ -295,8 +295,8 @@ export default function KerentananPage() {
               {/* Kop Surat Pemprov Jabar */}
               <div className="flex items-center border-b-[3px] border-double border-slate-900 pb-3 mb-6">
                 {/* Logo Pemprov Jawa Barat */}
-                <div className="w-16 h-16 mr-4 flex-shrink-0 flex items-center justify-center">
-                  <img src="/logo-jabar.png" alt="Logo Jawa Barat" className="w-14 h-auto object-contain" />
+                <div className="w-24 h-24 mr-4 flex-shrink-0 flex items-center justify-center">
+                  <img src="/logo-jabar.png" alt="Logo Jawa Barat" className="w-24 h-24 object-contain" />
                 </div>
                 <div className="flex-1 text-center font-sans">
                   <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">PEMERINTAH DAERAH PROVINSI JAWA BARAT</h3>
