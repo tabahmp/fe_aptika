@@ -14,13 +14,28 @@
   --primary: #1d4ed8;
   --primary-hover: #1e40af;
   --accent: #38bdf8;
-  --sidebar-gradient: linear-gradient(175deg, #0b2146 0%, #112d60 50%, #1e40af 100%);
+  --sidebar-bg: #ffffff;
+  --sidebar-text: #0b2146;
   --border-color: #e2e8f0;
 }
 
+.dark {
+  --bg-primary: #070f1e;
+  --bg-card: #0d1d36;
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-muted: #64748b;
+  --primary: #2563eb;
+  --primary-hover: #3b82f6;
+  --accent: #38bdf8;
+  --sidebar-bg: #071733;
+  --sidebar-text: #ffffff;
+  --border-color: #1e2d4a;
+}
+
 body {
-  background: var(--bg-primary);
-  color: var(--text-primary);
+  background: #f8fafc;
+  color: #0f2540;
   font-family: var(--font-plus-jakarta);
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;

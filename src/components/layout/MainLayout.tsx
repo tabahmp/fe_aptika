@@ -43,7 +43,7 @@ export default function MainLayout({
   }
 
   return (
-    <div className="relative min-h-screen w-full bg-[#f8fafc] overflow-x-hidden print:bg-white print:min-h-0 print:overflow-visible">
+    <div className="relative min-h-screen w-full bg-[#f8fafc] text-slate-800 overflow-x-hidden print:bg-white print:min-h-0 print:overflow-visible">
       {/* Diskominfo Jabar Logo Background Layer */}
       <div
         className="fixed inset-0 z-0 pointer-events-none bg-center bg-no-repeat transition-all opacity-[0.35] print:hidden"
