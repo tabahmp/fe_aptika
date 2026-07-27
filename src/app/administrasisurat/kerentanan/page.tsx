@@ -499,6 +499,38 @@ export default function KerentananPage() {
                     </tbody>
                   </table>
                 </div>
+
+                {/* Evidence content / photos directly below table */}
+                {previewItem.isi_lampiran && (
+                  <div className="mt-4 mb-6">
+                    <FormattedContentViewer content={previewItem.isi_lampiran} />
+                  </div>
+                )}
+
+                {/* Attached file download link if file uploaded */}
+                {previewItem.lampiran_nama && (
+                  <div className="mt-4 mb-6 border border-slate-300 rounded-lg p-3 bg-slate-50/50">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <FileText size={18} className="text-red-600" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-slate-800 text-xs truncate">{previewItem.lampiran_nama}</p>
+                        <p className="text-[10px] text-slate-500">Berkas pendukung terlampir</p>
+                      </div>
+                      {previewItem.lampiran_url && (
+                        <a
+                          href={previewItem.lampiran_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="print:hidden flex items-center gap-1.5 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-[10px] font-bold transition-colors shadow-sm"
+                        >
+                          <Download size={12} /> Unduh
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Section B: REKOMENDASI */}
@@ -539,43 +571,6 @@ export default function KerentananPage() {
                 </div>
               </div>
             </div>
-
-              {/* Section C: LAMPIRAN BUKTI (if text/links or file attached) */}
-              {(previewItem.isi_lampiran || previewItem.lampiran_nama) && (
-                <div className="mb-6 text-xs text-slate-900 leading-relaxed font-sans">
-                  <h3 className="font-bold text-xs text-slate-900 mb-3 uppercase">
-                    C. LAMPIRAN BUKTI:
-                  </h3>
-                  {previewItem.isi_lampiran && (
-                    <div className="mb-4 border border-slate-200 rounded-lg p-4 bg-slate-50/30">
-                      <FormattedContentViewer content={previewItem.isi_lampiran} />
-                    </div>
-                  )}
-                  {previewItem.lampiran_nama && (
-                    <div className="border border-slate-300 rounded-lg p-4 bg-slate-50/50">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                          <FileText size={20} className="text-red-600" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-slate-800 text-xs truncate">{previewItem.lampiran_nama}</p>
-                          <p className="text-[10px] text-slate-500 mt-0.5">Dokumen berkas terlampir</p>
-                        </div>
-                        {previewItem.lampiran_url && (
-                          <a
-                            href={previewItem.lampiran_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="print:hidden flex items-center gap-1.5 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-[10px] font-bold transition-colors shadow-sm"
-                          >
-                            <Download size={12} /> Unduh
-                          </a>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
 
             {/* Signature & TTE Box on Attachment */}
             <div className="flex justify-end mt-8">
