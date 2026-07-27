@@ -111,7 +111,7 @@ export default function Header({ title, subtitle, showBrand = false }: HeaderPro
           align="right"
           trigger={
             <div className="flex items-center gap-2.5 cursor-pointer hover:opacity-90 transition-opacity">
-              <Avatar name={userName} size="sm" indicator="online" />
+              <Avatar name={userName} src={currentUser?.avatar_url || currentUser?.avatar} size="sm" indicator="online" />
               <div className="hidden sm:flex flex-col text-left">
                 <span className="text-xs font-bold text-slate-700 dark:text-slate-200 max-w-[120px] truncate leading-none">
                   {userName}

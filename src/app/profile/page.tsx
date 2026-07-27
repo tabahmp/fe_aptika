@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Header from "@/components/layout/Header";
 import Sidebar from "@/components/layout/Sidebar";
 import Avatar from "@/components/ui/Avatar";
 import { showToast } from "@/components/ui/Toast";
 import { getProfile, updateProfile } from "@/services/api";
 import { useTaskStore } from "@/store/useTaskStore";
-import { User, Mail, Briefcase, Phone, Save, RotateCcw, CheckCircle, Shield } from "lucide-react";
+import { User, Mail, Briefcase, Phone, Save, RotateCcw, CheckCircle, Shield, Camera, Trash2, Upload } from "lucide-react";
 
 export default function ProfilePage() {
   const { currentUser, setCurrentUser, loadCurrentUser } = useTaskStore();
@@ -17,6 +17,12 @@ export default function ProfilePage() {
   const [position, setPosition] = useState("");
   const [phone, setPhone] = useState("");
   
+  // Avatar state
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [removeAvatar, setRemoveAvatar] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
@@ -70,6 +76,36 @@ export default function ProfilePage() {
     }
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate type
+    if (!file.type.startsWith("image/")) {
+      showToast.error("File harus berupa gambar (JPG, PNG, WEBP)");
+      return;
+    }
+
+    // Validate size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      showToast.error("Ukuran gambar tidak boleh melebihi 2MB");
+      return;
+    }
+
+    setAvatarFile(file);
+    setAvatarPreview(URL.createObjectURL(file));
+    setRemoveAvatar(false);
+  };
+
+  const handleRemovePhoto = () => {
+    setAvatarFile(null);
+    setAvatarPreview(null);
+    setRemoveAvatar(true);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
@@ -77,14 +113,32 @@ export default function ProfilePage() {
     setErrorMsg("");
 
     try {
-      const payload = {
-        name,
-        email,
-        position,
-        phone,
-      };
+      let res;
+      if (avatarFile || removeAvatar) {
+        const formData = new FormData();
+        formData.append("name", name);
+        formData.append("email", email);
+        formData.append("position", position || "");
+        formData.append("phone", phone || "");
 
-      const res = await updateProfile(payload);
+        if (avatarFile) {
+          formData.append("avatar", avatarFile);
+        }
+        if (removeAvatar) {
+          formData.append("remove_avatar", "1");
+        }
+
+        res = await updateProfile(formData);
+      } else {
+        const payload = {
+          name,
+          email,
+          position,
+          phone,
+        };
+        res = await updateProfile(payload);
+      }
+
       const updatedUser = res?.user || {
         ...currentUser,
         name,
@@ -92,6 +146,11 @@ export default function ProfilePage() {
         position,
         phone,
       };
+
+      // Reset avatar draft flags
+      setAvatarFile(null);
+      setAvatarPreview(null);
+      setRemoveAvatar(false);
 
       // Sync local state & Zustand store
       localStorage.setItem("user", JSON.stringify(updatedUser));
@@ -110,9 +169,20 @@ export default function ProfilePage() {
 
   const handleReset = () => {
     fetchUserProfile();
+    setAvatarFile(null);
+    setAvatarPreview(null);
+    setRemoveAvatar(false);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
     setSuccessMsg("");
     setErrorMsg("");
   };
+
+  // Determine current active avatar image URL
+  const currentAvatarSrc = removeAvatar 
+    ? undefined 
+    : (avatarPreview || currentUser?.avatar_url || currentUser?.avatar);
 
   return (
     <div className="flex h-screen bg-[#F8FAFC] text-slate-800 overflow-hidden font-sans">
@@ -130,8 +200,12 @@ export default function ProfilePage() {
           <div className="bg-white/80 backdrop-blur-md border border-slate-200/80 rounded-2xl p-6 shadow-sm flex flex-col sm:flex-row items-center sm:items-start gap-6 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full blur-2xl pointer-events-none" />
             
-            <div className="relative">
-              <Avatar name={name || currentUser?.name || "User"} size="xl" />
+            {/* Avatar container with hover camera icon */}
+            <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+              <Avatar name={name || currentUser?.name || "User"} src={currentAvatarSrc} size="xl" />
+              <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity">
+                <Camera size={20} />
+              </div>
               <div className="absolute bottom-0 right-0 bg-blue-600 border-2 border-white text-white p-1 rounded-full shadow-sm">
                 <User size={12} />
               </div>
@@ -180,7 +254,7 @@ export default function ProfilePage() {
           <div className="bg-white/80 backdrop-blur-md border border-slate-200/80 rounded-2xl p-6 sm:p-8 shadow-sm space-y-6">
             <div>
               <h3 className="text-lg font-bold text-slate-800">Formulir Edit Profil</h3>
-              <p className="text-xs text-slate-500">Perbarui data informasi akun dan kontak Anda di bawah ini.</p>
+              <p className="text-xs text-slate-500">Perbarui data informasi akun, foto profil, dan kontak Anda di bawah ini.</p>
             </div>
 
             {successMsg && (
@@ -203,6 +277,56 @@ export default function ProfilePage() {
               </div>
             ) : (
               <form onSubmit={handleSave} className="space-y-6">
+                {/* Hidden File Input */}
+                <input 
+                  type="file" 
+                  ref={fileInputRef} 
+                  onChange={handleFileChange} 
+                  accept="image/jpeg,image/png,image/jpg,image/webp" 
+                  className="hidden" 
+                />
+
+                {/* Photo Upload Section */}
+                <div className="p-4 bg-slate-50/70 border border-slate-200/80 rounded-xl flex flex-col sm:flex-row items-center gap-5">
+                  <div className="relative flex-shrink-0">
+                    <Avatar name={name || currentUser?.name || "User"} src={currentAvatarSrc} size="lg" />
+                  </div>
+
+                  <div className="flex-1 text-center sm:text-left space-y-1">
+                    <h4 className="text-xs font-bold text-slate-700">Foto Profil</h4>
+                    <p className="text-[11px] text-slate-500">
+                      Upload foto diri dalam format JPG, PNG, atau WEBP (Maks. 2MB).
+                    </p>
+                    {avatarFile && (
+                      <p className="text-[11px] font-semibold text-blue-600">
+                        File terpilih: {avatarFile.name} ({(avatarFile.size / 1024).toFixed(1)} KB)
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-2 flex-wrap justify-center">
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 rounded-lg text-xs font-medium transition-all shadow-xs"
+                    >
+                      <Upload size={13} className="text-blue-600" />
+                      <span>{currentAvatarSrc ? "Ganti Foto" : "Unggah Foto"}</span>
+                    </button>
+
+                    {(currentAvatarSrc || avatarFile) && (
+                      <button
+                        type="button"
+                        onClick={handleRemovePhoto}
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 border border-red-100 hover:bg-red-100 text-red-600 rounded-lg text-xs font-medium transition-all shadow-xs"
+                      >
+                        <Trash2 size={13} />
+                        <span>Hapus</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* 1. Perubahan Nama */}
                   <div className="space-y-2">
