@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { getSpdList, deleteSpd, fromApiSpdItem, getDetailPerjalananList, fromApiDetailPerjalanan, updateDetailPerjalananStatus, deleteDetailPerjalanan, updateSpd } from "@/services/api";
+import { showToast } from "@/components/ui/Toast";
 
 
 
@@ -507,9 +508,10 @@ export default function SpdDashboardPage() {
                     } else {
                       setSpdList([]);
                     }
+                    showToast.success("SPD berhasil dibuka kembali.");
                   } catch (err) {
                     console.error("Gagal membuka kembali SPD:", err);
-                    alert("Gagal membuka kembali SPD.");
+                    showToast.error("Gagal membuka kembali SPD.");
                   } finally {
                     setSelectedSpd(null);
                   }

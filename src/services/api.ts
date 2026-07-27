@@ -1,8 +1,8 @@
 import axios from "axios";
 
 export const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "https://beaptikatools.up.railway.app/api",
-  //baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api",
+  // baseURL: process.env.NEXT_PUBLIC_API_URL || "https://beaptikatools.up.railway.app/api",
+  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api",
 });
 
 // ✅ Auto-attach token ke setiap request
@@ -46,6 +46,41 @@ export const logout = async () => {
   await api.post("/logout");
   localStorage.removeItem("token");
   localStorage.removeItem("user");
+};
+
+export const getProfile = async () => {
+  try {
+    const res = await api.get("/profile");
+    return res.data;
+  } catch (err) {
+    try {
+      const res = await api.get("/user");
+      return res.data;
+    } catch (e) {
+      throw err;
+    }
+  }
+};
+
+export const updateProfile = async (data: {
+  name: string;
+  email: string;
+  position?: string;
+  phone?: string;
+  jabatan?: string;
+  no_telp?: string;
+}) => {
+  try {
+    const res = await api.patch("/profile", data);
+    return res.data;
+  } catch (err) {
+    try {
+      const res = await api.post("/profile", data);
+      return res.data;
+    } catch (e) {
+      throw err;
+    }
+  }
 };
 
 // ─── SPD ────────────────────────────────────────────────

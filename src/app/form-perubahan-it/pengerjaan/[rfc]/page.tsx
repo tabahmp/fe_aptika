@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { getPerubahanItByRfc, updatePerubahanItStatus, assignPerubahanIt } from '@/services/api';
+import { showToast } from '@/components/ui/Toast';
 
 export default function DetailPengerjaanAdmin() {
   const params = useParams();
@@ -54,11 +55,10 @@ const [showAssignModal, setShowAssignModal] = useState(false);
       if (result) {
         setIsStatusModalOpen(false);
         fetchTicketDetail(); 
-        alert('Status tiket berhasil diperbarui!');
+        showToast.success('Status tiket berhasil diperbarui!');
       }
     } catch (err: any) {
-      alert(`Gagal memperbarui status. HTTP ${err?.response?.status || 'Error'}`);
-      alert('Terjadi kesalahan jaringan saat menghubungi API.');
+      showToast.error(`Gagal memperbarui status: ${err?.response?.data?.message || 'Terjadi kesalahan'}`);
     } finally {
       setIsSavingStatus(false);
     }
@@ -88,7 +88,7 @@ const [showAssignModal, setShowAssignModal] = useState(false);
 ];
 const handleAssign = async () => {
   if (!selectedAgent) {
-    alert("Silakan pilih agen.");
+    showToast.error("Silakan pilih agen.");
     return;
   }
 
@@ -103,10 +103,10 @@ const handleAssign = async () => {
       setSelectedAgent("");
       setAssignNote("");
       fetchTicketDetail();
-      alert("Agen berhasil ditugaskan.");
+      showToast.success("Agen berhasil ditugaskan.");
     }
   } catch (err) {
-    alert("Gagal menugaskan agen.");
+    showToast.error("Gagal menugaskan agen.");
   }
 };
 

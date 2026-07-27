@@ -9,15 +9,40 @@ import {
 } from "lucide-react";
 import { getNotaDinasList, deleteNotaDinas, createNotaDinas, updateNotaDinas, exportNotaDinas } from "@/services/api";
 import { Pagination } from "@/components/ui/Pagination";
+import { RichTextEditor, FormattedContentViewer } from "@/components/ui/RichTextEditor";
+import { showToast } from "@/components/ui/Toast";
+import ConfirmModal from "@/components/ui/ConfirmModal";
 
-const formatDate = (dateString: string) => {
+const formatDate = (dateString?: string) => {
   if (!dateString) return "-";
-  const date = new Date(dateString);
-  return date.toLocaleDateString("id-ID", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
+  try {
+    const cleanStr = String(dateString).split("T")[0].split(" ")[0];
+    const parts = cleanStr.split("-");
+    if (parts.length === 3) {
+      const year = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10) - 1;
+      const day = parseInt(parts[2], 10);
+      if (!isNaN(year) && !isNaN(month) && !isNaN(day)) {
+        const date = new Date(year, month, day);
+        return date.toLocaleDateString("id-ID", {
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+        });
+      }
+    }
+    const date = new Date(dateString);
+    if (!isNaN(date.getTime())) {
+      return date.toLocaleDateString("id-ID", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      });
+    }
+  } catch (e) {
+    console.error(e);
+  }
+  return dateString;
 };
 
 const getLampiranText = (isiLampiranRaw: any) => {
@@ -56,8 +81,13 @@ const DEPARTMENT_OPTIONS = [
 ];
 
 export default function NotaDinasPage() {
+  const [mounted, setMounted] = useState(false);
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
   
   // View states: 'list' | 'form' | 'preview'
   const [viewState, setViewState] = useState<"list" | "form" | "preview">("list");
@@ -180,16 +210,42 @@ export default function NotaDinasPage() {
     setViewState("form");
   };
 
+  // Delete Modal State
+  const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDeleteClick = (id: number) => {
+    setDeleteId(id);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteId) return;
+    setIsDeleting(true);
+    try {
+      await deleteNotaDinas(deleteId);
+      showToast.success("Data Nota Dinas berhasil dihapus.");
+      fetchData();
+    } catch (err: any) {
+      showToast.error(err?.response?.data?.message || "Gagal menghapus data Nota Dinas.");
+    } finally {
+      setIsDeleting(false);
+      setIsDeleteModalOpen(false);
+      setDeleteId(null);
+    }
+  };
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (selectedKepada.length === 0) {
-      alert("Silakan pilih minimal satu unit kerja pada field 'Kepada'");
+      showToast.error("Silakan pilih minimal satu unit kerja pada field 'Kepada'");
       return;
     }
 
     if (lampiranFile && lampiranFile.size > 5 * 1024 * 1024) {
-      alert("Ukuran file lampiran tidak boleh melebihi 5MB");
+      showToast.error("Ukuran file lampiran tidak boleh melebihi 5MB");
       return;
     }
 
@@ -212,14 +268,17 @@ export default function NotaDinasPage() {
 
       if (formMode === "create") {
         await createNotaDinas(payload);
+        showToast.success("Nota Dinas berhasil dibuat dan dikirim.");
       } else if (formMode === "edit" && selectedId) {
         await updateNotaDinas(selectedId, payload);
+        showToast.success("Nota Dinas berhasil diperbarui.");
       }
 
       setViewState("list");
       fetchData();
     } catch (error: any) {
-      alert("Gagal menyimpan data. Pastikan semua field telah diisi dengan benar.");
+      const msg = error?.response?.data?.message || "Gagal menyimpan data. Pastikan semua field wajib telah diisi.";
+      showToast.error(msg);
       console.error(error);
     }
   };
@@ -252,10 +311,12 @@ export default function NotaDinasPage() {
     }
   };
 
+  if (!mounted) return null;
+
   // Preview Screen layout
   if (viewState === "preview" && previewItem) {
     return (
-      <div className="flex flex-col gap-6 max-w-[1200px] mx-auto font-sans bg-slate-100 min-h-screen p-4 md:p-6 pb-20 print:p-0 print:bg-white">
+      <div suppressHydrationWarning className="flex flex-col gap-6 max-w-[1200px] mx-auto font-sans bg-slate-100 min-h-screen p-4 md:p-6 pb-20 print:p-0 print:bg-white">
         
         {/* Top bar (Hidden when printing) */}
         <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 print:hidden">
@@ -395,9 +456,7 @@ export default function NotaDinasPage() {
               <div className="h-px bg-slate-300 w-full mb-6" />
 
               {/* Isi Surat */}
-              <div className="text-xs text-slate-800 leading-relaxed text-justify whitespace-pre-wrap font-sans">
-                {previewItem.isi_surat}
-              </div>
+              <FormattedContentViewer content={previewItem.isi_surat} />
             </div>
 
             {/* Signature Block */}
@@ -468,7 +527,7 @@ export default function NotaDinasPage() {
                 Isi Lampiran
               </h3>
 
-              {/* Dynamic Attachment content body */}
+              {/* Attachment content body */}
               <div className="text-xs text-slate-800 leading-relaxed mb-6 whitespace-pre-wrap font-sans">
                 {(() => {
                   try {
@@ -481,13 +540,15 @@ export default function NotaDinasPage() {
                               Lampiran {idx + 1}
                             </h4>
                           )}
-                          <div className="whitespace-pre-wrap text-slate-800">{item || "-"}</div>
+                          <div className="whitespace-pre-wrap text-slate-800">
+                            <FormattedContentViewer content={item || "-"} />
+                          </div>
                         </div>
                       ));
                     }
-                    return previewItem.isi_lampiran || "-";
+                    return <FormattedContentViewer content={previewItem.isi_lampiran || "-"} />;
                   } catch (e) {
-                    return previewItem.isi_lampiran || "-";
+                    return <FormattedContentViewer content={previewItem.isi_lampiran || "-"} />;
                   }
                 })()}
               </div>
@@ -535,7 +596,7 @@ export default function NotaDinasPage() {
   // Form Screen layout
   if (viewState === "form") {
     return (
-      <div className="flex flex-col gap-6 max-w-[1200px] mx-auto font-sans pb-10">
+      <div suppressHydrationWarning className="flex flex-col gap-6 max-w-[1200px] mx-auto font-sans pb-10">
         <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button
@@ -688,44 +749,14 @@ export default function NotaDinasPage() {
             </div>
 
             {/* Field: Isi Surat */}
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-bold text-slate-700">
-                Isi Surat <span className="text-red-500">*</span>
-              </label>
-              <div className="border border-slate-300 rounded-xl overflow-hidden focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 transition-all">
-                {/* Fake Toolbar */}
-                <div className="bg-slate-100/50 border-b border-slate-300 px-3 py-2 flex items-center gap-4 text-slate-600">
-                  <div className="flex items-center gap-3">
-                    <button type="button" className="hover:text-slate-900"><Bold size={14} /></button>
-                    <button type="button" className="hover:text-slate-900"><Italic size={14} /></button>
-                    <button type="button" className="hover:text-slate-900"><Underline size={14} /></button>
-                  </div>
-                  <div className="w-px h-4 bg-slate-300"></div>
-                  <div className="flex items-center gap-3">
-                    <button type="button" className="hover:text-slate-900"><List size={14} /></button>
-                    <button type="button" className="hover:text-slate-900"><ListOrdered size={14} /></button>
-                  </div>
-                  <div className="w-px h-4 bg-slate-300"></div>
-                  <div className="flex items-center gap-3">
-                    <button type="button" className="hover:text-slate-900"><AlignLeft size={14} /></button>
-                    <button type="button" className="hover:text-slate-900"><AlignCenter size={14} /></button>
-                    <button type="button" className="hover:text-slate-900"><AlignRight size={14} /></button>
-                  </div>
-                  <div className="w-px h-4 bg-slate-300"></div>
-                  <button type="button" className="hover:text-slate-900"><Link2 size={14} /></button>
-                  <div className="flex-1"></div>
-                  <button type="button" className="hover:text-slate-900"><Maximize2 size={14} /></button>
-                </div>
-                <textarea
-                  required
-                  rows={6}
-                  value={isiSurat}
-                  onChange={(e) => setIsiSurat(e.target.value)}
-                  className="w-full px-4 py-3 text-xs outline-none resize-y"
-                  placeholder="Tuliskan isi dari nota dinas..."
-                />
-              </div>
-            </div>
+            <RichTextEditor
+              label="Isi Surat"
+              required
+              rows={6}
+              value={isiSurat}
+              onChange={setIsiSurat}
+              placeholder="Tuliskan isi dari nota dinas..."
+            />
 
             {/* Field: Jumlah Lampiran */}
             <div className="flex flex-col gap-1">
@@ -757,48 +788,19 @@ export default function NotaDinasPage() {
             {/* Field: Isi Lampiran (Multiple) */}
             <div className="flex flex-col gap-4">
               {isiLampiranList.map((isi, index) => (
-                <div key={index} className="flex flex-col gap-1">
-                  <label className="text-xs font-bold text-slate-700">
-                    Isi Lampiran {jumlahLampiran > 1 ? `${index + 1}` : ""} <span className="text-red-500">*</span>
-                  </label>
-                  <div className="border border-slate-300 rounded-xl overflow-hidden focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 transition-all">
-                    {/* Fake Toolbar */}
-                    <div className="bg-slate-100/50 border-b border-slate-300 px-3 py-2 flex items-center gap-4 text-slate-600">
-                      <div className="flex items-center gap-3">
-                        <button type="button" className="hover:text-slate-900"><Bold size={14} /></button>
-                        <button type="button" className="hover:text-slate-900"><Italic size={14} /></button>
-                        <button type="button" className="hover:text-slate-900"><Underline size={14} /></button>
-                      </div>
-                      <div className="w-px h-4 bg-slate-300"></div>
-                      <div className="flex items-center gap-3">
-                        <button type="button" className="hover:text-slate-900"><List size={14} /></button>
-                        <button type="button" className="hover:text-slate-900"><ListOrdered size={14} /></button>
-                      </div>
-                      <div className="w-px h-4 bg-slate-300"></div>
-                      <div className="flex items-center gap-3">
-                        <button type="button" className="hover:text-slate-900"><AlignLeft size={14} /></button>
-                        <button type="button" className="hover:text-slate-900"><AlignCenter size={14} /></button>
-                        <button type="button" className="hover:text-slate-900"><AlignRight size={14} /></button>
-                      </div>
-                      <div className="w-px h-4 bg-slate-300"></div>
-                      <button type="button" className="hover:text-slate-900"><Link2 size={14} /></button>
-                      <div className="flex-1"></div>
-                      <button type="button" className="hover:text-slate-900"><Maximize2 size={14} /></button>
-                    </div>
-                    <textarea
-                      required
-                      rows={4}
-                      value={isi}
-                      onChange={(e) => {
-                        const newList = [...isiLampiranList];
-                        newList[index] = e.target.value;
-                        setIsiLampiranList(newList);
-                      }}
-                      className="w-full px-4 py-3 text-xs outline-none resize-y"
-                      placeholder="Tuliskan isi untuk lampiran di sini..."
-                    />
-                  </div>
-                </div>
+                <RichTextEditor
+                  key={index}
+                  label={`Isi Lampiran ${jumlahLampiran > 1 ? `${index + 1}` : ""}`}
+                  required
+                  rows={4}
+                  value={isi}
+                  onChange={(val) => {
+                    const newList = [...isiLampiranList];
+                    newList[index] = val;
+                    setIsiLampiranList(newList);
+                  }}
+                  placeholder="Tuliskan isi untuk lampiran di sini..."
+                />
               ))}
             </div>
 
@@ -868,7 +870,7 @@ export default function NotaDinasPage() {
   }
 
   return (
-    <div className="flex flex-col gap-6 max-w-[1200px] mx-auto font-sans">
+    <div suppressHydrationWarning className="flex flex-col gap-6 max-w-[1200px] mx-auto font-sans">
       
       {/* ── HEADER CARD ── */}
       <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -1033,7 +1035,7 @@ export default function NotaDinasPage() {
                           <Edit size={15} />
                         </button>
                         <button
-                          onClick={() => handleDelete(item.id)}
+                          onClick={() => handleDeleteClick(item.id)}
                           className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                           title="Hapus"
                         >
@@ -1060,6 +1062,14 @@ export default function NotaDinasPage() {
         )}
       </div>
 
+      <ConfirmModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={handleConfirmDelete}
+        title="Hapus Nota Dinas"
+        message="Apakah Anda yakin ingin menghapus dokumen Nota Dinas ini? Data yang dihapus tidak dapat dikembalikan."
+        loading={isDeleting}
+      />
     </div>
   );
 }

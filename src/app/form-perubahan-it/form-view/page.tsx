@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import SignaturePad, { SignaturePadRef } from './Signaturepad';
 import { getPerubahanItOpd, createPerubahanIt } from '@/services/api';
+import { showToast } from '@/components/ui/Toast';
 
 const inputCls = "block w-full rounded-md border border-[#E2E8F0] bg-[#EFF4FF] px-4 py-3 text-[13px] text-slate-800 placeholder:text-[#94a3b8] focus:border-[#153289] focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#153289]";
 const labelCls = "mb-2 block text-[11px] font-bold uppercase tracking-wider text-[#1e293b]";
@@ -166,13 +167,14 @@ export default function FormView({ onSuccess }: { onSuccess: (data: any) => void
           }
         };
         setShowConfirmModal(false);
+        showToast.success("Permohonan IT / Perubahan IT berhasil dikirim!");
         onSuccess(displayData);
       }
     } catch (error: any) {
       const errorMsg = error?.response?.data?.errors 
-        ? Object.values(error.response.data.errors).flat().join('\n') 
+        ? Object.values(error.response.data.errors).flat().join(', ') 
         : (error?.response?.data?.error || error?.response?.data?.message || "Terjadi kesalahan jaringan.");
-      alert("Gagal mengirim data:\n" + errorMsg);
+      showToast.error("Gagal mengirim data: " + errorMsg);
       setShowConfirmModal(false);
     } finally {
       setLoading(false);

@@ -6,6 +6,8 @@ import { getAdminUsers, createAdminUser, updateAdminUser, deleteAdminUser } from
 import Button from "@/components/ui/Button";
 import Badge from "@/components/ui/Badge";
 import { Plus, Pencil, Trash2 } from "lucide-react";
+import { showToast } from "@/components/ui/Toast";
+import ConfirmModal from "@/components/ui/ConfirmModal";
 
 const S = {
   page: { fontFamily: "'Plus Jakarta Sans', sans-serif", padding: "28px" } as React.CSSProperties,
@@ -59,7 +61,7 @@ export default function UsersCrudPage() {
         const u = JSON.parse(uStr);
         setCurrentUser(u);
         if (u.role !== "admin") {
-          router.push("/rekayasaaplikasi/dashboard");
+          router.push("/dashboard");
         } else {
           setAuthorized(true);
         }
@@ -106,10 +108,41 @@ export default function UsersCrudPage() {
     setShowEditModal(true);
   };
 
+  // Delete Confirm Modal state
+  const [deleteTargetUser, setDeleteTargetUser] = useState<any>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDeleteClick = (user: any) => {
+    if (user.id === currentUser?.id) {
+      showToast.error("Anda tidak dapat menghapus akun Anda sendiri.");
+      return;
+    }
+    setDeleteTargetUser(user);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTargetUser) return;
+    setIsDeleting(true);
+    try {
+      await deleteAdminUser(deleteTargetUser.id);
+      showToast.success(`Pengguna "${deleteTargetUser.name}" berhasil dihapus.`);
+      fetchUsers();
+    } catch (err: any) {
+      const msg = err.response?.data?.message || "Gagal menghapus pengguna.";
+      showToast.error(msg);
+    } finally {
+      setIsDeleting(false);
+      setIsDeleteModalOpen(false);
+      setDeleteTargetUser(null);
+    }
+  };
+
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formName || !formEmail || !formPassword) {
-      alert("Harap isi semua field wajib.");
+      showToast.error("Harap isi semua field wajib.");
       return;
     }
     setSaving(true);
@@ -121,11 +154,12 @@ export default function UsersCrudPage() {
         role: formRole,
         is_active: Number(formIsActive)
       });
+      showToast.success("Pengguna baru berhasil ditambahkan.");
       setShowAddModal(false);
       fetchUsers();
     } catch (err: any) {
       const msg = err.response?.data?.message || "Gagal membuat pengguna.";
-      alert(msg);
+      showToast.error(msg);
     } finally {
       setSaving(false);
     }
@@ -134,7 +168,7 @@ export default function UsersCrudPage() {
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formName || !formEmail) {
-      alert("Nama dan Email wajib diisi.");
+      showToast.error("Nama dan Email wajib diisi.");
       return;
     }
     setSaving(true);
@@ -149,6 +183,7 @@ export default function UsersCrudPage() {
         payload.password = formPassword;
       }
       await updateAdminUser(selectedUser.id, payload);
+      showToast.success("Data pengguna berhasil diperbarui.");
       
       // Jika mengedit akun sendiri, update localStorage
       if (selectedUser.id === currentUser?.id) {
@@ -161,26 +196,9 @@ export default function UsersCrudPage() {
       fetchUsers();
     } catch (err: any) {
       const msg = err.response?.data?.message || "Gagal memperbarui pengguna.";
-      alert(msg);
+      showToast.error(msg);
     } finally {
       setSaving(false);
-    }
-  };
-
-  const handleDelete = async (user: any) => {
-    if (user.id === currentUser?.id) {
-      alert("Anda tidak dapat menghapus akun Anda sendiri.");
-      return;
-    }
-    if (!confirm(`Apakah Anda yakin ingin menghapus akun ${user.name}?`)) {
-      return;
-    }
-    try {
-      await deleteAdminUser(user.id);
-      fetchUsers();
-    } catch (err: any) {
-      const msg = err.response?.data?.message || "Gagal menghapus pengguna.";
-      alert(msg);
     }
   };
 
@@ -261,7 +279,7 @@ export default function UsersCrudPage() {
                             <Pencil className="w-3.5 h-3.5 mr-1" /> Edit
                           </Button>
                           <Button 
-                            onClick={() => handleDelete(u)} 
+                            onClick={() => handleDeleteClick(u)} 
                             variant="ghost" 
                             size="sm" 
                             className="h-8 px-2 text-red-600 hover:text-red-700 hover:bg-red-50/50"
@@ -405,6 +423,14 @@ export default function UsersCrudPage() {
           </div>
         )}
 
+        <ConfirmModal
+          isOpen={isDeleteModalOpen}
+          onClose={() => setIsDeleteModalOpen(false)}
+          onConfirm={handleConfirmDelete}
+          title="Hapus Akun Pengguna"
+          message={`Apakah Anda yakin ingin menghapus akun "${deleteTargetUser?.name || "pengguna"}"? Data yang dihapus tidak dapat dikembalikan.`}
+          loading={isDeleting}
+        />
       </div>
     </>
   );
