@@ -53,7 +53,11 @@ export default function Header({ title, subtitle, showBrand = false }: HeaderPro
   ];
 
   return (
+<<<<<<< HEAD
     <header className="flex items-center justify-between bg-white/60 dark:bg-[#071733]/90 backdrop-blur-md border border-white/70 dark:border-slate-800 rounded-2xl px-6 py-4 shadow-sm select-none relative z-30 transition-colors duration-300">
+=======
+    <header className="flex items-center justify-between bg-white/60 backdrop-blur-md border border-white/70 rounded-2xl px-6 py-4 shadow-sm select-none relative z-30 print:hidden">
+>>>>>>> a50f5500e63df33d7842eccdbefe9a04c8c432d3
       {/* Title / Brand Area */}
       {showBrand ? (
         <div
