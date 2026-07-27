@@ -69,13 +69,11 @@ export const updateProfile = async (data: FormData | {
   phone?: string;
   jabatan?: string;
   no_telp?: string;
-  avatar?: File | null;
+  avatar?: string | File | null;
   remove_avatar?: boolean;
 }) => {
   if (typeof FormData !== "undefined" && data instanceof FormData) {
-    const res = await api.post("/profile", data, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
+    const res = await api.post("/profile", data);
     return res.data;
   }
 

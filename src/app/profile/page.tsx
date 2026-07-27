@@ -93,7 +93,15 @@ export default function ProfilePage() {
     }
 
     setAvatarFile(file);
-    setAvatarPreview(URL.createObjectURL(file));
+
+    // Read as Base64 Data URL for guaranteed persistence on ephemeral cloud filesystems
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const base64Str = event.target?.result as string;
+      setAvatarPreview(base64Str);
+    };
+    reader.readAsDataURL(file);
+
     setRemoveAvatar(false);
   };
 
@@ -114,18 +122,20 @@ export default function ProfilePage() {
 
     try {
       let res;
-      if (avatarFile || removeAvatar) {
+      if (avatarFile || avatarPreview || removeAvatar) {
         const formData = new FormData();
         formData.append("name", name);
         formData.append("email", email);
         formData.append("position", position || "");
         formData.append("phone", phone || "");
 
-        if (avatarFile) {
-          formData.append("avatar", avatarFile);
-        }
         if (removeAvatar) {
           formData.append("remove_avatar", "1");
+        } else if (avatarPreview && avatarPreview.startsWith("data:image/")) {
+          // Pass Base64 data URI directly to guarantee persistence without server disk dependency
+          formData.append("avatar", avatarPreview);
+        } else if (avatarFile) {
+          formData.append("avatar", avatarFile);
         }
 
         res = await updateProfile(formData);
