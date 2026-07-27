@@ -94,6 +94,7 @@ export default function KerentananPage() {
   const [tingkatKerentanan, setTingkatKerentanan] = useState("Tinggi");
   const [perihal, setPerihal] = useState("");
   const [deskripsi, setDeskripsi] = useState("");
+  const [isiLampiran, setIsiLampiran] = useState("");
   const [tanggal, setTanggal] = useState("");
   const [status, setStatus] = useState("DRAF");
   const [lampiranFile, setLampiranFile] = useState<File | null>(null);
@@ -165,6 +166,7 @@ export default function KerentananPage() {
       setTingkatKerentanan(data.tingkat_kerentanan || "Tinggi");
       setPerihal(data.perihal || "");
       setDeskripsi(data.deskripsi || "");
+      setIsiLampiran(data.isi_lampiran || "");
       setTanggal(data.tanggal ? data.tanggal.split("T")[0] : "");
       setStatus(data.status || "DRAF");
       setLampiranFile(null);
@@ -181,6 +183,7 @@ export default function KerentananPage() {
       setTingkatKerentanan("Tinggi");
       setPerihal("Pemberitahuan Celah Keamanan (Vulnerability Advisory)");
       setDeskripsi("");
+      setIsiLampiran("");
       setTanggal(new Date().toISOString().split("T")[0]);
       setStatus("DRAF");
       setLampiranFile(null);
@@ -205,6 +208,7 @@ export default function KerentananPage() {
       formData.append("tingkat_kerentanan", tingkatKerentanan);
       formData.append("perihal", perihal);
       formData.append("deskripsi", deskripsi);
+      formData.append("isi_lampiran", isiLampiran);
       formData.append("tanggal", tanggal);
       formData.append("status", status);
       if (lampiranFile) {
@@ -536,33 +540,40 @@ export default function KerentananPage() {
               </div>
             </div>
 
-              {/* Section C: LAMPIRAN BUKTI (if file attached) */}
-              {previewItem.lampiran_nama && (
+              {/* Section C: LAMPIRAN BUKTI (if text/links or file attached) */}
+              {(previewItem.isi_lampiran || previewItem.lampiran_nama) && (
                 <div className="mb-6 text-xs text-slate-900 leading-relaxed font-sans">
                   <h3 className="font-bold text-xs text-slate-900 mb-3 uppercase">
                     C. LAMPIRAN BUKTI:
                   </h3>
-                  <div className="border border-slate-300 rounded-lg p-4 bg-slate-50/50">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <FileText size={20} className="text-red-600" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-slate-800 text-xs truncate">{previewItem.lampiran_nama}</p>
-                        <p className="text-[10px] text-slate-500 mt-0.5">Dokumen bukti pendukung kerentanan</p>
-                      </div>
-                      {previewItem.lampiran_url && (
-                        <a
-                          href={previewItem.lampiran_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="print:hidden flex items-center gap-1.5 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-[10px] font-bold transition-colors shadow-sm"
-                        >
-                          <Download size={12} /> Unduh
-                        </a>
-                      )}
+                  {previewItem.isi_lampiran && (
+                    <div className="mb-4 border border-slate-200 rounded-lg p-4 bg-slate-50/30">
+                      <FormattedContentViewer content={previewItem.isi_lampiran} />
                     </div>
-                  </div>
+                  )}
+                  {previewItem.lampiran_nama && (
+                    <div className="border border-slate-300 rounded-lg p-4 bg-slate-50/50">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <FileText size={20} className="text-red-600" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-slate-800 text-xs truncate">{previewItem.lampiran_nama}</p>
+                          <p className="text-[10px] text-slate-500 mt-0.5">Dokumen berkas terlampir</p>
+                        </div>
+                        {previewItem.lampiran_url && (
+                          <a
+                            href={previewItem.lampiran_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="print:hidden flex items-center gap-1.5 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-[10px] font-bold transition-colors shadow-sm"
+                          >
+                            <Download size={12} /> Unduh
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -691,6 +702,14 @@ export default function KerentananPage() {
             value={deskripsi}
             onChange={setDeskripsi}
             placeholder="Jelaskan detail kerentanan (misal SQL Injection / XSS) dan panduan perbaikan..."
+          />
+
+          <RichTextEditor
+            label="Isi Lampiran / Bukti Kerentanan"
+            rows={6}
+            value={isiLampiran}
+            onChange={setIsiLampiran}
+            placeholder="Tuliskan rincian bukti lampiran, tangkapan layar, atau link berkas pendukung (misal: Google Drive)..."
           />
 
           <div>
