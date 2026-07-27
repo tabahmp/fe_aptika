@@ -386,7 +386,9 @@ export default function Sidebar() {
             {!isCollapsed && (
               <div className="flex-1 min-w-0">
                 <h4 className="text-xs font-bold text-[#0b2146] dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors truncate">{userName}</h4>
-                <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 truncate">{isAdmin ? "Administrator" : "Developer"}</p>
+                <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 truncate">
+                  {currentUser?.position || currentUser?.jabatan || (isAdmin ? "Administrator" : "Anggota Tim")}
+                </p>
               </div>
             )}
           </div>

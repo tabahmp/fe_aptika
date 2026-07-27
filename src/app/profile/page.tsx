@@ -127,7 +127,9 @@ export default function ProfilePage() {
         formData.append("name", name);
         formData.append("email", email);
         formData.append("position", position || "");
+        formData.append("jabatan", position || "");
         formData.append("phone", phone || "");
+        formData.append("no_telp", phone || "");
 
         if (removeAvatar) {
           formData.append("remove_avatar", "1");
@@ -143,7 +145,9 @@ export default function ProfilePage() {
           name,
           email,
           position,
+          jabatan: position,
           phone,
+          no_telp: phone,
         };
         res = await updateProfile(payload);
       }
@@ -153,7 +157,9 @@ export default function ProfilePage() {
         name,
         email,
         position,
+        jabatan: position,
         phone,
+        no_telp: phone,
       };
 
       // Reset avatar draft flags

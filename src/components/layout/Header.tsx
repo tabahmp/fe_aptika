@@ -116,8 +116,8 @@ export default function Header({ title, subtitle, showBrand = false }: HeaderPro
                 <span className="text-xs font-bold text-slate-700 dark:text-slate-200 max-w-[120px] truncate leading-none">
                   {userName}
                 </span>
-                <span className="text-[10px] text-slate-400 dark:text-slate-400 font-semibold tracking-wide mt-0.5">
-                  {isAdmin ? "Admin" : "Developer"}
+                <span className="text-[10px] text-slate-400 dark:text-slate-400 font-semibold tracking-wide mt-0.5 max-w-[120px] truncate">
+                  {currentUser?.position || currentUser?.jabatan || (isAdmin ? "Admin" : "Anggota Tim")}
                 </span>
               </div>
             </div>

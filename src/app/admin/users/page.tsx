@@ -48,6 +48,8 @@ export default function UsersCrudPage() {
   const [formPassword, setFormPassword] = useState("");
   const [formRole, setFormRole] = useState("user");
   const [formIsActive, setFormIsActive] = useState(1);
+  const [formPosition, setFormPosition] = useState("");
+  const [formPhone, setFormPhone] = useState("");
 
   const [saving, setSaving] = useState(false);
 
@@ -96,6 +98,8 @@ export default function UsersCrudPage() {
     setFormPassword("");
     setFormRole("user");
     setFormIsActive(1);
+    setFormPosition("");
+    setFormPhone("");
     setShowAddModal(true);
   };
 
@@ -106,6 +110,8 @@ export default function UsersCrudPage() {
     setFormPassword("");
     setFormRole(user.role);
     setFormIsActive(Number(user.is_active));
+    setFormPosition(user.position || user.jabatan || "");
+    setFormPhone(user.phone || user.no_telp || "");
     setShowEditModal(true);
   };
 
@@ -153,7 +159,9 @@ export default function UsersCrudPage() {
         email: formEmail,
         password: formPassword,
         role: formRole,
-        is_active: Number(formIsActive)
+        is_active: Number(formIsActive),
+        position: formPosition,
+        phone: formPhone,
       });
       showToast.success("Pengguna baru berhasil ditambahkan.");
       setShowAddModal(false);
@@ -178,7 +186,9 @@ export default function UsersCrudPage() {
         name: formName,
         email: formEmail,
         role: formRole,
-        is_active: Number(formIsActive)
+        is_active: Number(formIsActive),
+        position: formPosition,
+        phone: formPhone,
       };
       if (formPassword) {
         payload.password = formPassword;
@@ -188,7 +198,15 @@ export default function UsersCrudPage() {
       
       // Jika mengedit akun sendiri, update localStorage
       if (selectedUser.id === currentUser?.id) {
-        const updatedUser = { ...currentUser, name: formName, email: formEmail, role: formRole, is_active: Number(formIsActive) };
+        const updatedUser = { 
+          ...currentUser, 
+          name: formName, 
+          email: formEmail, 
+          role: formRole, 
+          is_active: Number(formIsActive),
+          position: formPosition,
+          phone: formPhone,
+        };
         localStorage.setItem("user", JSON.stringify(updatedUser));
         setCurrentUser(updatedUser);
       }
@@ -240,6 +258,8 @@ export default function UsersCrudPage() {
                   <tr>
                     <th style={S.th}>Nama</th>
                     <th style={S.th}>Email</th>
+                    <th style={S.th}>Jabatan</th>
+                    <th style={S.th}>No. Telp</th>
                     <th style={S.th}>Role</th>
                     <th style={S.th}>Status</th>
                     <th style={S.th}></th>
@@ -262,6 +282,16 @@ export default function UsersCrudPage() {
                         </div>
                       </td>
                       <td style={S.td}>{u.email}</td>
+                      <td style={S.td}>
+                        <span className="text-xs text-slate-600 font-medium">
+                          {u.position || u.jabatan || "-"}
+                        </span>
+                      </td>
+                      <td style={S.td}>
+                        <span className="text-xs text-slate-600 font-medium">
+                          {u.phone || u.no_telp || "-"}
+                        </span>
+                      </td>
                       <td style={S.td}>
                         <Badge variant={u.role === "admin" ? "default" : "secondary"} className="capitalize">
                           {u.role}
@@ -331,6 +361,20 @@ export default function UsersCrudPage() {
                 </div>
 
                 <div style={S.formGroup}>
+                  <label style={S.label}>Jabatan / Posisi</label>
+                  <div style={S.inputWrap} className="input-focus">
+                    <input type="text" value={formPosition} onChange={(e) => setFormPosition(e.target.value)} placeholder="Contoh: Pranata Komputer Ahli Muda" style={S.input} />
+                  </div>
+                </div>
+
+                <div style={S.formGroup}>
+                  <label style={S.label}>No. Telepon</label>
+                  <div style={S.inputWrap} className="input-focus">
+                    <input type="text" value={formPhone} onChange={(e) => setFormPhone(e.target.value)} placeholder="Contoh: 081234567890" style={S.input} />
+                  </div>
+                </div>
+
+                <div style={S.formGroup}>
                   <label style={S.label}>Hak Akses (Role) <span style={{ color: "#ef4444" }}>*</span></label>
                   <select value={formRole} onChange={(e) => setFormRole(e.target.value)} style={S.select} className="select-focus">
                     <option value="user">User biasa (Hanya CRUD 6 Service)</option>
@@ -376,6 +420,20 @@ export default function UsersCrudPage() {
                   <label style={S.label}>Email <span style={{ color: "#ef4444" }}>*</span></label>
                   <div style={S.inputWrap} className="input-focus">
                     <input type="email" value={formEmail} onChange={(e) => setFormEmail(e.target.value)} placeholder="email@domain.com" style={S.input} required />
+                  </div>
+                </div>
+
+                <div style={S.formGroup}>
+                  <label style={S.label}>Jabatan / Posisi</label>
+                  <div style={S.inputWrap} className="input-focus">
+                    <input type="text" value={formPosition} onChange={(e) => setFormPosition(e.target.value)} placeholder="Contoh: Pranata Komputer Ahli Muda" style={S.input} />
+                  </div>
+                </div>
+
+                <div style={S.formGroup}>
+                  <label style={S.label}>No. Telepon</label>
+                  <div style={S.inputWrap} className="input-focus">
+                    <input type="text" value={formPhone} onChange={(e) => setFormPhone(e.target.value)} placeholder="Contoh: 081234567890" style={S.input} />
                   </div>
                 </div>
 
