@@ -131,11 +131,10 @@ export default function ProfilePage() {
 
         if (removeAvatar) {
           formData.append("remove_avatar", "1");
-        } else if (avatarPreview && avatarPreview.startsWith("data:image/")) {
-          // Pass Base64 data URI directly to guarantee persistence without server disk dependency
-          formData.append("avatar", avatarPreview);
         } else if (avatarFile) {
           formData.append("avatar", avatarFile);
+        } else if (avatarPreview && avatarPreview.startsWith("data:image/")) {
+          formData.append("avatar", avatarPreview);
         }
 
         res = await updateProfile(formData);
