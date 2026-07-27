@@ -20,6 +20,28 @@ const formatDate = (dateString: string) => {
   });
 };
 
+const getLampiranText = (isiLampiranRaw: any) => {
+  if (!isiLampiranRaw) return "-";
+  let count = 1;
+  try {
+    const parsed = typeof isiLampiranRaw === "string" ? JSON.parse(isiLampiranRaw) : isiLampiranRaw;
+    if (Array.isArray(parsed)) {
+      const validItems = parsed.filter((item: string) => item && item.trim() !== "");
+      count = validItems.length > 0 ? validItems.length : 1;
+    }
+  } catch (e) {
+    count = 1;
+  }
+  const numberNames: Record<number, string> = {
+    1: "1 (Satu) Berkas",
+    2: "2 (Dua) Berkas",
+    3: "3 (Tiga) Berkas",
+    4: "4 (Empat) Berkas",
+    5: "5 (Lima) Berkas",
+  };
+  return numberNames[count] || `${count} Berkas`;
+};
+
 const DEPARTMENT_OPTIONS = [
   "Kepala Bidang e-Government",
   "Kepala Bidang Aplikasi Informatika",
@@ -360,7 +382,7 @@ export default function NotaDinasPage() {
                   <tr className="align-top">
                     <td className="py-1">Lampiran</td>
                     <td className="text-center">:</td>
-                    <td className="py-1">1 (Satu) berkas</td>
+                    <td className="py-1">{getLampiranText(previewItem.isi_lampiran)}</td>
                   </tr>
                   <tr className="align-top">
                     <td className="py-1 font-bold">Hal</td>
@@ -446,117 +468,57 @@ export default function NotaDinasPage() {
                 Isi Lampiran
               </h3>
 
-              {/* Attachment content body */}
-              <div className="text-xs text-slate-800 leading-relaxed mb-6 whitespace-pre-wrap">
+              {/* Dynamic Attachment content body */}
+              <div className="text-xs text-slate-800 leading-relaxed mb-6 whitespace-pre-wrap font-sans">
                 {(() => {
                   try {
                     const parsed = JSON.parse(previewItem.isi_lampiran);
                     if (Array.isArray(parsed)) {
-                      return parsed.map((item, idx) => (
+                      return parsed.map((item: string, idx: number) => (
                         <div key={idx} className="mb-4">
-                          {parsed.length > 1 && <div className="font-bold mb-1">Lampiran {idx + 1}</div>}
-                          <div>{item}</div>
+                          {parsed.length > 1 && (
+                            <h4 className="font-bold text-slate-900 mb-1.5 text-xs">
+                              Lampiran {idx + 1}
+                            </h4>
+                          )}
+                          <div className="whitespace-pre-wrap text-slate-800">{item || "-"}</div>
                         </div>
                       ));
                     }
-                    return previewItem.isi_lampiran;
-                  } catch(e) {
-                    return previewItem.isi_lampiran;
+                    return previewItem.isi_lampiran || "-";
+                  } catch (e) {
+                    return previewItem.isi_lampiran || "-";
                   }
                 })()}
               </div>
 
-              {/* Premium Sampling table matching the screenshot */}
-              <div className="border border-slate-300 rounded-xl overflow-hidden mb-6">
-                <table className="w-full text-xs text-left border-collapse">
-                  <thead>
-                    <tr className="bg-slate-100 border-b border-slate-300 text-slate-700 font-bold">
-                      <th className="px-3 py-2 text-center w-12 border-r border-slate-300">NO</th>
-                      <th className="px-4 py-2 border-r border-slate-300">IP-CLIENT</th>
-                      <th className="px-4 py-2 text-center border-r border-slate-300" colSpan={4}>AKSES KE**</th>
-                      <th className="px-4 py-2 text-center">AKSES KE**</th>
-                    </tr>
-                    <tr className="bg-slate-50 border-b border-slate-300 text-slate-600 text-[10px] font-bold text-center">
-                      <th className="border-r border-slate-300"></th>
-                      <th className="border-r border-slate-300"></th>
-                      <th className="border-r border-slate-300 py-1 w-10">A</th>
-                      <th className="border-r border-slate-300 py-1 w-10">B</th>
-                      <th className="border-r border-slate-300 py-1 w-10">C</th>
-                      <th className="border-r border-slate-300 py-1 w-10">D</th>
-                      <th></th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-200">
-                    <tr className="hover:bg-slate-50">
-                      <td className="px-3 py-2 text-center border-r border-slate-200">1.</td>
-                      <td className="px-4 py-2 border-r border-slate-200 font-medium">91.103.251.94 (Yerevan, Armenia)</td>
-                      <td className="px-4 py-2 text-center border-r border-slate-200">95</td>
-                      <td className="px-4 py-2 text-center border-r border-slate-200">0</td>
-                      <td className="px-4 py-2 text-center border-r border-slate-200">0</td>
-                      <td className="px-4 py-2 text-center border-r border-slate-200">0</td>
-                      <td className="px-4 py-2 text-center">57</td>
-                    </tr>
-                    <tr className="hover:bg-slate-50">
-                      <td className="px-3 py-2 text-center border-r border-slate-200">2.</td>
-                      <td className="px-4 py-2 border-r border-slate-200 font-medium">172.105.40.47 (San Francisco, United States)</td>
-                      <td className="px-4 py-2 text-center border-r border-slate-200">42</td>
-                      <td className="px-4 py-2 text-center border-r border-slate-200">0</td>
-                      <td className="px-4 py-2 text-center border-r border-slate-200">0</td>
-                      <td className="px-4 py-2 text-center border-r border-slate-200">37</td>
-                      <td className="px-4 py-2 text-center">2</td>
-                    </tr>
-                    <tr className="hover:bg-slate-50">
-                      <td className="px-3 py-2 text-center border-r border-slate-200">3.</td>
-                      <td className="px-4 py-2 border-r border-slate-200 font-medium">178.20.216.222 (Vélizy-Villacoublay, France)</td>
-                      <td className="px-4 py-2 text-center border-r border-slate-200">34</td>
-                      <td className="px-4 py-2 text-center border-r border-slate-200">0</td>
-                      <td className="px-4 py-2 text-center border-r border-slate-200">33</td>
-                      <td className="px-4 py-2 text-center border-r border-slate-200">0</td>
-                      <td className="px-4 py-2 text-center">2</td>
-                    </tr>
-                    <tr className="hover:bg-slate-50">
-                      <td className="px-3 py-2 text-center border-r border-slate-200">4.</td>
-                      <td className="px-4 py-2 border-r border-slate-200 font-medium">94.102.49.125 (Amsterdam, Netherlands)</td>
-                      <td className="px-4 py-2 text-center border-r border-slate-200">9</td>
-                      <td className="px-4 py-2 text-center border-r border-slate-200">1</td>
-                      <td className="px-4 py-2 text-center border-r border-slate-200">0</td>
-                      <td className="px-4 py-2 text-center border-r border-slate-200">0</td>
-                      <td className="px-4 py-2 text-center">2</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Explanatory notes */}
-              <div className="text-[10px] text-slate-500 space-y-1 font-sans">
-                <p className="font-bold">** KETERANGAN AKSES:</p>
-                <div className="grid grid-cols-3 gap-2">
-                  <div>A : /subdomain.jabarprov.go.id</div>
-                  <div>C : /env</div>
-                  <div>E : /phpmyadmin</div>
-                </div>
-                <div className="grid grid-cols-3 gap-2">
-                  <div>B : /~cpanel</div>
-                  <div>D : /eval-stdin</div>
-                </div>
-              </div>
-
-              {/* Sample images placeholder matching the screenshot */}
-              <div className="mt-6 grid grid-cols-2 gap-4">
-                <div className="border border-slate-200 rounded-lg p-2 bg-slate-50 flex flex-col items-center">
-                  <div className="w-full h-24 bg-slate-200 rounded flex items-center justify-center text-[10px] text-slate-400 font-bold mb-1">
-                    [IP Map Yerevan]
+              {/* Attached file download block if available */}
+              {(previewItem.lampiran || previewItem.lampiran_url) && (
+                <div className="mt-4 p-4 border border-blue-100 bg-blue-50/50 rounded-xl flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center">
+                      <FileText size={18} />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-slate-800">File Lampiran Terlampir</p>
+                      <p className="text-[11px] text-slate-500 truncate max-w-md">
+                        {previewItem.lampiran ? previewItem.lampiran.split("/").pop() : "Dokumen Lampiran"}
+                      </p>
+                    </div>
                   </div>
-                  <span className="text-[9px] font-bold text-slate-700">91.103.251.94 (Armenia)</span>
+                  {previewItem.lampiran_url && (
+                    <a
+                      href={previewItem.lampiran_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors"
+                    >
+                      <Download size={13} />
+                      Unduh File
+                    </a>
+                  )}
                 </div>
-                <div className="border border-slate-200 rounded-lg p-2 bg-slate-50 flex flex-col items-center">
-                  <div className="w-full h-24 bg-slate-200 rounded flex items-center justify-center text-[10px] text-slate-400 font-bold mb-1">
-                    [IP Map San Francisco]
-                  </div>
-                  <span className="text-[9px] font-bold text-slate-700">172.105.40.47 (USA)</span>
-                </div>
-              </div>
-
+              )}
             </div>
 
             {/* Page number footer */}
