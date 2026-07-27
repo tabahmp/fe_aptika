@@ -7,6 +7,47 @@ export interface AvatarProps extends React.HTMLAttributes<HTMLDivElement> {
   indicator?: "online" | "offline" | "away" | null;
 }
 
+export function resolveAvatarUrl(src?: string): string | undefined {
+  if (!src) return undefined;
+
+  // Blob URLs or Base64 Data URLs (preview)
+  if (src.startsWith("data:") || src.startsWith("blob:")) {
+    return src;
+  }
+
+  const defaultBackend = "https://beaptikatools.up.railway.app";
+  const apiBase = process.env.NEXT_PUBLIC_API_URL || `${defaultBackend}/api`;
+  const backendOrigin = apiBase.replace(/\/api\/?$/, "");
+
+  // If full URL with protocol
+  if (src.startsWith("http://") || src.startsWith("https://")) {
+    try {
+      const urlObj = new URL(src);
+      // If browser is NOT on localhost, but image URL points to localhost/127.0.0.1, convert to production backend domain
+      if (
+        typeof window !== "undefined" &&
+        !window.location.hostname.includes("localhost") &&
+        !window.location.hostname.includes("127.0.0.1")
+      ) {
+        if (urlObj.hostname.includes("localhost") || urlObj.hostname.includes("127.0.0.1")) {
+          return `${backendOrigin}${urlObj.pathname}`;
+        }
+      }
+      return src;
+    } catch (e) {
+      return src;
+    }
+  }
+
+  // Relative path (e.g. "avatars/xxx.jpg", "/storage/avatars/xxx.jpg")
+  let cleanPath = src.startsWith("/") ? src : `/${src}`;
+  if (!cleanPath.startsWith("/storage/")) {
+    cleanPath = `/storage${cleanPath}`;
+  }
+
+  return `${backendOrigin}${cleanPath}`;
+}
+
 export default function Avatar({
   src,
   name = "User",
@@ -15,6 +56,13 @@ export default function Avatar({
   className = "",
   ...props
 }: AvatarProps) {
+  const [imgError, setImgError] = React.useState(false);
+  const resolvedSrc = React.useMemo(() => resolveAvatarUrl(src), [src]);
+
+  React.useEffect(() => {
+    setImgError(false);
+  }, [src]);
+
   const getInitials = (userName: string) => {
     const parts = userName.trim().split(" ");
     if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
@@ -45,20 +93,21 @@ export default function Avatar({
 
   return (
     <div className={`relative inline-block rounded-full ${className}`} {...props}>
-      <div className={`
+      <div
+        className={`
         flex items-center justify-center rounded-full font-bold overflow-hidden select-none
         ${sizeClasses[size]}
-        ${src ? "bg-slate-100" : "bg-gradient-to-tr from-slate-700 to-slate-800 text-white"}
-      `}>
-        {src ? (
+        ${resolvedSrc && !imgError ? "bg-slate-100" : "bg-gradient-to-tr from-slate-700 to-slate-800 text-white"}
+      `}
+      >
+        {resolvedSrc && !imgError ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            src={src}
+            src={resolvedSrc}
             alt={name}
             className="w-full h-full object-cover"
-            onError={(e) => {
-              // Fallback to initials on load error
-              (e.target as HTMLElement).style.display = "none";
+            onError={() => {
+              setImgError(true);
             }}
           />
         ) : (
@@ -67,11 +116,13 @@ export default function Avatar({
       </div>
 
       {indicator && (
-        <span className={`
+        <span
+          className={`
           absolute bottom-0 right-0 rounded-full border border-white
           ${indicatorClasses[indicator]}
           ${indicatorSizes[size]}
-        `} />
+        `}
+        />
       )}
     </div>
   );

@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { 
-  FileText, Eye, Edit, Trash2, Plus, Search, Filter, Download, 
-  UserPlus, Bold, Italic, Underline, List, ListOrdered, 
+import {
+  FileText, Eye, Edit, Trash2, Plus, Search, Filter, Download,
+  UserPlus, Bold, Italic, Underline, List, ListOrdered,
   AlignLeft, AlignCenter, AlignRight, Link2, Maximize2, Send, ChevronDown, X,
-  Printer, ArrowLeft, CheckCircle2 
+  Printer, ArrowLeft, CheckCircle2
 } from "lucide-react";
 import { getNotaDinasList, deleteNotaDinas, createNotaDinas, updateNotaDinas, exportNotaDinas } from "@/services/api";
 import { Pagination } from "@/components/ui/Pagination";
@@ -88,7 +88,7 @@ export default function NotaDinasPage() {
   useEffect(() => {
     setMounted(true);
   }, []);
-  
+
   // View states: 'list' | 'form' | 'preview'
   const [viewState, setViewState] = useState<"list" | "form" | "preview">("list");
   const [formMode, setFormMode] = useState<"create" | "edit">("create");
@@ -168,7 +168,7 @@ export default function NotaDinasPage() {
     setFormMode(mode);
     if (mode === "edit" && data) {
       setSelectedId(data.id);
-      
+
       const kepadaArray = data.tujuan ? data.tujuan.split(", ") : [];
       setSelectedKepada(kepadaArray);
 
@@ -317,7 +317,7 @@ export default function NotaDinasPage() {
   if (viewState === "preview" && previewItem) {
     return (
       <div suppressHydrationWarning className="flex flex-col gap-6 max-w-[1200px] mx-auto font-sans bg-slate-100 min-h-screen p-4 md:p-6 pb-20 print:p-0 print:bg-white">
-        
+
         {/* Top bar (Hidden when printing) */}
         <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 print:hidden">
           <div className="flex items-center gap-3">
@@ -332,7 +332,7 @@ export default function NotaDinasPage() {
               <h2 className="text-base font-bold text-slate-800">Administrasi Surat</h2>
             </div>
           </div>
-          
+
           <div className="flex flex-wrap items-center gap-3">
             <button
               onClick={handlePrint}
@@ -370,7 +370,7 @@ export default function NotaDinasPage() {
 
         {/* Document Rendered Container */}
         <div className="flex flex-col items-center gap-8 py-4 print:gap-0 print:py-0 print:block print:w-full">
-          
+
           {/* PAGE 1: The Memo */}
           <div className="w-[210mm] min-h-[297mm] bg-white p-[25mm] shadow-lg border border-slate-200 relative flex flex-col justify-between print:shadow-none print:border-none print:p-[20mm] print:w-full print:min-h-0 print:h-auto print:mx-auto print-page-break">
             <div>
@@ -460,7 +460,7 @@ export default function NotaDinasPage() {
                 <p className="text-xs font-bold text-slate-950 uppercase leading-normal">
                   {previewItem.dari}
                 </p>
-                
+
                 {/* Space for Digital Signature (TTE) */}
                 <div className="my-8 flex items-center justify-center">
                   <div className="border border-dashed border-slate-300 rounded-lg p-3 bg-slate-50/50 flex flex-col items-center">
@@ -474,7 +474,7 @@ export default function NotaDinasPage() {
                 </p>
               </div>
             </div>
-            
+
             {/* Page number footer */}
             <div className="absolute bottom-6 left-1/2 -translate-x-1/2 text-[10px] text-slate-400 font-semibold">
               1
@@ -621,24 +621,23 @@ export default function NotaDinasPage() {
                   className="w-full text-left border border-slate-300 rounded-xl px-4 py-2.5 text-xs focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none flex justify-between items-center bg-white"
                 >
                   <span className={selectedKepada.length > 0 ? "text-slate-800" : "text-slate-400"}>
-                    {selectedKepada.length > 0 
-                      ? `${selectedKepada.length} unit kerja terpilih` 
+                    {selectedKepada.length > 0
+                      ? `${selectedKepada.length} unit kerja terpilih`
                       : "Pilih Tujuan Nota Dinas"}
                   </span>
                   <ChevronDown size={16} className="text-slate-400" />
                 </button>
-                
+
                 {isKepadaOpen && (
                   <div className="absolute top-full left-0 w-full mt-2 bg-white border border-slate-200 rounded-xl shadow-xl z-50 p-2 max-h-60 overflow-y-auto">
                     {DEPARTMENT_OPTIONS.map((dept) => (
-                      <div 
-                        key={dept} 
+                      <div
+                        key={dept}
                         className="flex items-center gap-2 px-3 py-2 hover:bg-slate-50 rounded-lg cursor-pointer"
                         onClick={() => toggleKepada(dept)}
                       >
-                        <div className={`w-4 h-4 rounded border flex items-center justify-center ${
-                          selectedKepada.includes(dept) ? "bg-blue-600 border-blue-600" : "border-slate-300"
-                        }`}>
+                        <div className={`w-4 h-4 rounded border flex items-center justify-center ${selectedKepada.includes(dept) ? "bg-blue-600 border-blue-600" : "border-slate-300"
+                          }`}>
                           {selectedKepada.includes(dept) && <CheckCircle2 size={12} className="text-white" />}
                         </div>
                         <span className="text-xs text-slate-700 font-medium">{dept}</span>
@@ -647,7 +646,7 @@ export default function NotaDinasPage() {
                   </div>
                 )}
               </div>
-              
+
               {selectedKepada.length > 0 && (
                 <div className="flex flex-wrap gap-2 mt-2">
                   {selectedKepada.map(dept => (
@@ -826,8 +825,8 @@ export default function NotaDinasPage() {
                     <span className="truncate flex-1">
                       {lampiranFile ? lampiranFile.name : existingLampiranName}
                     </span>
-                    <button 
-                      type="button" 
+                    <button
+                      type="button"
                       onClick={() => { setLampiranFile(null); setExistingLampiranName(""); }}
                       className="text-slate-400 hover:text-red-500"
                     >
@@ -862,7 +861,7 @@ export default function NotaDinasPage() {
 
   return (
     <div suppressHydrationWarning className="flex flex-col gap-6 max-w-[1200px] mx-auto font-sans">
-      
+
       {/* ── HEADER CARD ── */}
       <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
@@ -996,14 +995,13 @@ export default function NotaDinasPage() {
                       {item.perihal}
                     </td>
                     <td className="px-5 py-4">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold whitespace-nowrap ${
-                        item.status === 'terkirim' ? 'bg-green-50 text-green-700 border border-green-100' :
-                        item.status === 'menunggu_tte' ? 'bg-blue-50 text-blue-700 border border-blue-100' :
-                        'bg-slate-100 text-slate-700 border border-slate-200'
-                      }`}>
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold whitespace-nowrap ${item.status === 'terkirim' ? 'bg-green-50 text-green-700 border border-green-100' :
+                          item.status === 'menunggu_tte' ? 'bg-blue-50 text-blue-700 border border-blue-100' :
+                            'bg-slate-100 text-slate-700 border border-slate-200'
+                        }`}>
                         {item.status === 'terkirim' ? 'Terkirim' :
-                         item.status === 'menunggu_tte' ? 'Menunggu TTE' :
-                         'Draft'}
+                          item.status === 'menunggu_tte' ? 'Menunggu TTE' :
+                            'Draft'}
                       </span>
                     </td>
                     <td className="px-5 py-4">
