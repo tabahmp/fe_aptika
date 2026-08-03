@@ -12,7 +12,7 @@ import {
   Loader2,
   Sliders
 } from "lucide-react";
-import dynamic from "next/dynamic";
+import { KanbanColumn } from "@/components/manajementugas/KanbanColumn";
 import { useTaskStore, Task } from "@/store/useTaskStore";
 import { Avatar } from "@/components/ui/Avatar";
 import { showToast } from "@/components/ui/Toast";
@@ -20,15 +20,6 @@ import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { TaskDetailModal } from "@/components/manajementugas/TaskDetailModal";
 import { updateTask, getJoinRequests, approveJoinRequest, rejectJoinRequest } from "@/services/api";
-
-// Lazy load the KanbanColumn component which automatically handles TaskCard inside it.
-const KanbanColumn = dynamic(
-  () => import("@/components/manajementugas/KanbanColumn").then((mod) => mod.KanbanColumn),
-  { 
-    ssr: false, 
-    loading: () => <div className="min-h-[480px] bg-slate-50 border border-slate-100 rounded-2xl animate-pulse" /> 
-  }
-);
 
 export default function KanbanBoardPage() {
   const params = useParams();

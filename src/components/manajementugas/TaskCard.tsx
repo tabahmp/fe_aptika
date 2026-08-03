@@ -37,7 +37,7 @@ const priorityConfig = {
   low: { color: "text-emerald-650 bg-emerald-50 border-emerald-150", label: "Low", icon: ChevronDown },
 };
 
-export const TaskCard: React.FC<TaskCardProps> = ({
+const TaskCardComponent: React.FC<TaskCardProps> = ({
   task,
   project,
   currentUser,
@@ -307,3 +307,5 @@ export const TaskCard: React.FC<TaskCardProps> = ({
     </div>
   );
 };
+
+export const TaskCard = React.memo(TaskCardComponent);

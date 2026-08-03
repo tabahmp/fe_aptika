@@ -53,8 +53,8 @@ const Field = ({ label, value, onChange, error, required }: { label:string; valu
 
 export default function InputPage() {
   const router      = useRouter();
-  const team        = "sadajabar";
-  const teamLabel   = "SADAjabar";
+  const team        = "sada jabar";
+  const teamLabel   = "SADA jabar";
   const currentYear  = new Date().getFullYear();
   const currentMonth = String(new Date().getMonth() + 1);
 

@@ -229,13 +229,36 @@ export default function DashboardSmart() {
         <div style={{
           background: "rgba(15, 23, 42, 0.03)",
           border: "1px solid rgba(226, 232, 240, 0.8)",
-          padding: "12px 20px",
+          padding: "16px 20px",
           borderRadius: "12px",
           marginBottom: "20px",
+          display: "flex",
+          flexDirection: "column",
+          gap: "12px",
         }}>
-          <span style={{ fontSize: "15px", fontWeight: "700", color: "#0f172a", letterSpacing: "-0.3px" }}>
+          <span style={{ fontSize: "16px", fontWeight: "700", color: "#0f172a", letterSpacing: "-0.3px" }}>
             {teamLabel}
           </span>
+          <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
+            <button
+              onClick={() => handleUnduh()}
+              style={{ background: "#f1f5f9", color: "#475569", border: "1px solid #e2e8f0", padding: "8px 16px", borderRadius: "8px", fontSize: "13px", fontWeight: "600", cursor: "pointer", fontFamily: "'Plus Jakarta Sans',sans-serif" }}
+            >
+              ↓ Unduh Data
+            </button>
+            <button
+              onClick={() => router.push(`/smartjabar/edit?year=${currentYear}&month=${currentMonth}`)}
+              style={{ background: "#fef3c7", color: "#92400e", border: "1px solid #fcd34d", padding: "8px 16px", borderRadius: "8px", fontSize: "13px", fontWeight: "600", cursor: "pointer", fontFamily: "'Plus Jakarta Sans',sans-serif" }}
+            >
+              ✎ Edit
+            </button>
+            <button
+              onClick={() => router.push("/smartjabar/input")}
+              style={{ background: "linear-gradient(135deg, #0f2540, #1d4ed8)", color: "white", border: "none", padding: "8px 16px", borderRadius: "8px", fontSize: "13px", fontWeight: "600", cursor: "pointer", fontFamily: "'Plus Jakarta Sans',sans-serif" }}
+            >
+              + Isi Form Rekapitulasi
+            </button>
+          </div>
         </div>
 
    {/* ── CARD 3: Tabel Presentase per PD ─────────────────────────── */}
@@ -394,39 +417,6 @@ export default function DashboardSmart() {
           </div>
         </div>
 
-        {/* ── FORM DATA BULAN INI ───────────────────────────────────────── */}
-        <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "16px" }}>
-          <span style={{ fontSize: "12px", fontWeight: "600", color: "#475569", fontFamily: "'Plus Jakarta Sans',sans-serif" }}>Form Data Bulan Ini</span>
-          <span style={{ background: "#dcfce7", color: "#166534", fontSize: "11px", fontWeight: "700", padding: "3px 10px", borderRadius: "999px" }}>✓ Sudah Diisi</span>
-          <button
-            onClick={() => router.push(`/smartjabar/edit?year=${currentYear}&month=${currentMonth}`)}
-            style={{ background: "#fef3c7", color: "#92400e", fontSize: "11px", fontWeight: "700", padding: "3px 10px", borderRadius: "999px", border: "none", cursor: "pointer", fontFamily: "'Plus Jakarta Sans',sans-serif" }}
-          >
-            Edit
-          </button>
-        </div>
-
-        {/* ── TOMBOL AKSI ──────────────────────────────────────────────── */}
-        <div style={{ display: "flex", gap: "10px", marginBottom: "24px", flexWrap: "wrap" }}>
-          <button
-            onClick={() => handleUnduh()}
-            style={{ background: "#f1f5f9", color: "#475569", border: "1px solid #e2e8f0", padding: "9px 18px", borderRadius: "8px", fontSize: "13px", fontWeight: "600", cursor: "pointer", fontFamily: "'Plus Jakarta Sans',sans-serif" }}
-          >
-            ↓ Unduh Data
-          </button>
-          <button
-            onClick={() => router.push(`/smartjabar/edit?year=${currentYear}&month=${currentMonth}`)}
-            style={{ background: "#fef3c7", color: "#92400e", border: "1px solid #fcd34d", padding: "9px 18px", borderRadius: "8px", fontSize: "13px", fontWeight: "600", cursor: "pointer", fontFamily: "'Plus Jakarta Sans',sans-serif" }}
-          >
-            ✎ Edit
-          </button>
-          <button
-            onClick={() => router.push("/smartjabar/input")}
-            style={{ background: "linear-gradient(135deg, #0f2540, #1d4ed8)", color: "white", border: "none", padding: "9px 18px", borderRadius: "8px", fontSize: "13px", fontWeight: "600", cursor: "pointer", fontFamily: "'Plus Jakarta Sans',sans-serif" }}
-          >
-            + Isi Form Rekapitulasi
-          </button>
-        </div>
 
         {/* ── RIWAYAT DATA ─────────────────────────────────────────────── */}
         <div style={S.card}>

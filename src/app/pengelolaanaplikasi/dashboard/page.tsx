@@ -236,13 +236,21 @@ export default function DashboardPengelolaan() {
         <div style={{
           background: "var(--bg-card)",
           border: "1px solid var(--border-color)",
-          padding: "12px 20px",
+          padding: "16px 20px",
           borderRadius: "12px",
           marginBottom: "20px",
+          display: "flex",
+          flexDirection: "column",
+          gap: "12px",
         }}>
-          <span style={{ fontSize: "15px", fontWeight: "700", color: "var(--text-primary)", letterSpacing: "-0.3px" }}>
+          <span style={{ fontSize: "16px", fontWeight: "700", color: "var(--text-primary)", letterSpacing: "-0.3px" }}>
             {TEAM_LABEL}
           </span>
+          <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
+            <button onClick={handleUnduh} style={{ background: "#f1f5f9", color: "#475569", border: "1px solid #e2e8f0", padding: "8px 16px", borderRadius: "8px", fontSize: "13px", fontWeight: "600", cursor: "pointer", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>↓ Unduh Data</button>
+            <button onClick={() => router.push("/pengelolaanaplikasi/edit")} style={{ background: "#fef3c7", color: "#92400e", border: "1px solid #fcd34d", padding: "8px 16px", borderRadius: "8px", fontSize: "13px", fontWeight: "600", cursor: "pointer", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>✎ Edit</button>
+            <button onClick={() => router.push("/pengelolaanaplikasi/input")} style={{ background: "linear-gradient(135deg, #0f2540, #1d4ed8)", color: "white", border: "none", padding: "8px 16px", borderRadius: "8px", fontSize: "13px", fontWeight: "600", cursor: "pointer", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>+ Isi Form Rekapitulasi</button>
+          </div>
         </div>
 
         {/* ── SECTION 1: DATA BULAN LALU ── */}
@@ -708,21 +716,8 @@ export default function DashboardPengelolaan() {
               </table>
             </div>
           </div>
-
-          {/* Form Data Bulan Ini */}
-          <div style={{ display: "flex", alignItems: "center", gap: "10px", marginTop: "16px" }}>
-            <span style={{ fontSize: "12px", fontWeight: "600", color: "#475569" }}>Form Data Bulan Ini</span>
-            <button onClick={handleUnduh} style={{ background: "#f1f5f9", color: "#475569", border: "1px solid #e2e8f0", padding: "4px 14px", borderRadius: "6px", fontSize: "11px", fontWeight: "600", cursor: "pointer", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Unduh Data</button>
-            <button onClick={() => router.push("/pengelolaanaplikasi/edit")} style={{ background: "#fef3c7", color: "#92400e", fontSize: "11px", fontWeight: "700", padding: "4px 14px", borderRadius: "6px", border: "1px solid #fcd34d", cursor: "pointer", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Edit</button>
-          </div>
         </div>
 
-        {/* ── TOMBOL AKSI ── */}
-        <div style={{ display: "flex", gap: "10px", marginBottom: "24px" }}>
-          <button onClick={handleUnduh} style={{ background: "#f1f5f9", color: "#475569", border: "1px solid #e2e8f0", padding: "9px 18px", borderRadius: "8px", fontSize: "13px", fontWeight: "600", cursor: "pointer", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>↓ Unduh Data</button>
-          <button onClick={() => router.push("/pengelolaanaplikasi/edit")} style={{ background: "#fef3c7", color: "#92400e", border: "1px solid #fcd34d", padding: "9px 18px", borderRadius: "8px", fontSize: "13px", fontWeight: "600", cursor: "pointer", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>✎ Edit</button>
-          <button onClick={() => router.push("/pengelolaanaplikasi/input")} style={{ background: "linear-gradient(135deg, #0f2540, #1d4ed8)", color: "white", border: "none", padding: "9px 18px", borderRadius: "8px", fontSize: "13px", fontWeight: "600", cursor: "pointer", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>+ Isi Form Rekapitulasi</button>
-        </div>
 
         {/* ── RIWAYAT DATA ── */}
         <div style={S.card}>

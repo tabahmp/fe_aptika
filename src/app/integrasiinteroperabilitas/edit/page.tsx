@@ -11,7 +11,7 @@ import {
 
 const MONTHS = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
 
-const TEAM_LABEL = "Integrasi-Interoperabilitas";
+const TEAM_LABEL = "Integrasi Interoperabilitas";
 
 const S = {
   page: { fontFamily: "'Plus Jakarta Sans', sans-serif", padding: "28px" } as React.CSSProperties,

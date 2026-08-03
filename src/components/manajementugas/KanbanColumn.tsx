@@ -43,7 +43,7 @@ interface KanbanColumnProps {
   onOpenDetail?: (task: Task) => void;
 }
 
-export const KanbanColumn: React.FC<KanbanColumnProps> = ({
+const KanbanColumnComponent: React.FC<KanbanColumnProps> = ({
   colKey,
   label,
   colorClass,
@@ -211,3 +211,5 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
     </div>
   );
 };
+
+export const KanbanColumn = React.memo(KanbanColumnComponent);
