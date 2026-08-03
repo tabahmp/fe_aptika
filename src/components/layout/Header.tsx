@@ -35,7 +35,7 @@ export default function Header({ title, subtitle, showBrand = false }: HeaderPro
     } catch {}
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-    router.push("/login");
+    router.push("/");
   };
 
   const profileMenuItems = [

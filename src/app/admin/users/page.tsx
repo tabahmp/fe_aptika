@@ -57,7 +57,7 @@ export default function UsersCrudPage() {
     if (typeof window !== "undefined") {
       const uStr = localStorage.getItem("user");
       if (!uStr) {
-        router.push("/login");
+        router.push("/");
         return;
       }
       try {
@@ -69,7 +69,7 @@ export default function UsersCrudPage() {
           setAuthorized(true);
         }
       } catch {
-        router.push("/login");
+        router.push("/");
       }
     }
   }, [router]);

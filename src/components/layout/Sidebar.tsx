@@ -152,7 +152,7 @@ export default function Sidebar() {
     } catch { }
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-    router.push("/login");
+    router.push("/");
   };
 
   return (

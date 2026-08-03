@@ -5,7 +5,7 @@ export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Define public paths
-  const isPublicPath = pathname === "/login";
+  const isPublicPath = pathname === "/login" || pathname === "/" || pathname.startsWith("/form-perubahan-it");
   
   // Static assets, public resources, and favicon bypass
   if (
@@ -17,15 +17,16 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // If user is logged in, restrict access to /login or / and redirect to dashboard
-  if (token && (isPublicPath || pathname === "/")) {
+  // If user is logged in and accesses /login, redirect to dashboard
+  if (token && pathname === "/login") {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
-  // If user is NOT logged in and path is protected, redirect to login
+  // If user is NOT logged in and path is protected, redirect to landing page (/)
   if (!token && !isPublicPath) {
-    return NextResponse.redirect(new URL("/login", request.url));
+    return NextResponse.redirect(new URL("/", request.url));
   }
+
 
   // Otherwise, proceed
   return NextResponse.next();
