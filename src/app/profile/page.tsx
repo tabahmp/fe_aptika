@@ -5,9 +5,9 @@ import Header from "@/components/layout/Header";
 import Sidebar from "@/components/layout/Sidebar";
 import Avatar from "@/components/ui/Avatar";
 import { showToast } from "@/components/ui/Toast";
-import { getProfile, updateProfile } from "@/services/api";
+import { getProfile, updateProfile, updatePassword } from "@/services/api";
 import { useTaskStore } from "@/store/useTaskStore";
-import { User, Mail, Briefcase, Phone, Save, RotateCcw, CheckCircle, Shield, Camera, Trash2, Upload } from "lucide-react";
+import { User, Mail, Briefcase, Phone, Save, RotateCcw, CheckCircle, Shield, Camera, Trash2, Upload, KeyRound, Lock, Eye, EyeOff } from "lucide-react";
 
 export default function ProfilePage() {
   const { currentUser, setCurrentUser, loadCurrentUser } = useTaskStore();
@@ -23,10 +23,22 @@ export default function ProfilePage() {
   const [removeAvatar, setRemoveAvatar] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Profile Form state
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
+
+  // Password Change state
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [savingPassword, setSavingPassword] = useState(false);
+  const [passwordSuccessMsg, setPasswordSuccessMsg] = useState("");
+  const [passwordErrorMsg, setPasswordErrorMsg] = useState("");
 
   useEffect(() => {
     loadCurrentUser();
@@ -192,6 +204,62 @@ export default function ProfilePage() {
     }
     setSuccessMsg("");
     setErrorMsg("");
+  };
+
+  const handlePasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPasswordSuccessMsg("");
+    setPasswordErrorMsg("");
+
+    if (!currentPassword) {
+      setPasswordErrorMsg("Password lama harus diisi.");
+      showToast.error("Password lama harus diisi.");
+      return;
+    }
+
+    if (!newPassword) {
+      setPasswordErrorMsg("Password baru harus diisi.");
+      showToast.error("Password baru harus diisi.");
+      return;
+    }
+
+    if (newPassword.length < 8) {
+      setPasswordErrorMsg("Password baru minimal 8 karakter.");
+      showToast.error("Password baru minimal 8 karakter.");
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setPasswordErrorMsg("Konfirmasi password baru tidak cocok.");
+      showToast.error("Konfirmasi password baru tidak cocok.");
+      return;
+    }
+
+    setSavingPassword(true);
+
+    try {
+      await updatePassword({
+        current_password: currentPassword,
+        password: newPassword,
+        password_confirmation: confirmPassword,
+      });
+
+      setPasswordSuccessMsg("Password berhasil diperbarui!");
+      showToast.success("Password Anda berhasil diperbarui.");
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (err: any) {
+      const msg =
+        err?.response?.data?.errors?.current_password?.[0] ||
+        err?.response?.data?.errors?.password?.[0] ||
+        err?.response?.data?.message ||
+        "Gagal mengganti password. Pastikan password lama Anda sudah benar.";
+      setPasswordErrorMsg(msg);
+      showToast.error(msg);
+    } finally {
+      setSavingPassword(false);
+    }
   };
 
   // Determine current active avatar image URL
@@ -458,6 +526,146 @@ export default function ProfilePage() {
                 </div>
               </form>
             )}
+          </div>
+
+          {/* Card Ubah Password */}
+          <div className="bg-white/80 backdrop-blur-md border border-slate-200/80 rounded-2xl p-6 sm:p-8 shadow-sm space-y-6">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 bg-blue-50 border border-blue-100 rounded-xl text-blue-600">
+                <KeyRound size={20} />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-slate-800">Ubah Password</h3>
+                <p className="text-xs text-slate-500">
+                  Perbarui password akun Anda. Verifikasi password lama diperlukan untuk keamanan.
+                </p>
+              </div>
+            </div>
+
+            {passwordSuccessMsg && (
+              <div className="flex items-center gap-2 p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-700 text-sm font-medium animate-fadeIn">
+                <CheckCircle size={18} className="flex-shrink-0" />
+                <span>{passwordSuccessMsg}</span>
+              </div>
+            )}
+
+            {passwordErrorMsg && (
+              <div className="p-3.5 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm font-medium animate-fadeIn">
+                {passwordErrorMsg}
+              </div>
+            )}
+
+            <form onSubmit={handlePasswordChange} className="space-y-5">
+              {/* 1. Password Lama */}
+              <div className="space-y-2">
+                <label htmlFor="input-current-password" className="block text-xs font-semibold text-slate-700">
+                  Password Lama <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                    <Lock size={16} />
+                  </div>
+                  <input
+                    id="input-current-password"
+                    type={showCurrentPassword ? "text" : "password"}
+                    required
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    placeholder="Masukkan password lama Anda"
+                    className="w-full pl-10 pr-10 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-slate-800 font-medium"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                    className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 transition-colors"
+                    title={showCurrentPassword ? "Sembunyikan password" : "Tampilkan password"}
+                  >
+                    {showCurrentPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                {/* 2. Password Baru */}
+                <div className="space-y-2">
+                  <label htmlFor="input-new-password" className="block text-xs font-semibold text-slate-700">
+                    Password Baru <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                      <Lock size={16} />
+                    </div>
+                    <input
+                      id="input-new-password"
+                      type={showNewPassword ? "text" : "password"}
+                      required
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="Minimal 8 karakter"
+                      className="w-full pl-10 pr-10 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-slate-800 font-medium"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowNewPassword(!showNewPassword)}
+                      className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 transition-colors"
+                      title={showNewPassword ? "Sembunyikan password" : "Tampilkan password"}
+                    >
+                      {showNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+                </div>
+
+                {/* 3. Konfirmasi Password Baru */}
+                <div className="space-y-2">
+                  <label htmlFor="input-confirm-password" className="block text-xs font-semibold text-slate-700">
+                    Konfirmasi Password Baru <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                      <Lock size={16} />
+                    </div>
+                    <input
+                      id="input-confirm-password"
+                      type={showConfirmPassword ? "text" : "password"}
+                      required
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="Ulangi password baru"
+                      className="w-full pl-10 pr-10 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-slate-800 font-medium"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 transition-colors"
+                      title={showConfirmPassword ? "Sembunyikan password" : "Tampilkan password"}
+                    >
+                      {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Password Action Button */}
+              <div className="flex items-center justify-end pt-3 border-t border-slate-100">
+                <button
+                  type="submit"
+                  disabled={savingPassword}
+                  className="flex items-center gap-2 px-5 py-2.5 bg-slate-800 hover:bg-slate-900 active:bg-black text-white rounded-xl text-xs font-semibold shadow-sm transition-all disabled:opacity-50"
+                >
+                  {savingPassword ? (
+                    <>
+                      <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <span>Memperbarui Password...</span>
+                    </>
+                  ) : (
+                    <>
+                      <KeyRound size={14} />
+                      <span>Ganti Password</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       </main>
