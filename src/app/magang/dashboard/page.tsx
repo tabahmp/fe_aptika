@@ -290,11 +290,15 @@ export default function MagangDashboard() {
               <span className="text-slate-500 font-medium">Sertifikat</span>
               <span className="col-span-2 font-semibold text-slate-900">{selectedMagang.sertifikat}</span>
             </div>
-            <div className="grid grid-cols-3 pb-3">
+            <div className="grid grid-cols-3 border-b border-slate-100 pb-3">
               <span className="text-slate-500 font-medium">CV Magang</span>
               <span className="col-span-2 font-semibold text-blue-600 hover:underline">
                 {selectedMagang.cv_magang ? <a href={selectedMagang.cv_magang} target="_blank" rel="noreferrer">Lihat File</a> : "-"}
               </span>
+            </div>
+            <div className="grid grid-cols-3 pb-3">
+              <span className="text-slate-500 font-medium">Keterangan</span>
+              <span className="col-span-2 font-semibold text-slate-900 whitespace-pre-line">{selectedMagang.keterangan || "-"}</span>
             </div>
           </div>
         ) : (
