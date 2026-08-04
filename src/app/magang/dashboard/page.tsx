@@ -605,13 +605,6 @@ export default function MagangDashboard() {
         <h2 className="text-lg font-bold text-slate-800">Daftar Anak Magang</h2>
         <div className="flex items-center gap-3">
           <button
-            onClick={handleOpenNdaModal}
-            className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-sm transition-all"
-          >
-            <Printer size={18} />
-            Cetak NDA
-          </button>
-          <button
             onClick={() => handleOpenModal("add")}
             className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-sm transition-all"
           >
