@@ -198,7 +198,7 @@ export default function MagangDashboard() {
       return;
     }
 
-    const selectedIndex = availableMagangs.findIndex((m) => String(m.id) === String(ndaFormData.magangId));
+    const selectedIndex = magangs.findIndex((m) => String(m.id) === String(ndaFormData.magangId));
     const seqNumber = String(selectedIndex >= 0 ? selectedIndex + 7 : 7).padStart(2, "0");
     const fullDateText = formatIndonesianFullDateText(ndaFormData.tanggal);
     const dateObj = new Date(ndaFormData.tanggal + "T00:00:00");
@@ -904,7 +904,7 @@ export default function MagangDashboard() {
               <p className="mt-1.5 text-xs text-slate-500 font-medium">
                 Nomor Surat (Otomatis):{" "}
                 <span className="font-bold text-slate-800">
-                  NO: {String((availableMagangs.findIndex((m) => String(m.id) === String(ndaFormData.magangId)) >= 0 ? availableMagangs.findIndex((m) => String(m.id) === String(ndaFormData.magangId)) + 7 : 7)).padStart(2, "0")}/NDA/APTIKA/{new Date().getFullYear()}
+                  NO: {String((magangs.findIndex((m) => String(m.id) === String(ndaFormData.magangId)) >= 0 ? magangs.findIndex((m) => String(m.id) === String(ndaFormData.magangId)) + 7 : 7)).padStart(2, "0")}/NDA/APTIKA/{new Date().getFullYear()}
                 </span>
               </p>
             )}
