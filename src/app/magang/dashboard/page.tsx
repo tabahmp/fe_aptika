@@ -132,7 +132,8 @@ export default function MagangDashboard() {
     try {
       const res = await getMagangList();
       if (res?.data) {
-        setMagangs(res.data);
+        const sorted = [...res.data].sort((a: any, b: any) => (a.id || 0) - (b.id || 0));
+        setMagangs(sorted);
       }
     } catch (error) {
       console.error("Failed to fetch magang data", error);
