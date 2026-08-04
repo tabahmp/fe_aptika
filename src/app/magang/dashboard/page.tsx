@@ -81,11 +81,9 @@ export default function MagangDashboard() {
     return [];
   });
 
-  const availableMagangs = magangs.filter((m) => {
-    const isPrintedById = printedNdaIds.includes(String(m.id));
-    const isVanesa = m.nama && m.nama.toLowerCase().includes("vanesa");
-    return !isPrintedById && !isVanesa;
-  });
+  const availableMagangs = magangs.filter(
+    (m) => !printedNdaIds.includes(String(m.id))
+  );
 
 
 
@@ -175,11 +173,7 @@ export default function MagangDashboard() {
   };
 
   const handleOpenNdaModal = () => {
-    const unprinted = magangs.filter((m) => {
-      const isPrintedById = printedNdaIds.includes(String(m.id));
-      const isVanesa = m.nama && m.nama.toLowerCase().includes("vanesa");
-      return !isPrintedById && !isVanesa;
-    });
+    const unprinted = magangs.filter((m) => !printedNdaIds.includes(String(m.id)));
     setNdaFormData({
       magangId: unprinted.length > 0 ? String(unprinted[0].id) : "",
       tanggal: new Date().toISOString().split("T")[0],
