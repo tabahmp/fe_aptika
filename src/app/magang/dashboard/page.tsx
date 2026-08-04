@@ -65,9 +65,7 @@ export default function MagangDashboard() {
     tanggal: new Date().toISOString().split("T")[0],
   });
 
-  // Custom Dropdown Scroll State
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [dropdownSearch, setDropdownSearch] = useState("");
+
 
 
 
@@ -845,72 +843,15 @@ export default function MagangDashboard() {
         size="md"
       >
         <form onSubmit={handlePrintNda} className="space-y-5">
-          <div className="relative">
+          <div>
             <label className="block text-xs font-bold text-slate-700 mb-1">
               Nama Anak Magang
             </label>
-            <button
-              type="button"
-              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              className="w-full flex items-center justify-between border border-slate-200 rounded-lg px-3 py-2.5 text-sm bg-white hover:border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-left transition-all"
-            >
-              <span className={ndaFormData.magangId ? "text-slate-800 font-medium" : "text-slate-400"}>
-                {ndaFormData.magangId && availableMagangs.find((m) => String(m.id) === String(ndaFormData.magangId))
-                  ? `${availableMagangs.find((m) => String(m.id) === String(ndaFormData.magangId))?.nama} - ${availableMagangs.find((m) => String(m.id) === String(ndaFormData.magangId))?.nama_kampus}`
-                  : availableMagangs.length === 0
-                  ? "-- Semua Anak Magang Sudah Mencetak NDA --"
-                  : "-- Pilih Anak Magang --"}
-              </span>
-              <svg className="w-4 h-4 text-slate-400 shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
-
-            {isDropdownOpen && availableMagangs.length > 0 && (
-              <div className="absolute z-50 mt-1 w-full bg-white border border-slate-200 rounded-lg shadow-xl py-1 text-sm max-h-52 overflow-y-auto">
-                <div className="p-2 sticky top-0 bg-white border-b border-slate-100 z-10">
-                  <input
-                    type="text"
-                    placeholder="Cari nama atau kampus..."
-                    value={dropdownSearch}
-                    onChange={(e) => setDropdownSearch(e.target.value)}
-                    className="w-full px-2.5 py-1.5 text-xs border border-slate-200 rounded focus:border-blue-500 outline-none"
-                    onClick={(e) => e.stopPropagation()}
-                  />
-                </div>
-                {availableMagangs.filter((item) =>
-                  `${item.nama} ${item.nama_kampus}`.toLowerCase().includes(dropdownSearch.toLowerCase())
-                ).length === 0 ? (
-                  <div className="px-3 py-2 text-xs text-slate-400 text-center">
-                    Tidak ditemukan
-                  </div>
-                ) : (
-                  availableMagangs
-                    .filter((item) =>
-                      `${item.nama} ${item.nama_kampus}`.toLowerCase().includes(dropdownSearch.toLowerCase())
-                    )
-                    .map((item) => (
-                      <button
-                        key={item.id}
-                        type="button"
-                        onClick={() => {
-                          setNdaFormData({ ...ndaFormData, magangId: String(item.id) });
-                          setIsDropdownOpen(false);
-                          setDropdownSearch("");
-                        }}
-                        className={`w-full text-left px-3 py-2 text-xs hover:bg-blue-50 transition-colors ${
-                          String(item.id) === String(ndaFormData.magangId)
-                            ? "bg-blue-50 font-bold text-blue-600"
-                            : "text-slate-700"
-                        }`}
-                      >
-                        {item.nama} - {item.nama_kampus}
-                      </button>
-                    ))
-                )}
-              </div>
-            )}
-
+            <div className="w-full border border-slate-200 bg-slate-50/80 rounded-lg px-3 py-2.5 text-sm font-semibold text-slate-800">
+              {magangs.find((m) => String(m.id) === String(ndaFormData.magangId))
+                ? `${magangs.find((m) => String(m.id) === String(ndaFormData.magangId))?.nama} - ${magangs.find((m) => String(m.id) === String(ndaFormData.magangId))?.nama_kampus}`
+                : "-"}
+            </div>
             {ndaFormData.magangId && (
               <p className="mt-1.5 text-xs text-slate-500 font-medium">
                 Nomor Surat (Otomatis):{" "}
