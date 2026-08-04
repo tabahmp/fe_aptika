@@ -1251,6 +1251,15 @@ export const deleteMagang = async (id: number) => {
   return res.data;
 };
 
+export const uploadMagangNda = async (id: number, file: File) => {
+  const formData = new FormData();
+  formData.append("nda_file", file);
+  const res = await api.post(`/magang/${id}/upload-nda`, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return res.data;
+};
+
 // ─── NOTA DINAS (API) ─────────────────────────────────────
 export const getNotaDinasList = async (params?: { search?: string; status?: string; page?: number; per_page?: number }) => {
   const res = await api.get("/nota-dinas", { params });

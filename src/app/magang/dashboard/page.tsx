@@ -1,18 +1,28 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Users, Eye, Edit, Trash2, Plus, Printer } from "lucide-react";
-import { getMagangList, deleteMagang, createMagang, updateMagang } from "@/services/api";
+import { Users, Eye, Edit, Trash2, Plus, Printer, Upload, FileText } from "lucide-react";
+import { getMagangList, deleteMagang, createMagang, updateMagang, uploadMagangNda } from "@/services/api";
 import { Modal } from "@/components/ui/Modal";
 
 const formatDate = (dateString: string) => {
   if (!dateString) return "-";
-  const date = new Date(dateString);
-  return date.toLocaleDateString("id-ID", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
+  try {
+    const cleanStr = dateString.includes("T") ? dateString.split("T")[0] : dateString;
+    const parts = cleanStr.split("-");
+    if (parts.length === 3 && parts[0].length === 4) {
+      const [year, month, day] = parts;
+      return `${day.padStart(2, "0")}/${month.padStart(2, "0")}/${year}`;
+    }
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return dateString;
+    const day = date.getDate().toString().padStart(2, "0");
+    const month = (date.getMonth() + 1).toString().padStart(2, "0");
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  } catch {
+    return dateString;
+  }
 };
 
 const numberToWords = (n: number): string => {
@@ -64,6 +74,37 @@ export default function MagangDashboard() {
     magangId: "",
     tanggal: new Date().toISOString().split("T")[0],
   });
+
+  // Upload NDA Modal State
+  const [isUploadNdaModalOpen, setIsUploadNdaModalOpen] = useState(false);
+  const [targetMagangForNda, setTargetMagangForNda] = useState<any>(null);
+  const [uploadNdaFile, setUploadNdaFile] = useState<File | null>(null);
+  const [isUploadingNda, setIsUploadingNda] = useState(false);
+
+  const handleOpenUploadNdaModal = (magang: any) => {
+    setTargetMagangForNda(magang);
+    setUploadNdaFile(null);
+    setIsUploadNdaModalOpen(true);
+  };
+
+  const handleSaveNdaUpload = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!targetMagangForNda || !uploadNdaFile) return;
+
+    try {
+      setIsUploadingNda(true);
+      await uploadMagangNda(targetMagangForNda.id, uploadNdaFile);
+      await fetchMagangs();
+      setIsUploadNdaModalOpen(false);
+      setUploadNdaFile(null);
+      alert("File NDA berhasil diupload!");
+    } catch (err: any) {
+      console.error(err);
+      alert("Gagal mengupload file NDA: " + (err.response?.data?.message || err.message));
+    } finally {
+      setIsUploadingNda(false);
+    }
+  };
 
 
 
@@ -624,17 +665,18 @@ export default function MagangDashboard() {
                 <th className="px-3 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Periode</th>
                 <th className="px-3 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Status Magang</th>
                 <th className="px-3 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Sertifikat</th>
-                <th className="px-3 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider text-center w-28">Aksi</th>
+                <th className="px-3 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">NDA</th>
+                <th className="px-3 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider text-center w-24">Aksi</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {loading ? (
                 <tr>
-                  <td colSpan={7} className="text-center py-10 text-slate-500">Memuat data...</td>
+                  <td colSpan={8} className="text-center py-10 text-slate-500">Memuat data...</td>
                 </tr>
               ) : magangs.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="text-center py-10 text-slate-500">Tidak ada data magang</td>
+                  <td colSpan={8} className="text-center py-10 text-slate-500">Tidak ada data magang</td>
                 </tr>
               ) : (
                 magangs.map((item, idx) => (
@@ -659,12 +701,42 @@ export default function MagangDashboard() {
                       </span>
                     </td>
                     <td className="px-3 py-3">
+                      <div className="flex items-center justify-center gap-1.5">
+                        <button
+                          onClick={() => handleOpenNdaModalForMagang(item.id)}
+                          className="p-1.5 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                          title="Cetak Surat NDA"
+                        >
+                          <Printer size={16} />
+                        </button>
+                        <button
+                          onClick={() => handleOpenUploadNdaModal(item)}
+                          className={`p-1.5 rounded-lg transition-colors ${
+                            item.nda_file
+                              ? 'text-blue-600 bg-blue-50 hover:bg-blue-100'
+                              : 'text-slate-400 hover:text-blue-600 hover:bg-blue-50'
+                          }`}
+                          title={item.nda_file ? "Ganti File NDA" : "Upload File NDA"}
+                        >
+                          <Upload size={16} />
+                        </button>
+                        {item.nda_file && (
+                          <a
+                            href={item.nda_file}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="p-1.5 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors"
+                            title="Lihat Dokumen NDA"
+                          >
+                            <FileText size={16} />
+                          </a>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-3 py-3">
                       <div className="flex items-center justify-center gap-1">
                         <button onClick={() => handleOpenModal("view", item)} className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Lihat Detail">
                           <Eye size={16} />
-                        </button>
-                        <button onClick={() => handleOpenNdaModalForMagang(item.id)} className="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors" title="Cetak Surat NDA">
-                          <Printer size={16} />
                         </button>
                         <button onClick={() => handleOpenModal("edit", item)} className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors" title="Edit">
                           <Edit size={16} />
@@ -719,6 +791,12 @@ export default function MagangDashboard() {
               <span className="text-slate-500 font-medium">CV Magang</span>
               <span className="col-span-2 font-semibold text-blue-600 hover:underline">
                 {selectedMagang.cv_magang ? <a href={selectedMagang.cv_magang} target="_blank" rel="noreferrer">Lihat File</a> : "-"}
+              </span>
+            </div>
+            <div className="grid grid-cols-3 border-b border-slate-100 pb-3">
+              <span className="text-slate-500 font-medium">File NDA</span>
+              <span className="col-span-2 font-semibold text-blue-600 hover:underline">
+                {selectedMagang.nda_file ? <a href={selectedMagang.nda_file} target="_blank" rel="noreferrer">Lihat File NDA</a> : <span className="text-slate-400 font-normal">Belum diupload</span>}
               </span>
             </div>
             <div className="grid grid-cols-3 pb-3">
@@ -897,6 +975,74 @@ export default function MagangDashboard() {
             >
               <Printer size={16} />
               Cetak Dokumen NDA
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* ── MODAL UPLOAD NDA ── */}
+      <Modal
+        isOpen={isUploadNdaModalOpen}
+        onClose={() => setIsUploadNdaModalOpen(false)}
+        title="Upload Dokumen NDA (Non-Disclosure Agreement)"
+        size="md"
+      >
+        <form onSubmit={handleSaveNdaUpload} className="space-y-5">
+          <div>
+            <label className="block text-xs font-bold text-slate-700 mb-1">
+              Anak Magang
+            </label>
+            <div className="w-full border border-slate-200 bg-slate-50/80 rounded-lg px-3 py-2.5 text-sm font-semibold text-slate-800">
+              {targetMagangForNda ? `${targetMagangForNda.nama} - ${targetMagangForNda.nama_kampus}` : "-"}
+            </div>
+          </div>
+
+          {targetMagangForNda?.nda_file && (
+            <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl text-xs text-blue-900 flex items-center justify-between">
+              <div>
+                <span className="font-bold block mb-0.5">Dokumen Ter-upload:</span>
+                <span className="text-slate-600">File NDA sudah pernah diupload.</span>
+              </div>
+              <a
+                href={targetMagangForNda.nda_file}
+                target="_blank"
+                rel="noreferrer"
+                className="px-3 py-1.5 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-1"
+              >
+                <FileText size={14} />
+                Lihat File
+              </a>
+            </div>
+          )}
+
+          <div>
+            <label className="block text-xs font-bold text-slate-700 mb-1">
+              Pilih File Dokumen NDA (PDF/JPG/PNG/DOCX)
+            </label>
+            <input
+              type="file"
+              required
+              accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+              onChange={(e) => setUploadNdaFile(e.target.files?.[0] || null)}
+              className="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition-all cursor-pointer border border-slate-200 rounded-xl p-1"
+            />
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+            <button
+              type="button"
+              onClick={() => setIsUploadNdaModalOpen(false)}
+              className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-bold rounded-xl transition-all"
+            >
+              Batal
+            </button>
+            <button
+              type="submit"
+              disabled={isUploadingNda || !uploadNdaFile}
+              className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-bold rounded-xl transition-all shadow-sm"
+            >
+              <Upload size={16} />
+              {isUploadingNda ? "Mengupload..." : "Upload Dokumen"}
             </button>
           </div>
         </form>
