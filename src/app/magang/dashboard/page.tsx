@@ -65,7 +65,7 @@ export default function MagangDashboard() {
     tanggal: new Date().toISOString().split("T")[0],
   });
 
-  // NDA Print Counter state (mulai dari 7 dan bertambah tiap cetak)
+  // NDA Print Counter state (mulai dari 7 dan bertambah tiap kali mencetak)
   const [printCounter, setPrintCounter] = useState<number>(() => {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem("nda_print_counter");
@@ -77,23 +77,7 @@ export default function MagangDashboard() {
     return 7;
   });
 
-  // Melacak ID anak magang yang sudah mencetak NDA
-  const [printedNdaIds, setPrintedNdaIds] = useState<string[]>(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("printed_nda_ids");
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed)) return parsed.map(String);
-        } catch (e) {}
-      }
-    }
-    return [];
-  });
 
-  const availableMagangs = magangs.filter(
-    (m) => !printedNdaIds.includes(String(m.id))
-  );
 
   // Form state
   const [formData, setFormData] = useState({
@@ -180,9 +164,8 @@ export default function MagangDashboard() {
   };
 
   const handleOpenNdaModal = () => {
-    const unprinted = magangs.filter((m) => !printedNdaIds.includes(String(m.id)));
     setNdaFormData({
-      magangId: unprinted.length > 0 ? String(unprinted[0].id) : "",
+      magangId: magangs.length > 0 ? String(magangs[0].id) : "",
       tanggal: new Date().toISOString().split("T")[0],
     });
     setIsNdaModalOpen(true);
@@ -208,17 +191,11 @@ export default function MagangDashboard() {
     const generatedNomorSurat = `NO: ${seqNumber}/NDA/APTIKA/${yearNum}`;
     const logoUrl = typeof window !== "undefined" ? window.location.origin + "/logo-jabar.png" : "/logo-jabar.png";
 
-    // Increment print counter untuk cetakan berikutnya
+    // Naikkan counter cetak untuk transaksi berikutnya
     const nextCounter = printCounter + 1;
     setPrintCounter(nextCounter);
-
-    // Tandai anak magang ini sudah mencetak NDA
-    const updatedPrintedIds = Array.from(new Set([...printedNdaIds, String(selected.id)]));
-    setPrintedNdaIds(updatedPrintedIds);
-
     if (typeof window !== "undefined") {
       localStorage.setItem("nda_print_counter", String(nextCounter));
-      localStorage.setItem("printed_nda_ids", JSON.stringify(updatedPrintedIds));
     }
 
     const printWindow = window.open("", "_blank");
@@ -232,70 +209,65 @@ export default function MagangDashboard() {
       <html lang="id">
       <head>
         <meta charset="UTF-8">
-        <title>Surat Perjanjian NDA - ${selected.nama}</title>
+        <title></title>
         <style>
           @page {
             size: A4;
-            margin: 20mm 20mm 20mm 20mm;
+            margin: 2cm 20mm 15mm 20mm;
+          }
+          *, *:before, *:after {
+            box-sizing: border-box;
           }
           body {
             font-family: Arial, Helvetica, sans-serif;
-            font-size: 10.5pt;
-            line-height: 1.5;
+            font-size: 10pt;
+            line-height: 1.45;
             color: #000;
             margin: 0;
             padding: 0;
             background-color: #fff;
           }
-          .page {
-            page-break-after: always;
-            position: relative;
-            box-sizing: border-box;
-          }
-          .page:last-child {
-            page-break-after: avoid;
-          }
           .logo-container {
             text-align: center;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
           }
           .logo-container img {
-            width: 90px;
+            width: 80px;
             height: auto;
           }
           .title-header {
             text-align: center;
             font-weight: bold;
             font-size: 11pt;
-            line-height: 1.4;
-            margin-bottom: 25px;
+            line-height: 1.35;
+            margin-bottom: 18px;
           }
           .title-header .doc-no {
-            margin-top: 10px;
-            font-size: 10.5pt;
+            margin-top: 8px;
+            font-size: 10pt;
             font-weight: bold;
           }
           p {
             margin-top: 0;
-            margin-bottom: 12px;
+            margin-bottom: 8px;
             text-align: justify;
             text-justify: inter-word;
           }
           .party-block {
-            margin-left: 20px;
-            margin-bottom: 12px;
+            margin-left: 15px;
+            margin-bottom: 8px;
           }
           .table-party {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 6px;
+            margin-bottom: 4px;
           }
           .table-party td {
-            padding: 2px 4px;
+            padding: 1px 4px;
             vertical-align: top;
           }
           .table-party td.label {
-            width: 90px;
+            width: 85px;
           }
           .table-party td.colon {
             width: 15px;
@@ -303,11 +275,18 @@ export default function MagangDashboard() {
           }
           .section-title {
             font-weight: bold;
-            margin-top: 14px;
-            margin-bottom: 6px;
+            margin-top: 12px;
+            margin-bottom: 4px;
+            page-break-after: avoid;
+          }
+          .sub-block {
+            padding-left: 15px;
+          }
+          .sub-block-2 {
+            padding-left: 15px;
           }
           .signature-container {
-            margin-top: 70px;
+            margin-top: 40px;
             display: flex;
             justify-content: space-between;
             page-break-inside: avoid;
@@ -318,206 +297,191 @@ export default function MagangDashboard() {
           }
           .signature-title {
             font-weight: bold;
-            margin-bottom: 4px;
+            margin-bottom: 2px;
           }
           .signature-role {
-            margin-bottom: 80px;
+            margin-bottom: 60px;
           }
           .signature-name {
             font-weight: bold;
           }
           @media print {
-            body { padding: 0; }
+            body {
+              padding: 0;
+              margin: 0;
+            }
           }
         </style>
       </head>
       <body>
 
-        <!-- HALAMAN 1 -->
-        <div class="page">
-          <div class="logo-container">
-            <img src="${logoUrl}" alt="Logo Jawa Barat" />
-          </div>
+        <div class="logo-container">
+          <img src="${logoUrl}" alt="Logo Jawa Barat" />
+        </div>
 
-          <div class="title-header">
-            PERJANJIAN<br>
-            LARANGAN PENGUNGKAPAN DAN KERAHASIAAN<br>
-            ANTARA<br>
-            DINAS KOMUNIKASI DAN INFORMATIKA PROVINSI JAWA BARAT<br>
-            DENGAN<br>
-            MAHASISWA MAGANG<br>
-            ${(selected.nama_kampus || "").toUpperCase()}<br>
-            <div class="doc-no">${generatedNomorSurat}</div>
-          </div>
+        <div class="title-header">
+          PERJANJIAN<br>
+          LARANGAN PENGUNGKAPAN DAN KERAHASIAAN<br>
+          ANTARA<br>
+          DINAS KOMUNIKASI DAN INFORMATIKA PROVINSI JAWA BARAT<br>
+          DENGAN<br>
+          MAHASISWA MAGANG<br>
+          ${(selected.nama_kampus || "").toUpperCase()}<br>
+          <div class="doc-no">${generatedNomorSurat}</div>
+        </div>
 
-          <p>
-            Perjanjian Larangan Pengungkapan dan Kerahasiaan (untuk selanjutnya disebut sebagai "Perjanjian") ini diadakan dan ditandatangani pada hari ${fullDateText}, antara:
+        <p>
+          Perjanjian Larangan Pengungkapan dan Kerahasiaan (untuk selanjutnya disebut sebagai "Perjanjian") ini diadakan dan ditandatangani pada hari ${fullDateText}, antara:
+        </p>
+
+        <div class="party-block">
+          <table class="table-party">
+            <tr>
+              <td class="label">1. Nama</td>
+              <td class="colon">:</td>
+              <td>Dian Istanti, S.Sos, MAP</td>
+            </tr>
+            <tr>
+              <td class="label">&nbsp;&nbsp;&nbsp;NIP</td>
+              <td class="colon">:</td>
+              <td>19690519 199803 2 001</td>
+            </tr>
+            <tr>
+              <td class="label">&nbsp;&nbsp;&nbsp;Jabatan</td>
+              <td class="colon">:</td>
+              <td>Kepala Bidang Aplikasi Informatika</td>
+            </tr>
+          </table>
+          <p style="margin-left: 0;">
+            yang bertindak sebagai dan atas nama Dinas Komunikasi dan Informatika Provinsi Jawa Barat untuk selanjutnya disebut sebagai <strong>PIHAK PERTAMA</strong>.
           </p>
+        </div>
 
-          <div class="party-block">
-            <table class="table-party">
-              <tr>
-                <td class="label">1. Nama</td>
-                <td class="colon">:</td>
-                <td>Dian Istanti, S.Sos, MAP</td>
-              </tr>
-              <tr>
-                <td class="label">&nbsp;&nbsp;&nbsp;NIP</td>
-                <td class="colon">:</td>
-                <td>19690519 199803 2 001</td>
-              </tr>
-              <tr>
-                <td class="label">&nbsp;&nbsp;&nbsp;Jabatan</td>
-                <td class="colon">:</td>
-                <td>Kepala Bidang Aplikasi Informatika</td>
-              </tr>
-            </table>
-            <p style="margin-left: 0;">
-              yang bertindak sebagai dan atas nama Dinas Komunikasi dan Informatika Provinsi Jawa Barat untuk selanjutnya disebut sebagai <strong>PIHAK PERTAMA</strong>.
-            </p>
-          </div>
-
-          <div class="party-block">
-            <table class="table-party">
-              <tr>
-                <td class="label">2. Nama</td>
-                <td class="colon">:</td>
-                <td>${selected.nama}</td>
-              </tr>
-              <tr>
-                <td class="label">&nbsp;&nbsp;&nbsp;Jabatan</td>
-                <td class="colon">:</td>
-                <td>Mahasiswa Magang</td>
-              </tr>
-            </table>
-            <p style="margin-left: 0;">
-              yang bertindak sebagai Mahasiswa Magang Dari ${selected.nama_kampus} untuk selanjutnya disebut Sebagian <strong>PIHAK KEDUA</strong>.
-            </p>
-          </div>
-
-          <p>
-            PIHAK PERTAMA dan PIHAK KEDUA selanjutnya bersama-sama dapat disebut "Para Pihak", atau masing-masing disebut "Pihak" dengan ini menjelaskan dan menyatakan sebagai berikut:
+        <div class="party-block">
+          <table class="table-party">
+            <tr>
+              <td class="label">2. Nama</td>
+              <td class="colon">:</td>
+              <td>${selected.nama}</td>
+            </tr>
+            <tr>
+              <td class="label">&nbsp;&nbsp;&nbsp;Jabatan</td>
+              <td class="colon">:</td>
+              <td>Mahasiswa Magang</td>
+            </tr>
+          </table>
+          <p style="margin-left: 0;">
+            yang bertindak sebagai Mahasiswa Magang Dari ${selected.nama_kampus} untuk selanjutnya disebut Sebagian <strong>PIHAK KEDUA</strong>.
           </p>
+        </div>
 
-          <p>
-            Bahwa, dalam pelaksanaan kerja sama, Para Pihak akan saling bertukar informasi yang wajib dijaga kerahasiaannya.
-          </p>
+        <p>
+          PIHAK PERTAMA dan PIHAK KEDUA selanjutnya bersama-sama dapat disebut "Para Pihak", atau masing-masing disebut "Pihak" dengan ini menjelaskan dan menyatakan sebagai berikut:
+        </p>
 
-          <p>
-            Bahwa, para Pihak merasa perlu untuk melindungi kepentingannya atas informasi yang diberikan kepada Pihak lainnya.
-          </p>
+        <p>
+          Bahwa, dalam pelaksanaan kerja sama, Para Pihak akan saling bertukar informasi yang wajib dijaga kerahasiaannya.
+        </p>
 
-          <p>
-            Karenanya, Para Pihak dengan ini mengadakan Perjanjian ini, berdasarkan syarat-syarat dan ketentuan sebagai berikut:
-          </p>
+        <p>
+          Bahwa, para Pihak merasa perlu untuk melindungi kepentingannya atas informasi yang diberikan kepada Pihak lainnya.
+        </p>
 
-          <div class="section-title">1. PENGERTIAN</div>
-          <div style="padding-left: 15px;">
-            <p>a. "Pihak Yang Mengungkapkan" berarti suatu Pihak yang memberikan Informasi Rahasia kepada Pihak lainnya;</p>
-            <p>b. "Pihak Yang Menerima" berarti suatu Pihak yang menerima Informasi Rahasia dari Pihak lainnya;</p>
-            <p>c. "Afiliasi" berarti setiap pihak, kerabat, anak perusahaan, atau induk perusahaan dari suatu Pihak, Perorangan atau perusahaan yang dikendalikan oleh, atau mengendalikan suatu Pihak;</p>
+        <p>
+          Karenanya, Para Pihak dengan ini mengadakan Perjanjian ini, berdasarkan syarat-syarat dan ketentuan sebagai berikut:
+        </p>
+
+        <div class="section-title">1. PENGERTIAN</div>
+        <div class="sub-block">
+          <p>a. "Pihak Yang Mengungkapkan" berarti suatu Pihak yang memberikan Informasi Rahasia kepada Pihak lainnya;</p>
+          <p>b. "Pihak Yang Menerima" berarti suatu Pihak yang menerima Informasi Rahasia dari Pihak lainnya;</p>
+          <p>c. "Afiliasi" berarti setiap pihak, kerabat, anak perusahaan, atau induk perusahaan dari suatu Pihak, Perorangan atau perusahaan yang dikendalikan oleh, atau mengendalikan suatu Pihak;</p>
+          <p>d. "Informasi Rahasia" berarti mencakup Informasi "Rahasia/Penting/Strategis" milik Pemerintah Daerah Provinsi Jawa Barat dapat berupa dokumen tercetak (hardcopy) atau file elektronik (softcopy), meliputi antara lain:</p>
+          <div class="sub-block-2">
+            <p>1) Data pribadi pegawai;</p>
+            <p>2) Konfigurasi IT dan IP address;</p>
+            <p>3) Password;</p>
+            <p>4) Kode program (source code);</p>
+            <p>5) Hasil scanning vulnerability/penetration testing;</p>
+            <p>6) Hasil kajian risiko (risk assessment) dan hasil audit;</p>
+            <p>7) Data lelang; dan</p>
+            <p>8) Data/Informasi berkategori "Internal/Terbatas/Sensitif/Kritikal/Rahasia" lainnya milik Pemerintah Daerah Provinsi Jawa Barat.</p>
           </div>
         </div>
 
-        <!-- HALAMAN 2 -->
-        <div class="page">
-          <div style="padding-left: 15px;">
-            <p>d. "Informasi Rahasia" berarti mencakup Informasi "Rahasia/Penting/Strategis" milik Pemerintah Daerah Provinsi Jawa Barat dapat berupa dokumen tercetak (hardcopy) atau file elektronik (softcopy), meliputi antara lain:</p>
-            <div style="padding-left: 20px;">
-              <p>1) Data pribadi pegawai;</p>
-              <p>2) Konfigurasi IT dan IP address;</p>
-              <p>3) Password;</p>
-              <p>4) Kode program (source code);</p>
-              <p>5) Hasil scanning vulnerability/penetration testing;</p>
-              <p>6) Hasil kajian risiko (risk assessment) dan hasil audit;</p>
-              <p>7) Data lelang; dan</p>
-              <p>8) Data/Informasi berkategori "Internal/Terbatas/Sensitif/Kritikal/Rahasia" lainnya milik Pemerintah Daerah Provinsi Jawa Barat.</p>
-            </div>
+        <div class="section-title">2. KERAHASIAAN</div>
+        <div class="sub-block">
+          <p>a. Pihak Yang Menerima dengan ini setuju bahwa Informasi Rahasia merupakan hak milik dari, dan dimiliki oleh Pihak Yang Mengungkapkan. Tidak ada satu ketentuan pun dalam Perjanjian ini yang memberikan pengertian atau penafsiran, atau dapat ditafsirkan bahwa setiap Informasi Rahasia yang diberikan, dikirimkan atau diungkapkan kepada Pihak Yang Menerima adalah bentuk dari pengalihan kepemilikan, hibah, pemberian opsi, atau pemberian lisensi hak kekayaan intelektual atas Informasi Rahasia;</p>
+          <p>b. Dengan diberikan atau diungkapkannya Informasi Rahasia oleh Pihak Yang Mengungkapkan kepada Pihak Yang Menerima, Pihak Yang Menerima wajib untuk:</p>
+          <div class="sub-block-2">
+            <p>1) Tidak membocorkan Informasi Rahasia/Penting/Strategis kepada pihak manapun baik secara langsung maupun tidak langsung;</p>
+            <p>2) Tidak mempergunakan Informasi Rahasia yang dapat merugikan Pihak Yang Mengungkapkan dan tidak, dengan cara melawan hukum atau dengan cara yang tidak etis, mempergunakan Informasi Rahasia untuk keuntungan dirinya sendiri atau pihak lain;</p>
+            <p>3) Tidak memanfaatkan informasi yang diakses dari Pemerintah Daerah Provinsi Jawa Barat selama penugasan untuk kepentingan di luar pelaksanaan tugas dan pekerjaan yang diberikan;</p>
+            <p>4) Menjaga kerahasiaannya dan memastikan bahwa Informasi Rahasia tidak diungkapkan kepada Personil atau Afiliasi kecuali dalam hal pengungkapan tersebut dipandang perlu untuk kepentingan pekerjaan dan atas dasar "perlu untuk diketahui" untuk kepentingan pekerjaan tanpa mengesampingkan ketentuan lain dari Perjanjian ini;</p>
+            <p>5) Mengamankan seluruh informasi dan sistem informasi sesuai kebijakan yang ditetapkan Pemerintah Daerah Provinsi Jawa Barat;</p>
+            <p>6) Tidak membuka Informasi Rahasia kepada pihak ketiga manapun kecuali sebelumnya telah mendapatkan persetujuan tertulis dari Pihak Yang Mengungkapkan;</p>
+            <p>7) Tidak, atau mengizinkan pihak lain, termasuk Personil dan Afiliasinya, untuk membuat fotokopi/salinan atau mereproduksi dalam bentuk apapun, setiap Informasi Rahasia tanpa sebelumnya telah mendapatkan persetujuan tertulis dari Pihak Yang Mengungkapkan, kecuali yang secara wajar diperlukan untuk pekerjaan; dan</p>
+            <p>8) Mematuhi seluruh kebijakan dan prosedur yang ditetapkan Pemerintah Daerah Provinsi Jawa Barat menyangkut keamanan informasi.</p>
           </div>
-
-          <div class="section-title">2. KERAHASIAAN</div>
-          <div style="padding-left: 15px;">
-            <p>a. Pihak Yang Menerima dengan ini setuju bahwa Informasi Rahasia merupakan hak milik dari, dan dimiliki oleh Pihak Yang Mengungkapkan. Tidak ada satu ketentuan pun dalam Perjanjian ini yang memberikan pengertian atau penafsiran, atau dapat ditafsirkan bahwa setiap Informasi Rahasia yang diberikan, dikirimkan atau diungkapkan kepada Pihak Yang Menerima adalah bentuk dari pengalihan kepemilikan, hibah, pemberian opsi, atau pemberian lisensi hak kekayaan intelektual atas Informasi Rahasia;</p>
-            <p>b. Dengan diberikan atau diungkapkannya Informasi Rahasia oleh Pihak Yang Mengungkapkan kepada Pihak Yang Menerima, Pihak Yang Menerima wajib untuk:</p>
-            <div style="padding-left: 20px;">
-              <p>1) Tidak membocorkan Informasi Rahasia/Penting/Strategis kepada pihak manapun baik secara langsung maupun tidak langsung;</p>
-              <p>2) Tidak mempergunakan Informasi Rahasia yang dapat merugikan Pihak Yang Mengungkapkan dan tidak, dengan cara melawan hukum atau dengan cara yang tidak etis, mempergunakan Informasi Rahasia untuk keuntungan dirinya sendiri atau pihak lain;</p>
-              <p>3) Tidak memanfaatkan informasi yang diakses dari Pemerintah Daerah Provinsi Jawa Barat selama penugasan untuk kepentingan di luar pelaksanaan tugas dan pekerjaan yang diberikan;</p>
-              <p>4) Menjaga kerahasiaannya dan memastikan bahwa Informasi Rahasia tidak diungkapkan kepada Personil atau Afiliasi kecuali dalam hal pengungkapan tersebut dipandang perlu untuk kepentingan pekerjaan dan atas dasar "perlu untuk diketahui" untuk kepentingan pekerjaan tanpa mengesampingkan ketentuan lain dari Perjanjian ini;</p>
-              <p>5) Mengamankan seluruh informasi dan sistem informasi sesuai kebijakan yang ditetapkan Pemerintah Daerah Provinsi Jawa Barat;</p>
-              <p>6) Tidak membuka Informasi Rahasia kepada pihak ketiga manapun kecuali sebelumnya telah mendapatkan persetujuan tertulis dari Pihak Yang Mengungkapkan;</p>
-              <p>7) Tidak, atau mengizinkan pihak lain, termasuk Personil dan Afiliasinya, untuk membuat fotokopi/salinan atau mereproduksi dalam bentuk apapun, setiap Informasi Rahasia tanpa sebelumnya telah mendapatkan persetujuan tertulis dari Pihak Yang Mengungkapkan, kecuali yang secara wajar diperlukan untuk pekerjaan; dan</p>
-              <p>8) Mematuhi seluruh kebijakan dan prosedur yang ditetapkan Pemerintah Daerah Provinsi Jawa Barat menyangkut keamanan informasi.</p>
-            </div>
-            <p>c. Kewajiban untuk menjaga Informasi Rahasia sebagaimana dimaksud dalam butir b di atas tidak berlaku dalam hal Informasi Rahasia:</p>
-            <div style="padding-left: 20px;">
-              <p>1) Telah menjadi pengetahuan umum atau telah dipublikasikan kepada umum dengan cara yang tidak melanggar ketentuan kerahasiaan berdasarkan Perjanjian ini maupun ketentuan lain yang terkait dengannya;</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- HALAMAN 3 -->
-        <div class="page">
-          <div style="padding-left: 35px;">
+          <p>c. Kewajiban untuk menjaga Informasi Rahasia sebagaimana dimaksud dalam butir b di atas tidak berlaku dalam hal Informasi Rahasia:</p>
+          <div class="sub-block-2">
+            <p>1) Telah menjadi pengetahuan umum atau telah dipublikasikan kepada umum dengan cara yang tidak melanggar ketentuan kerahasiaan berdasarkan Perjanjian ini maupun ketentuan lain yang terkait dengannya;</p>
             <p>2) Telah diketahui oleh Pihak Yang Menerima sebelum Informasi Rahasia diberikan atau diungkapkan kepada Pihak Yang Menerima sebagaimana dibuktikan dengan bukti tertulis Pihak Yang Menerima; dan</p>
             <p>3) Disyaratkan untuk diungkapkan berdasarkan ketentuan hukum yang berlaku atau berdasarkan perintah badan peradilan atau instansi Pemerintah terkait.</p>
           </div>
-
-          <div class="section-title">3. PENGEMBALIAN DAN PEMUSNAHAN INFORMASI RAHASIA</div>
-          <p>
-            Atas permintaan Pihak Yang Mengungkapkan, Pihak Yang Menerima wajib mengembalikan seluruh dokumen atau fasilitas sistem informasi Pemerintah Daerah Provinsi Jawa Barat yang dipinjamkan selama penugasan saya, termasuk mengembalikan hak akses baik logic (User ID) maupun fisik (ID Card) yang saya terima sebagai bagian dari pelaksanaan tugas dan pekerjaan yang diberikan.
-          </p>
-
-          <div class="section-title">4. JANJI LEBIH LANJUT</div>
-          <p>Untuk lebih lanjut menjaga kerahasiaan dari Informasi Rahasia, Pihak Yang Menerima wajib:</p>
-          <div style="padding-left: 15px;">
-            <p>a. Membuat agar seluruh Informasi Rahasia dan seluruh informasi yang dihasilkan oleh Pihak Yang Menerima dari Informasi Rahasia terpisah dari dokumen dan catatan-catatan/rekaman-rekaman lain Pihak Yang Menerima dan mengatur serta memelihara tempat penyimpanan yang layak dan aman atas setiap Informasi Rahasia dalam bentuk apapun yang berada padanya; dan</p>
-            <p>b. Untuk tidak menggunakan, mereproduksi, mengalih bentuk, atau menyimpan setiap dari Informasi Rahasia pada komputer atau sistem penerimaan informasi elektronik yang dapat diakses oleh eksternal atau mengirimkan Informasi Rahasia tersebut dalam bentuk apapun ke luar tempat usaha Pihak Yang Menerima.</p>
-          </div>
-
-          <div class="section-title">5. PEMULIHAN</div>
-          <p>
-            Para Pihak mengakui dan sepakat bahwa ganti rugi berupa uang mungkin bukan merupakan penggantian yang cukup dalam hal pelanggaran terhadap Perjanjian ini oleh Pihak Yang Menerima. Karenanya, Para Pihak sepakat bahwa Pihak Yang Mengungkapkan berhak untuk mendapatkan penetapan-penetapan atau putusan-putusan pengadilan yang memerintahkan Pihak Yang Menerima wajib untuk berbuat atau untuk tidak berbuat sesuatu, termasuk penetapan-penetapan pengadilan yang mewajibkan Pihak Yang Menerima untuk melaksanakan ketentuan Perjanjian ini dalam hal terjadinya pelanggaran terhadap Perjanjian ini, sebagai tambahan dari hak-hak pemulihan lain yang dimiliki oleh Pihak Yang Mengungkapkan berdasarkan ketentuan peraturan yang berlaku.
-          </p>
-
-          <div class="section-title">6. KEBERLAKUAN</div>
-          <p>
-            Perjanjian ini memiliki jangka waktu paling lama selama 1 (satu) tahun. Meskipun demikian, kewajiban-kewajiban untuk menjaga kerahasiaan dan pembatasan-pembatasan atas penggunaan dan pengungkapan Informasi Rahasia yang berlaku atas Pihak Yang Menerima berdasarkan Perjanjian ini akan tetap berlanjut walaupun perjanjian telah diselesaikan, tidak berjalan, dibatalkan atau terjadinya pengakhiran dari Perjanjian ini.
-          </p>
-
-          <div class="section-title">7. HUKUM YANG BERLAKU</div>
-          <p>
-            Perjanjian ini serta pelaksanaan dari dan penafsiran atas Perjanjian ini diatur oleh dan tunduk pada hukum Negara Republik Indonesia.
-          </p>
-
-          <div class="section-title">8. PERUBAHAN</div>
-          <p>
-            Setiap perubahan terhadap Perjanjian ini tidak berlaku dan tidak mengikat bagi Para Pihak kecuali apabila perubahan tersebut dituangkan secara tertulis dan ditandatangani oleh wakil-wakil yang sah dari Para Pihak. Setelah perubahan tersebut ditandatangani dengan sebagaimana mestinya oleh wakil-wakil yang sah dari Para Pihak, perubahan tersebut akan menjadi satu kesatuan dengan dan bagian yang tidak terpisahkan dari Perjanjian ini.
-          </p>
         </div>
 
-        <!-- HALAMAN 4 -->
-        <div class="page">
-          <div class="section-title">9. KESELURUHAN PERJANJIAN</div>
-          <p>
-            Perjanjian ini memuat keseluruhan perjanjian antara Para Pihak dalam Perjanjian ini yang berkaitan dengan materi pokok dari Perjanjian ini, dan menggantikan setiap dan semua perjanjian, komunikasi dan kesepahaman sebelumnya, baik secara tertulis atau lisan, mengenai materi pokok tersebut.
-          </p>
+        <div class="section-title">3. PENGEMBALIAN DAN PEMUSNAHAN INFORMASI RAHASIA</div>
+        <p>
+          Atas permintaan Pihak Yang Mengungkapkan, Pihak Yang Menerima wajib mengembalikan seluruh dokumen atau fasilitas sistem informasi Pemerintah Daerah Provinsi Jawa Barat yang dipinjamkan selama penugasan saya, termasuk mengembalikan hak akses baik logic (User ID) maupun fisik (ID Card) yang saya terima sebagai bagian dari pelaksanaan tugas dan pekerjaan yang diberikan.
+        </p>
 
-          <p style="margin-top: 25px;">
-            Demikian Perjanjian ini dibuat, yang masing-masing ditandatangani serta bermeterai cukup dengan sebagaimana mestinya oleh Para Pihak pada tanggal sebagaimana disebut di awal Perjanjian ini, dan masing-masing mempunyai kekuatan hukum yang sama.
-          </p>
+        <div class="section-title">4. JANJI LEBIH LANJUT</div>
+        <p>Untuk lebih lanjut menjaga kerahasiaan dari Informasi Rahasia, Pihak Yang Menerima wajib:</p>
+        <div class="sub-block">
+          <p>a. Membuat agar seluruh Informasi Rahasia dan seluruh informasi yang dihasilkan oleh Pihak Yang Menerima dari Informasi Rahasia terpisah dari dokumen dan catatan-catatan/rekaman-rekaman lain Pihak Yang Menerima dan mengatur serta memelihara tempat penyimpanan yang layak dan aman atas setiap Informasi Rahasia dalam bentuk apapun yang berada padanya; dan</p>
+          <p>b. Untuk tidak menggunakan, mereproduksi, mengalih bentuk, atau menyimpan setiap dari Informasi Rahasia pada komputer atau sistem penerimaan informasi elektronik yang dapat diakses oleh eksternal atau mengirimkan Informasi Rahasia tersebut dalam bentuk apapun ke luar tempat usaha Pihak Yang Menerima.</p>
+        </div>
 
-          <div class="signature-container">
-            <div class="signature-box">
-              <div class="signature-title">PIHAK KESATU</div>
-              <div class="signature-role">Kepala Bidang Aplikasi Informatika,</div>
-              <div class="signature-name">Dian Istanti, S.Sos, MAP</div>
-            </div>
-            <div class="signature-box">
-              <div class="signature-title">PIHAK KEDUA</div>
-              <div class="signature-role">Mahasiswa Magang,</div>
-              <div class="signature-name">${selected.nama}</div>
-            </div>
+        <div class="section-title">5. PEMULIHAN</div>
+        <p>
+          Para Pihak mengakui dan sepakat bahwa ganti rugi berupa uang mungkin bukan merupakan penggantian yang cukup dalam hal pelanggaran terhadap Perjanjian ini oleh Pihak Yang Menerima. Karenanya, Para Pihak sepakat bahwa Pihak Yang Mengungkapkan berhak untuk mendapatkan penetapan-penetapan atau putusan-putusan pengadilan yang memerintahkan Pihak Yang Menerima wajib untuk berbuat atau untuk tidak berbuat sesuatu, termasuk penetapan-penetapan pengadilan yang mewajibkan Pihak Yang Menerima untuk melaksanakan ketentuan Perjanjian ini dalam hal terjadinya pelanggaran terhadap Perjanjian ini, sebagai tambahan dari hak-hak pemulihan lain yang dimiliki oleh Pihak Yang Mengungkapkan berdasarkan ketentuan peraturan yang berlaku.
+        </p>
+
+        <div class="section-title">6. KEBERLAKUAN</div>
+        <p>
+          Perjanjian ini memiliki jangka waktu paling lama selama 1 (satu) tahun. Meskipun demikian, kewajiban-kewajiban untuk menjaga kerahasiaan dan pembatasan-pembatasan atas penggunaan dan pengungkapan Informasi Rahasia yang berlaku atas Pihak Yang Menerima berdasarkan Perjanjian ini akan tetap berlanjut walaupun perjanjian telah diselesaikan, tidak berjalan, dibatalkan atau terjadinya pengakhiran dari Perjanjian ini.
+        </p>
+
+        <div class="section-title">7. HUKUM YANG BERLAKU</div>
+        <p>
+          Perjanjian ini serta pelaksanaan dari dan penafsiran atas Perjanjian ini diatur oleh dan tunduk pada hukum Negara Republik Indonesia.
+        </p>
+
+        <div class="section-title">8. PERUBAHAN</div>
+        <p>
+          Setiap perubahan terhadap Perjanjian ini tidak berlaku dan tidak mengikat bagi Para Pihak kecuali apabila perubahan tersebut dituangkan secara tertulis dan ditandatangani oleh wakil-wakil yang sah dari Para Pihak. Setelah perubahan tersebut ditandatangani dengan sebagaimana mestinya oleh wakil-wakil yang sah dari Para Pihak, perubahan tersebut akan menjadi satu kesatuan dengan dan bagian yang tidak terpisahkan dari Perjanjian ini.
+        </p>
+
+        <div class="section-title">9. KESELURUHAN PERJANJIAN</div>
+        <p>
+          Perjanjian ini memuat keseluruhan perjanjian antara Para Pihak dalam Perjanjian ini yang berkaitan dengan materi pokok dari Perjanjian ini, dan menggantikan setiap dan semua perjanjian, komunikasi dan kesepahaman sebelumnya, baik secara tertulis atau lisan, mengenai materi pokok tersebut.
+        </p>
+
+        <p style="margin-top: 15px;">
+          Demikian Perjanjian ini dibuat, yang masing-masing ditandatangani serta bermeterai cukup dengan sebagaimana mestinya oleh Para Pihak pada tanggal sebagaimana disebut di awal Perjanjian ini, dan masing-masing mempunyai kekuatan hukum yang sama.
+        </p>
+
+        <div class="signature-container">
+          <div class="signature-box">
+            <div class="signature-title">PIHAK KESATU</div>
+            <div class="signature-role">Kepala Bidang Aplikasi Informatika,</div>
+            <div class="signature-name">Dian Istanti, S.Sos, MAP</div>
+          </div>
+          <div class="signature-box">
+            <div class="signature-title">PIHAK KEDUA</div>
+            <div class="signature-role">Mahasiswa Magang,</div>
+            <div class="signature-name">${selected.nama}</div>
           </div>
         </div>
 
@@ -865,11 +829,9 @@ export default function MagangDashboard() {
               className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all bg-white"
             >
               <option value="" disabled>
-                {availableMagangs.length === 0
-                  ? "-- Semua Anak Magang Sudah Mencetak NDA --"
-                  : "-- Pilih Anak Magang --"}
+                -- Pilih Anak Magang --
               </option>
-              {availableMagangs.map((item) => (
+              {magangs.map((item) => (
                 <option key={item.id} value={item.id}>
                   {item.nama} - {item.nama_kampus}
                 </option>
