@@ -69,10 +69,10 @@ export default function MagangDashboard() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [dropdownSearch, setDropdownSearch] = useState("");
 
-  // NDA Print Counter state (mulai dari 7 dan terus berlanjut berurutan meski ada data yang dihapus)
+  // NDA Print Counter state (di-reset kembali ke 7 untuk pencetakan awal)
   const [printCounter, setPrintCounter] = useState<number>(() => {
     if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("nda_print_counter");
+      const saved = localStorage.getItem("nda_print_counter_v3");
       if (saved) {
         const parsed = parseInt(saved, 10);
         if (!isNaN(parsed) && parsed > 0) return parsed;
@@ -239,7 +239,7 @@ export default function MagangDashboard() {
     setPrintedNdaIds(updatedPrintedIds);
 
     if (typeof window !== "undefined") {
-      localStorage.setItem("nda_print_counter", String(nextCounter));
+      localStorage.setItem("nda_print_counter_v3", String(nextCounter));
       localStorage.setItem("printed_nda_ids", JSON.stringify(updatedPrintedIds));
     }
 
