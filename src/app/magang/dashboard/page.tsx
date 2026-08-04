@@ -142,6 +142,11 @@ export default function MagangDashboard() {
     if (confirm("Apakah anda yakin ingin menghapus data ini?")) {
       try {
         await deleteMagang(id);
+        const updatedPrintedIds = printedNdaIds.filter((printedId) => printedId !== String(id));
+        setPrintedNdaIds(updatedPrintedIds);
+        if (typeof window !== "undefined") {
+          localStorage.setItem("printed_nda_ids", JSON.stringify(updatedPrintedIds));
+        }
         fetchData();
       } catch (error) {
         alert("Gagal menghapus data");
