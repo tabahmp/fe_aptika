@@ -69,17 +69,7 @@ export default function MagangDashboard() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [dropdownSearch, setDropdownSearch] = useState("");
 
-  // NDA Print Counter state (di-reset kembali ke 7 untuk pencetakan awal)
-  const [printCounter, setPrintCounter] = useState<number>(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("nda_print_counter_v3");
-      if (saved) {
-        const parsed = parseInt(saved, 10);
-        if (!isNaN(parsed) && parsed > 0) return parsed;
-      }
-    }
-    return 7;
-  });
+
 
 
 
@@ -223,23 +213,19 @@ export default function MagangDashboard() {
       return;
     }
 
-    const seqNumber = String(printCounter).padStart(2, "0");
+    const selectedIndex = magangs.findIndex((m) => String(m.id) === String(ndaFormData.magangId));
+    const seqNumber = String(selectedIndex >= 0 ? selectedIndex + 7 : 7).padStart(2, "0");
     const fullDateText = formatIndonesianFullDateText(ndaFormData.tanggal);
     const dateObj = new Date(ndaFormData.tanggal + "T00:00:00");
     const yearNum = isNaN(dateObj.getTime()) ? new Date().getFullYear() : dateObj.getFullYear();
     const generatedNomorSurat = `NO: ${seqNumber}/NDA/APTIKA/${yearNum}`;
     const logoUrl = typeof window !== "undefined" ? window.location.origin + "/logo-jabar.png" : "/logo-jabar.png";
 
-    // Naikkan counter untuk pencetakan berikutnya (07, 08, 09, 10...)
-    const nextCounter = printCounter + 1;
-    setPrintCounter(nextCounter);
-
     // Tandai anak magang ini sudah selesai mencetak NDA (dihapus dari list dropdown)
     const updatedPrintedIds = Array.from(new Set([...printedNdaIds, String(selected.id)]));
     setPrintedNdaIds(updatedPrintedIds);
 
     if (typeof window !== "undefined") {
-      localStorage.setItem("nda_print_counter_v3", String(nextCounter));
       localStorage.setItem("printed_nda_ids", JSON.stringify(updatedPrintedIds));
     }
 
@@ -934,9 +920,9 @@ export default function MagangDashboard() {
 
             {ndaFormData.magangId && (
               <p className="mt-1.5 text-xs text-slate-500 font-medium">
-                Nomor Surat Cetakan Ini:{" "}
+                Nomor Surat (Otomatis):{" "}
                 <span className="font-bold text-slate-800">
-                  NO: {String(printCounter).padStart(2, "0")}/NDA/APTIKA/{new Date().getFullYear()}
+                  NO: {String((magangs.findIndex((m) => String(m.id) === String(ndaFormData.magangId)) >= 0 ? magangs.findIndex((m) => String(m.id) === String(ndaFormData.magangId)) + 7 : 7)).padStart(2, "0")}/NDA/APTIKA/{new Date().getFullYear()}
                 </span>
               </p>
             )}
