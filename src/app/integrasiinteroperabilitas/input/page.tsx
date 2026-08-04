@@ -6,7 +6,7 @@ import { createIntopMandateServiceSummary, createServiceCatalog, createIntegrati
 
 const MONTHS = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
 
-const TEAM_LABEL = "Integrasi-Interoperabilitas";
+const TEAM_LABEL = "Integrasi Interoperabilitas";
 const TEAM_BE_NAME = "Integrasi Interoperabilitas";
 
 const S = {

@@ -161,7 +161,10 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
   },
 
   fetchProjects: async () => {
-    set({ loadingProjects: true, error: null });
+    // Only show full loading spinner if we don't have projects loaded yet
+    if (get().projects.length === 0) {
+      set({ loadingProjects: true, error: null });
+    }
     try {
       const user = get().currentUser || (typeof window !== "undefined" ? JSON.parse(localStorage.getItem("user") || "null") : null);
       if (user && !get().currentUser) {
@@ -190,7 +193,9 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       }
     } catch (err: any) {
       console.error("Failed fetching projects:", err);
-      set({ error: "Gagal memuat daftar proyek. Silakan coba beberapa saat lagi." });
+      if (get().projects.length === 0) {
+        set({ error: "Gagal memuat daftar proyek. Silakan coba beberapa saat lagi." });
+      }
     } finally {
       set({ loadingProjects: false });
     }
@@ -229,7 +234,10 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
   },
 
   fetchTasks: async (projectId) => {
-    set({ loadingTasks: true });
+    // Only set loading spinner if tasks are currently empty
+    if (get().tasks.length === 0) {
+      set({ loadingTasks: true });
+    }
     try {
       const [tasksRes, membersRes] = await Promise.all([
         getTasks(projectId),

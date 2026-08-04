@@ -46,8 +46,8 @@ const Field = ({ label, value, onChange, error, required }: { label:string; valu
 function EditPageContent() {
   const router       = useRouter();
   const searchParams = useSearchParams();
-  const team         = "sadajabar";
-  const teamLabel    = "SADAjabar";
+  const team         = "sada jabar";
+  const teamLabel    = "SADA jabar";
   const currentYear  = new Date().getFullYear();
 
   const monthParam = searchParams.get("month");
