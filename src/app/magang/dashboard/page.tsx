@@ -94,7 +94,7 @@ export default function MagangDashboard() {
     try {
       setIsUploadingNda(true);
       await uploadMagangNda(targetMagangForNda.id, uploadNdaFile);
-      await fetchMagangs();
+      await fetchData();
       setIsUploadNdaModalOpen(false);
       setUploadNdaFile(null);
       alert("File NDA berhasil diupload!");
@@ -1017,12 +1017,12 @@ export default function MagangDashboard() {
 
           <div>
             <label className="block text-xs font-bold text-slate-700 mb-1">
-              Pilih File Dokumen NDA (PDF/JPG/PNG/DOCX)
+              Pilih File Dokumen NDA (Khusus Format PDF)
             </label>
             <input
               type="file"
               required
-              accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+              accept=".pdf,application/pdf"
               onChange={(e) => setUploadNdaFile(e.target.files?.[0] || null)}
               className="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition-all cursor-pointer border border-slate-200 rounded-xl p-1"
             />
