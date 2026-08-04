@@ -77,6 +77,24 @@ export default function MagangDashboard() {
     return 7;
   });
 
+  // Melacak ID anak magang yang sudah mencetak NDA
+  const [printedNdaIds, setPrintedNdaIds] = useState<string[]>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("printed_nda_ids");
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed)) return parsed.map(String);
+        } catch (e) {}
+      }
+    }
+    return [];
+  });
+
+  const availableMagangs = magangs.filter(
+    (m) => !printedNdaIds.includes(String(m.id))
+  );
+
 
 
   // Form state
@@ -164,8 +182,9 @@ export default function MagangDashboard() {
   };
 
   const handleOpenNdaModal = () => {
+    const unprinted = magangs.filter((m) => !printedNdaIds.includes(String(m.id)));
     setNdaFormData({
-      magangId: magangs.length > 0 ? String(magangs[0].id) : "",
+      magangId: unprinted.length > 0 ? String(unprinted[0].id) : "",
       tanggal: new Date().toISOString().split("T")[0],
     });
     setIsNdaModalOpen(true);
@@ -194,8 +213,14 @@ export default function MagangDashboard() {
     // Naikkan counter cetak untuk transaksi berikutnya
     const nextCounter = printCounter + 1;
     setPrintCounter(nextCounter);
+
+    // Tandai anak magang ini sudah selesai mencetak NDA (dihapus dari list dropdown)
+    const updatedPrintedIds = Array.from(new Set([...printedNdaIds, String(selected.id)]));
+    setPrintedNdaIds(updatedPrintedIds);
+
     if (typeof window !== "undefined") {
       localStorage.setItem("nda_print_counter", String(nextCounter));
+      localStorage.setItem("printed_nda_ids", JSON.stringify(updatedPrintedIds));
     }
 
     const printWindow = window.open("", "_blank");
@@ -829,9 +854,11 @@ export default function MagangDashboard() {
               className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all bg-white"
             >
               <option value="" disabled>
-                -- Pilih Anak Magang --
+                {availableMagangs.length === 0
+                  ? "-- Semua Anak Magang Sudah Mencetak NDA --"
+                  : "-- Pilih Anak Magang --"}
               </option>
-              {magangs.map((item) => (
+              {availableMagangs.map((item) => (
                 <option key={item.id} value={item.id}>
                   {item.nama} - {item.nama_kampus}
                 </option>
