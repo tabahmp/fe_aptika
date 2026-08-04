@@ -11,6 +11,7 @@ import {
 import { Avatar } from "@/components/ui/Avatar";
 import { Task, Project } from "@/store/useTaskStore";
 import { showToast } from "@/components/ui/Toast";
+import { getTaskColorConfig } from "@/utils/taskColors";
 
 interface TaskCardProps {
   task: Task;
@@ -32,9 +33,9 @@ interface TaskCardProps {
 }
 
 const priorityConfig = {
-  high: { color: "text-red-650 bg-red-50 border-red-150", label: "High", icon: ChevronUp },
-  medium: { color: "text-amber-650 bg-amber-50 border-amber-150", label: "Medium", icon: ChevronUp },
-  low: { color: "text-emerald-650 bg-emerald-50 border-emerald-150", label: "Low", icon: ChevronDown },
+  high: { color: "text-red-700 bg-red-50 border-red-200", label: "High", icon: ChevronUp },
+  medium: { color: "text-amber-700 bg-amber-50 border-amber-200", label: "Medium", icon: ChevronUp },
+  low: { color: "text-emerald-700 bg-emerald-50 border-emerald-200", label: "Low", icon: ChevronDown },
 };
 
 export const TaskCard: React.FC<TaskCardProps> = ({
@@ -135,6 +136,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
 
   const config = priorityConfig[task.priority] || priorityConfig.medium;
   const PriorityIcon = config.icon;
+  const colorCfg = getTaskColorConfig(task.color);
 
   const canToggleCheckbox = isPm && task.status === "inreview" && !isDone;
 
@@ -144,24 +146,27 @@ export const TaskCard: React.FC<TaskCardProps> = ({
       onDragStart={handleDragStartLocal}
       onDragEnd={onDragEnd}
       onClick={() => onOpenDetail?.(task)}
-      className={`bg-white rounded-xl p-3.5 border border-slate-200/50 shadow-sm hover:shadow-md transition-all flex items-start gap-3 relative select-none cursor-pointer ${
+      className={`rounded-xl pt-4 pb-3.5 px-3.5 border shadow-sm hover:shadow-md transition-all flex items-start gap-3 relative select-none cursor-pointer overflow-hidden backdrop-blur-md ${colorCfg.cardBg} ${
         isDone
-          ? "opacity-100 border-emerald-200/60 hover:shadow-sm"
-          : canModifyStatus ? "hover:border-slate-300" : "opacity-90 border-slate-100"
+          ? "opacity-90 border-emerald-200/60 hover:shadow-sm"
+          : canModifyStatus ? colorCfg.cardBorder : "opacity-90 border-slate-200/50"
       }`}
     >
+      {/* Top Accent Color Bar */}
+      <div className={`absolute top-0 left-0 right-0 h-1.5 ${colorCfg.barBg}`} />
+
       {/* Checkbox status */}
       {canToggleCheckbox ? (
         <button 
           onClick={handleToggleLocal} 
-          className={`mt-0.5 transition-colors flex-shrink-0 ${
+          className={`mt-1 transition-colors flex-shrink-0 ${
             task.status === "done" ? "text-blue-600 hover:text-blue-800" : "text-slate-400 hover:text-slate-600"
           }`}
         >
           {task.status === "done" ? <CheckSquare size={15} /> : <Square size={15} />}
         </button>
       ) : (
-        <div className="mt-0.5 flex-shrink-0" />
+        <div className="mt-1 flex-shrink-0" />
       )}
 
       {/* Content */}
@@ -175,12 +180,20 @@ export const TaskCard: React.FC<TaskCardProps> = ({
           {task.title}
         </h4>
 
-        <div className="flex items-center justify-between mt-1">
-          <span className="text-[9px] text-slate-400 font-extrabold bg-slate-50 border border-slate-200/40 px-1.5 py-0.5 rounded tracking-wider">
-            {task.code}
-          </span>
+        <div className="flex items-center justify-between mt-1 gap-1">
+          <div className="flex items-center gap-1.5">
+            <span className="text-[9px] text-slate-600 font-extrabold bg-white/80 border border-slate-200/80 px-1.5 py-0.5 rounded tracking-wider shadow-2xs">
+              {task.code}
+            </span>
+            
+            {/* Color Tag Badge */}
+            <span className={`inline-flex items-center gap-1 text-[8px] font-extrabold px-1.5 py-0.5 rounded border ${colorCfg.badgeStyle}`}>
+              <span className={`w-1.5 h-1.5 rounded-full ${colorCfg.dotColor}`} />
+              {colorCfg.name.split(" ")[0]}
+            </span>
+          </div>
           
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             {/* Priority Badge */}
             <span className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[8px] font-bold border ${config.color}`}>
               <PriorityIcon size={9} className="stroke-[3.5]" />
@@ -190,7 +203,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
             {isDone && (
               <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[8px] font-bold border text-emerald-600 bg-emerald-50 border-emerald-200">
                 <Lock size={9} className="stroke-[3.5]" />
-                Completed
+                Done
               </span>
             )}
 

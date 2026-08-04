@@ -2,6 +2,7 @@ import React from "react";
 import { Plus, CheckCircle2, Inbox } from "lucide-react";
 import { TaskCard } from "./TaskCard";
 import { Task, Project } from "@/store/useTaskStore";
+import { TASK_COLORS } from "@/utils/taskColors";
 
 type CurrentUserShape = { id: number; role: string };
 
@@ -22,6 +23,7 @@ interface KanbanColumnProps {
   newTaskTitle: string;
   newTaskPriority: "low" | "medium" | "high";
   newTaskAssignee: string;
+  newTaskColor?: string;
   isCreatingTask?: boolean;
   groupBy: "status" | "priority" | "assignee";
   onDragOver: (e: React.DragEvent, colKey: string) => void;
@@ -40,6 +42,7 @@ interface KanbanColumnProps {
   setNewTaskTitle: (val: string) => void;
   setNewTaskPriority: (val: "low" | "medium" | "high") => void;
   setNewTaskAssignee: (val: string) => void;
+  setNewTaskColor?: (val: string) => void;
   onOpenDetail?: (task: Task) => void;
 }
 
@@ -57,6 +60,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
   newTaskTitle,
   newTaskPriority,
   newTaskAssignee,
+  newTaskColor = "blue",
   isCreatingTask = false,
   groupBy,
   onDragOver,
@@ -75,6 +79,7 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
   setNewTaskTitle,
   setNewTaskPriority,
   setNewTaskAssignee,
+  setNewTaskColor,
   onOpenDetail,
 }) => {
 // Project.created_by may not exist in the mapped Project type; rely on role instead.
@@ -140,6 +145,24 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
             />
             
             <div className="flex flex-col gap-2 text-left">
+              {/* Color Selector */}
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] text-slate-400 font-bold">Warna Task:</span>
+                <div className="flex items-center gap-1">
+                  {Object.values(TASK_COLORS).slice(0, 6).map((c) => (
+                    <button
+                      key={c.key}
+                      type="button"
+                      title={c.name}
+                      onClick={() => setNewTaskColor?.(c.key)}
+                      className={`w-3.5 h-3.5 rounded-full ${c.dotColor} transition-transform ${
+                        newTaskColor === c.key ? "ring-2 ring-slate-800 scale-110" : "opacity-80 hover:opacity-100"
+                      }`}
+                    />
+                  ))}
+                </div>
+              </div>
+
               {/* Priority Selector */}
               {groupBy !== "priority" && (
                 <div className="flex items-center justify-between">

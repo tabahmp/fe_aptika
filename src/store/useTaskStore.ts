@@ -26,6 +26,7 @@ export interface Task {
   createdAt?: string;
   updatedAt?: string;
   activities?: any[];
+  color?: string;
 }
 
 export interface Project {
@@ -51,11 +52,35 @@ export interface AppNotification {
   read: boolean;
 }
 
+const getStoredTaskColors = (): Record<number, string> => {
+  if (typeof window === "undefined") return {};
+  try {
+    const data = localStorage.getItem("task_colors");
+    return data ? JSON.parse(data) : {};
+  } catch {
+    return {};
+  }
+};
+
+const setStoredTaskColor = (taskId: number, color: string) => {
+  if (typeof window === "undefined") return;
+  try {
+    const existing = getStoredTaskColors();
+    existing[taskId] = color;
+    localStorage.setItem("task_colors", JSON.stringify(existing));
+  } catch (e) {
+    console.error("Failed to store task color", e);
+  }
+};
+
 const mapBackendToFrontendTask = (t: any): Task => {
   let fStatus: Task["status"] = "todo";
   if (t.status === "in_progress") fStatus = "inprogress";
   else if (t.status === "in_review") fStatus = "inreview";
   else if (t.status === "done") fStatus = "done";
+
+  const colorsMap = getStoredTaskColors();
+  const savedColor = t.color || colorsMap[t.id] || "blue";
 
   return {
     id: t.id,
@@ -68,7 +93,8 @@ const mapBackendToFrontendTask = (t: any): Task => {
     description: t.description || "",
     createdAt: t.created_at || t.createdAt,
     updatedAt: t.updated_at || t.updatedAt,
-    activities: t.activities || []
+    activities: t.activities || [],
+    color: savedColor,
   };
 };
 
@@ -94,7 +120,8 @@ interface TaskStore {
   addProject: (payload: { name: string; description: string; deadline: string; type: "web" | "mobile" | "api" | "security" }) => Promise<boolean>;
   joinProject: (id: number) => Promise<boolean>;
   fetchTasks: (projectId: number) => Promise<void>;
-  addTask: (projectId: number, title: string, priority: "low" | "medium" | "high", assigneeId: number | null, columnKey: string, groupBy: string) => Promise<boolean>;
+  addTask: (projectId: number, title: string, priority: "low" | "medium" | "high", assigneeId: number | null, columnKey: string, groupBy: string, color?: string) => Promise<boolean>;
+  setTaskColor: (taskId: number, color: string) => void;
   modifyTaskStatus: (task: Task, nextFStatus: Task["status"]) => Promise<boolean>;
   modifyTaskStatusRaw: (taskId: number, nextFStatus: Task["status"]) => Promise<boolean>;
   assignTask: (taskId: number, assigneeId: number | null) => Promise<boolean>;
@@ -228,7 +255,7 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
     }
   },
 
-  addTask: async (projectId, title, priority, assigneeId, columnKey, groupBy) => {
+  addTask: async (projectId, title, priority, assigneeId, columnKey, groupBy, color) => {
     let taskStatus: "todo" | "in_progress" | "in_review" | "done" = "todo";
     let taskPriority: "low" | "medium" | "high" = priority;
     let taskAssigneeId: number | null = assigneeId;
@@ -244,13 +271,18 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
     }
 
     try {
-      await createTask({
+      const res = await createTask({
         board_id: projectId,
         title: title.trim(),
         priority: taskPriority,
         status: taskStatus,
         assigned_to: taskAssigneeId
       });
+
+      if (res && res.data && res.data.id && color) {
+        setStoredTaskColor(res.data.id, color);
+      }
+
       get().addNotification("Tugas Baru", `Tugas "${title.trim()}" berhasil dibuat.`);
       await get().fetchTasks(projectId);
       return true;
@@ -258,6 +290,13 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       console.error("Failed to create task:", err);
       return false;
     }
+  },
+
+  setTaskColor: (taskId, color) => {
+    setStoredTaskColor(taskId, color);
+    set((state) => ({
+      tasks: state.tasks.map((t) => (t.id === taskId ? { ...t, color } : t)),
+    }));
   },
 
   modifyTaskStatus: async (task, nextFStatus) => {

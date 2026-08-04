@@ -80,6 +80,7 @@ export default function KanbanBoardPage() {
   const [newTaskTitle, setNewTaskTitle] = useState("");
   const [newTaskPriority, setNewTaskPriority] = useState<"low" | "medium" | "high">("medium");
   const [newTaskAssignee, setNewTaskAssignee] = useState<string>("unassigned");
+  const [newTaskColor, setNewTaskColor] = useState<string>("blue");
   const [isCreatingTask, setIsCreatingTask] = useState(false);
 
   // Join request management states
@@ -295,10 +296,11 @@ export default function KanbanBoardPage() {
 
     try {
       const tAssigneeId = newTaskAssignee === "unassigned" ? null : Number(newTaskAssignee);
-      const success = await addTask(projectId, newTaskTitle, newTaskPriority, tAssigneeId, colKey, groupBy);
+      const success = await addTask(projectId, newTaskTitle, newTaskPriority, tAssigneeId, colKey, groupBy, newTaskColor);
       
       if (success) {
         setNewTaskTitle("");
+        setNewTaskColor("blue");
         setActiveInputColumn(null);
         showToast.success("Tugas berhasil ditambahkan!");
       } else {
@@ -881,6 +883,7 @@ export default function KanbanBoardPage() {
                 newTaskTitle={newTaskTitle}
                 newTaskPriority={newTaskPriority}
                 newTaskAssignee={newTaskAssignee}
+                newTaskColor={newTaskColor}
                 isCreatingTask={isCreatingTask}
                 groupBy={groupBy}
                 onDragOver={handleDragOver}
@@ -898,15 +901,18 @@ export default function KanbanBoardPage() {
                   setNewTaskTitle("");
                   setNewTaskPriority("medium");
                   setNewTaskAssignee("unassigned");
+                  setNewTaskColor("blue");
                   setActiveInputColumn(colK);
                 }}
                 onCancelCreateTask={() => {
                   setActiveInputColumn(null);
                   setNewTaskTitle("");
+                  setNewTaskColor("blue");
                 }}
                 setNewTaskTitle={setNewTaskTitle}
                 setNewTaskPriority={setNewTaskPriority}
                 setNewTaskAssignee={setNewTaskAssignee}
+                setNewTaskColor={setNewTaskColor}
                 onOpenDetail={(task) => {
                   setSelectedTask(task);
                   setIsDetailModalOpen(true);

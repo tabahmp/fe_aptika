@@ -15,12 +15,15 @@ import {
   Clock,
   History,
   MessageSquare,
-  Lock
+  Lock,
+  Palette,
+  Check
 } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
-import { Task, Project } from "@/store/useTaskStore";
+import { Task, Project, useTaskStore } from "@/store/useTaskStore";
 import { showToast } from "@/components/ui/Toast";
 import { getTaskComments, createTaskComment, deleteTaskComment, getTaskActivities } from "@/services/api";
+import { TASK_COLORS, getTaskColorConfig } from "@/utils/taskColors";
 
 interface TaskDetailModalProps {
   isOpen: boolean;
@@ -48,6 +51,9 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
   members,
   onUpdateTask,
 }) => {
+  const setTaskColor = useTaskStore((state) => state.setTaskColor);
+
+  const [selectedColorKey, setSelectedColorKey] = useState<string>(task?.color || "blue");
   const [activeTab, setActiveTab] = useState<"comments" | "history" | "worklog">("comments");
   const [isEditingDescription, setIsEditingDescription] = useState(false);
   const [editedDescription, setEditedDescription] = useState("");
@@ -86,9 +92,10 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, task]);
 
-  // Load comments, activities, and description on task change
+  // Load comments, activities, description, and color on task change
   useEffect(() => {
     if (isOpen && task) {
+      setSelectedColorKey(task.color || "blue");
       setEditedDescription(task.description || "");
       setIsEditingDescription(false);
       fetchComments();
@@ -149,6 +156,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
 
   const isDone = task.status === "done";
   const isReadOnly = isDone || !canModify;
+  const currentColorCfg = getTaskColorConfig(selectedColorKey || task.color);
 
   const handleStatusChange = async (nextStatus: Task["status"]) => {
     if (isDone) {
@@ -309,6 +317,11 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
               <span>{project?.name || "PROYEK"}</span>
               <span>•</span>
               <span>{task.code}</span>
+              <span>•</span>
+              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[9px] font-extrabold border ${currentColorCfg.badgeStyle}`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${currentColorCfg.dotColor}`} />
+                {currentColorCfg.name.split(" ")[0]}
+              </span>
             </div>
             <h2 className="text-lg font-bold text-white leading-tight pr-6 break-words">
               {task.title}
@@ -359,6 +372,50 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
 
         {/* Body Content */}
         <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
+
+          {/* Task Color Palette Selection */}
+          <div className="space-y-2.5 text-left bg-white p-4 rounded-xl border border-slate-200/80 shadow-sm">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-extrabold text-[#0b2540] uppercase tracking-wider flex items-center gap-1.5">
+                <Palette size={14} className="text-blue-600" />
+                <span>Pilihan Warna Label Task</span>
+              </h3>
+              <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-extrabold border ${currentColorCfg.badgeStyle}`}>
+                <span className={`w-2 h-2 rounded-full ${currentColorCfg.dotColor}`} />
+                {currentColorCfg.name}
+              </span>
+            </div>
+
+            {!isReadOnly ? (
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
+                {Object.values(TASK_COLORS).map((c) => {
+                  const isSelected = selectedColorKey === c.key;
+                  return (
+                    <button
+                      key={c.key}
+                      type="button"
+                      onClick={() => {
+                        task.color = c.key;
+                        setSelectedColorKey(c.key);
+                        setTaskColor(task.id, c.key);
+                        showToast.success(`Warna task diubah ke ${c.name.split(" ")[0]}`);
+                      }}
+                      className={`flex items-center gap-2 p-2 rounded-lg border text-[11px] font-medium transition-all text-left ${c.bg} ${c.border} ${c.text} ${
+                        isSelected ? "ring-2 ring-blue-500 font-bold shadow-sm scale-[1.02]" : "hover:opacity-90"
+                      }`}
+                    >
+                      <span className={`w-3.5 h-3.5 rounded-full ${c.dotColor} flex-shrink-0 flex items-center justify-center text-white`}>
+                        {isSelected && <Check size={10} className="stroke-[3]" />}
+                      </span>
+                      <span className="truncate">{c.name.split(" ")[0]}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="text-xs text-slate-400 italic">Task telah selesai (status Done).</p>
+            )}
+          </div>
 
           {/* Description Section */}
           <div className="space-y-2.5 text-left">
