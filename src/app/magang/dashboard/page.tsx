@@ -185,6 +185,14 @@ export default function MagangDashboard() {
     setIsNdaModalOpen(true);
   };
 
+  const handleOpenNdaModalForMagang = (magangId: number) => {
+    setNdaFormData({
+      magangId: String(magangId),
+      tanggal: new Date().toISOString().split("T")[0],
+    });
+    setIsNdaModalOpen(true);
+  };
+
   const handlePrintNda = (e: React.FormEvent) => {
     e.preventDefault();
     if (!ndaFormData.magangId) {
@@ -654,8 +662,11 @@ export default function MagangDashboard() {
                     </td>
                     <td className="px-3 py-3">
                       <div className="flex items-center justify-center gap-1">
-                        <button onClick={() => handleOpenModal("view", item)} className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Lihat">
+                        <button onClick={() => handleOpenModal("view", item)} className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Lihat Detail">
                           <Eye size={16} />
+                        </button>
+                        <button onClick={() => handleOpenNdaModalForMagang(item.id)} className="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors" title="Cetak Surat NDA">
+                          <Printer size={16} />
                         </button>
                         <button onClick={() => handleOpenModal("edit", item)} className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors" title="Edit">
                           <Edit size={16} />
