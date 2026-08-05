@@ -59,6 +59,51 @@ const formatIndonesianFullDateText = (dateString: string) => {
   return `${dayName} tanggal ${dayWords} Bulan ${monthName} tahun ${yearWords} (${dayNum} ${monthName} ${yearNum})`;
 };
 
+const isSertifikatEligible = (tglSelesai: string) => {
+  if (!tglSelesai) return false;
+  const cleanStr = tglSelesai.includes("T") ? tglSelesai.split("T")[0] : tglSelesai;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const end = new Date(cleanStr + "T00:00:00");
+  end.setHours(0, 0, 0, 0);
+  return today.getTime() >= end.getTime();
+};
+
+const formatCertificatePeriod = (tglMulaiStr: string, tglSelesaiStr: string) => {
+  if (!tglMulaiStr || !tglSelesaiStr) return "-";
+  const months = [
+    "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+    "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+  ];
+
+  const cleanMulai = tglMulaiStr.includes("T") ? tglMulaiStr.split("T")[0] : tglMulaiStr;
+  const cleanSelesai = tglSelesaiStr.includes("T") ? tglSelesaiStr.split("T")[0] : tglSelesaiStr;
+
+  const startDate = new Date(cleanMulai + "T00:00:00");
+  const endDate = new Date(cleanSelesai + "T00:00:00");
+
+  if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+    return `${cleanMulai} s.d ${cleanSelesai}`;
+  }
+
+  const startDay = startDate.getDate();
+  const startMonth = months[startDate.getMonth()];
+  const startYear = startDate.getFullYear();
+
+  const endDay = endDate.getDate();
+  const endMonth = months[endDate.getMonth()];
+  const endYear = endDate.getFullYear();
+
+  if (startYear === endYear) {
+    if (startMonth === endMonth) {
+      return `${startDay} s.d ${endDay} ${endMonth} ${endYear}`;
+    }
+    return `${startDay} ${startMonth} s.d ${endDay} ${endMonth} ${endYear}`;
+  }
+
+  return `${startDay} ${startMonth} ${startYear} s.d ${endDay} ${endMonth} ${endYear}`;
+};
+
 export default function MagangDashboard() {
   const [magangs, setMagangs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -104,6 +149,383 @@ export default function MagangDashboard() {
     } finally {
       setIsUploadingNda(false);
     }
+  };
+
+  const handlePrintCertificate = async (item: any) => {
+    if (!isSertifikatEligible(item.tgl_selesai)) {
+      alert(`Sertifikat belum dapat dicetak. Tanggal selesai magang adalah ${formatDate(item.tgl_selesai)}.`);
+      return;
+    }
+
+    if (item.sertifikat !== "Sudah menerima") {
+      try {
+        const payload = new FormData();
+        payload.append("nama", item.nama);
+        payload.append("nama_kampus", item.nama_kampus);
+        payload.append("tgl_mulai_magang", item.tgl_mulai);
+        payload.append("tgl_selesai_magang", item.tgl_selesai);
+        payload.append("sertifikat", "Sudah menerima");
+        if (item.keterangan) payload.append("keterangan", item.keterangan);
+
+        await updateMagang(item.id, payload);
+        fetchData();
+      } catch (e) {
+        console.error("Gagal memperbarui status sertifikat", e);
+      }
+    }
+
+    const periodText = formatCertificatePeriod(item.tgl_mulai, item.tgl_selesai);
+    const logoUrl = typeof window !== "undefined" ? window.location.origin + "/logo-jabar.png" : "/logo-jabar.png";
+    const esignLogoUrl = typeof window !== "undefined" ? window.location.origin + "/logo-esign.png" : "/logo-esign.png";
+
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) {
+      alert("Gagal membuka jendela cetak. Mohon izinkan pop-up di browser Anda.");
+      return;
+    }
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html lang="id">
+      <head>
+        <meta charset="UTF-8">
+        <title>Sertifikat Magang - ${item.nama}</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+        <style>
+          @page {
+            size: A4 landscape;
+            margin: 0 !important;
+          }
+          @media print {
+            html, body {
+              width: 297mm !important;
+              height: 210mm !important;
+              margin: 0 !important;
+              padding: 0 !important;
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+            }
+          }
+          *, *:before, *:after {
+            box-sizing: border-box;
+          }
+          html, body {
+            margin: 0;
+            padding: 0;
+            width: 297mm;
+            height: 210mm;
+            font-family: 'Plus Jakarta Sans', Arial, sans-serif;
+            background-color: #ffffff;
+            position: relative;
+            overflow: hidden;
+            color: #0f172a;
+          }
+
+          .bg-waves {
+            position: absolute;
+            inset: 0;
+            z-index: 1;
+            opacity: 0.45;
+            pointer-events: none;
+            width: 100%;
+            height: 100%;
+          }
+
+          .geo-left-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: 14px;
+            background-color: #0F62FE;
+            z-index: 2;
+          }
+
+          .geo-tl {
+            position: absolute;
+            top: 0;
+            left: 14px;
+            z-index: 2;
+          }
+          .geo-tl .block-teal-1 { position: absolute; top: 12px; left: 0; width: 22px; height: 50px; background-color: #00CBA5; }
+          .geo-tl .block-blue-1 { position: absolute; top: 12px; left: 26px; width: 38px; height: 95px; background-color: #0F62FE; }
+          .geo-tl .block-yellow-1 { position: absolute; top: 38px; left: 68px; width: 44px; height: 35px; background-color: #FFE135; }
+          .geo-tl .block-teal-2 { position: absolute; top: 125px; left: 0; width: 62px; height: 32px; background-color: #00CBA5; }
+          .geo-tl .block-yellow-2 { position: absolute; top: 165px; left: 0; width: 22px; height: 50px; background-color: #FFE135; }
+
+          .geo-br {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            z-index: 2;
+          }
+          .geo-br .block-yellow-1 { position: absolute; bottom: 215px; right: 14px; width: 45px; height: 35px; background-color: #FFE135; }
+          .geo-br .block-teal-1 { position: absolute; bottom: 175px; right: 14px; width: 120px; height: 35px; background-color: #00CBA5; }
+          .geo-br .block-blue-1 { position: absolute; bottom: 48px; right: 80px; width: 50px; height: 120px; background-color: #0F62FE; }
+          .geo-br .block-yellow-2 { position: absolute; bottom: 110px; right: 14px; width: 60px; height: 38px; background-color: #FFE135; }
+          .geo-br .block-teal-2 { position: absolute; bottom: 14px; right: 14px; width: 45px; height: 90px; background-color: #00CBA5; }
+          .geo-br .block-yellow-3 { position: absolute; bottom: 35px; right: 145px; width: 75px; height: 42px; background-color: #FFE135; }
+          .geo-br .bottom-bar { position: absolute; bottom: 0; right: 0; width: 340px; height: 16px; background-color: #0F62FE; }
+          .geo-br .right-bar { position: absolute; bottom: 0; right: 0; top: 0; width: 14px; background-color: #0F62FE; }
+
+          .logo-badge {
+            position: absolute;
+            top: 28px;
+            right: 48px;
+            z-index: 3;
+            background: rgba(255, 255, 255, 0.95);
+            border: 1.5px solid #e2e8f0;
+            border-radius: 40px;
+            padding: 6px 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+          }
+          .logo-badge img {
+            height: 42px;
+            width: auto;
+          }
+
+          .watermark-logo {
+            position: absolute;
+            top: 50%;
+            left: 34%;
+            transform: translate(-50%, -50%);
+            z-index: 1;
+            opacity: 0.07;
+            pointer-events: none;
+          }
+          .watermark-logo img {
+            width: 360px;
+            height: auto;
+          }
+
+          .cert-container {
+            position: relative;
+            z-index: 10;
+            padding: 48px 80px 40px 105px;
+            text-align: left;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+          }
+
+          .header-title {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 38pt;
+            font-weight: 800;
+            color: #081B4B;
+            margin: 0 0 2px 0;
+            letter-spacing: -0.5px;
+            text-align: left;
+          }
+
+          .header-subtitle {
+            font-size: 13.5pt;
+            font-weight: 500;
+            color: #334155;
+            margin: 0 0 16px 0;
+            text-align: left;
+          }
+
+          .recipient-name {
+            font-family: 'Great Vibes', cursive;
+            font-size: 46pt;
+            font-weight: 400;
+            color: #091D4C;
+            margin: 0 0 16px 0;
+            line-height: 1.2;
+            text-align: left;
+          }
+
+          .cert-body {
+            font-size: 11pt;
+            line-height: 1.55;
+            color: #1e293b;
+            text-align: left;
+            max-width: 680px;
+            margin: 0;
+            font-weight: 500;
+          }
+
+          .cert-body strong {
+            font-weight: 700;
+            color: #0f172a;
+          }
+
+          .footer-section {
+            display: flex;
+            align-items: flex-end;
+            justify-content: flex-start;
+            gap: 30px;
+            padding: 0;
+            margin-top: 28px;
+          }
+
+          .esign-box {
+            border: 1.5px solid #1e293b;
+            border-radius: 16px;
+            padding: 10px 14px;
+            width: 310px;
+            background: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-align: left;
+          }
+
+          .esign-icon {
+            height: 52px;
+            width: auto;
+            object-fit: contain;
+            flex-shrink: 0;
+          }
+
+          .esign-text {
+            font-size: 7.5pt;
+            line-height: 1.35;
+            color: #0f172a;
+          }
+
+          .esign-text .header-esign {
+            font-size: 7pt;
+            color: #475569;
+            margin-bottom: 3px;
+          }
+
+          .esign-text .title-esign {
+            font-weight: 700;
+            font-size: 7.5pt;
+            text-transform: uppercase;
+            line-height: 1.2;
+            margin-bottom: 10px;
+          }
+
+          .esign-text .signer-name {
+            font-weight: 800;
+            font-size: 8.5pt;
+            margin-bottom: 3px;
+          }
+
+          .esign-text .signer-rank {
+            font-size: 7.5pt;
+            color: #334155;
+          }
+
+          .gold-medal {
+            width: 82px;
+            height: 82px;
+            margin-bottom: 6px;
+          }
+        </style>
+      </head>
+      <body>
+
+        <svg class="bg-waves" viewBox="0 0 1000 700" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- Upper Wave Ribbon (4px spacing) -->
+          <path d="M-100 180 C150 80, 350 380, 600 230 C850 80, 1050 330, 1200 180" stroke="#CBD5E1" stroke-width="1" fill="none"/>
+          <path d="M-100 184 C150 84, 350 384, 600 234 C850 84, 1050 334, 1200 184" stroke="#D1D5DB" stroke-width="1" fill="none"/>
+          <path d="M-100 188 C150 88, 350 388, 600 238 C850 88, 1050 338, 1200 188" stroke="#E2E8F0" stroke-width="1" fill="none"/>
+          <path d="M-100 192 C150 92, 350 392, 600 242 C850 92, 1050 342, 1200 192" stroke="#E5E7EB" stroke-width="1" fill="none"/>
+          <path d="M-100 196 C150 96, 350 396, 600 246 C850 96, 1050 346, 1200 196" stroke="#E2E8F0" stroke-width="1" fill="none"/>
+          <path d="M-100 200 C150 100, 350 400, 600 250 C850 100, 1050 350, 1200 200" stroke="#CBD5E1" stroke-width="1" fill="none"/>
+          <path d="M-100 204 C150 104, 350 404, 600 254 C850 104, 1050 354, 1200 204" stroke="#E2E8F0" stroke-width="1" fill="none"/>
+          <path d="M-100 208 C150 108, 350 408, 600 258 C850 108, 1050 358, 1200 208" stroke="#F1F5F9" stroke-width="1" fill="none"/>
+
+          <!-- Lower Wave Ribbon (4px spacing) -->
+          <path d="M-100 480 C200 330, 450 630, 750 430 C950 300, 1100 480, 1200 430" stroke="#CBD5E1" stroke-width="1" fill="none"/>
+          <path d="M-100 484 C200 334, 450 634, 750 434 C950 304, 1100 484, 1200 434" stroke="#D1D5DB" stroke-width="1" fill="none"/>
+          <path d="M-100 488 C200 338, 450 638, 750 438 C950 308, 1100 488, 1200 438" stroke="#E2E8F0" stroke-width="1" fill="none"/>
+          <path d="M-100 492 C200 342, 450 642, 750 442 C950 312, 1100 492, 1200 442" stroke="#E5E7EB" stroke-width="1" fill="none"/>
+          <path d="M-100 496 C200 346, 450 646, 750 446 C950 316, 1100 496, 1200 446" stroke="#E2E8F0" stroke-width="1" fill="none"/>
+          <path d="M-100 500 C200 350, 450 650, 750 450 C950 320, 1100 500, 1200 450" stroke="#CBD5E1" stroke-width="1" fill="none"/>
+        </svg>
+
+        <div class="geo-left-bar"></div>
+
+        <div class="watermark-logo">
+          <img src="${logoUrl}" alt="Watermark Diskominfo" />
+        </div>
+
+        <div class="geo-tl">
+          <div class="block-teal-1"></div>
+          <div class="block-blue-1"></div>
+          <div class="block-yellow-1"></div>
+          <div class="block-teal-2"></div>
+          <div class="block-yellow-2"></div>
+        </div>
+
+        <div class="geo-br">
+          <div class="block-yellow-1"></div>
+          <div class="block-teal-1"></div>
+          <div class="block-blue-1"></div>
+          <div class="block-yellow-2"></div>
+          <div class="block-teal-2"></div>
+          <div class="block-yellow-3"></div>
+          <div class="bottom-bar"></div>
+          <div class="right-bar"></div>
+        </div>
+
+        <div class="logo-badge">
+          <img src="${logoUrl}" alt="Logo Diskominfo Jabar" />
+        </div>
+
+        <div class="cert-container">
+
+          <div>
+            <h1 class="header-title">Sertifikat</h1>
+            <p class="header-subtitle">Diberikan kepada :</p>
+            <div class="recipient-name">${item.nama}</div>
+            <div class="cert-body">
+              Yang telah selesai melaksanakan Kerja Praktek di Dinas Komunikasi dan Informatika Provinsi Jawa Barat, pada <strong>${periodText}</strong> dan yang bersangkutan dinyatakan memenuhi persyaratan dan peraturan yang berlaku, sehingga kepadanya diberikan sertifikat.
+            </div>
+          </div>
+
+          <div class="footer-section">
+
+            <div class="esign-box">
+              <img src="${esignLogoUrl}" class="esign-icon" alt="Logo E-Sign" />
+              <div class="esign-text">
+                <div class="header-esign">Ditandatangani secara elektronik oleh:</div>
+                <div class="title-esign">KEPALA DINAS KOMUNIKASI DAN INFORMATIKA<br>PROVINSI JAWA BARAT</div>
+                <div class="signer-name">MAS ADI KOMAR, S.STP., M.Tr.A.P.</div>
+                <div class="signer-rank">Pembina Tk.I</div>
+              </div>
+            </div>
+
+            <div class="gold-medal">
+              <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M38 65 L28 95 L40 88 L48 95 L43 65 Z" fill="#D97706"/>
+                <path d="M62 65 L57 95 L65 88 L77 95 L67 65 Z" fill="#B45309"/>
+                <circle cx="50" cy="45" r="38" fill="#F59E0B"/>
+                <circle cx="50" cy="45" r="34" fill="#FBBF24"/>
+                <circle cx="50" cy="45" r="30" fill="#F59E0B"/>
+                <circle cx="50" cy="45" r="28" fill="#FEF3C7" stroke="#D97706" stroke-width="1.5"/>
+                <circle cx="50" cy="45" r="22" fill="#F59E0B"/>
+                <path d="M50 29 L54 38 L64 39 L57 46 L59 56 L50 51 L41 56 L43 46 L36 39 L46 38 Z" fill="#FEF3C7"/>
+              </svg>
+            </div>
+
+          </div>
+
+        </div>
+
+        <script>
+          window.onload = function() {
+            setTimeout(function() {
+              window.print();
+            }, 300);
+          };
+        </script>
+      </body>
+      </html>
+    `;
+
+    printWindow.document.write(htmlContent);
+    printWindow.document.close();
   };
 
 
@@ -696,9 +1118,29 @@ export default function MagangDashboard() {
                       </span>
                     </td>
                     <td className="px-3 py-3">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold whitespace-nowrap ${item.sertifikat === 'Sudah menerima' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}`}>
-                        {item.sertifikat || 'Belum menerima'}
-                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold whitespace-nowrap ${item.sertifikat === 'Sudah menerima' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}`}>
+                          {item.sertifikat || 'Belum menerima'}
+                        </span>
+                        {isSertifikatEligible(item.tgl_selesai) ? (
+                          <button
+                            onClick={() => handlePrintCertificate(item)}
+                            className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                            title="Cetak Sertifikat Magang"
+                          >
+                            <Printer size={16} />
+                          </button>
+                        ) : (
+                          <button
+                            disabled
+                            onClick={() => alert(`Sertifikat belum dapat dicetak. Tanggal selesai magang adalah ${formatDate(item.tgl_selesai)}.`)}
+                            className="p-1.5 text-slate-300 cursor-not-allowed rounded-lg"
+                            title={`Magang belum selesai. Sertifikat baru dapat dicetak setelah ${formatDate(item.tgl_selesai)}`}
+                          >
+                            <Printer size={16} />
+                          </button>
+                        )}
+                      </div>
                     </td>
                     <td className="px-3 py-3">
                       <div className="flex items-center justify-center gap-1.5">
