@@ -260,7 +260,7 @@ const handleAssign = async () => {
                   return (
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                       {files.map((path: string, idx: number) => {
-                        const fileUrl = `http://localhost:8000/storage/${path.replace(/\\/g, '/')}`;
+                        const fileUrl = `${process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'https://beaptika-production-3cee.up.railway.app'}/storage/${path.replace(/\\/g, '/')}`;
                         const ext = path.split('.').pop()?.toLowerCase() || 'file';
                         const isPdf = ext === 'pdf';
                         return (

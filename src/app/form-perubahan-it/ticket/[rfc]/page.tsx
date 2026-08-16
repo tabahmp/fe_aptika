@@ -306,7 +306,7 @@ return (
               return (
                 <div className="flex flex-wrap gap-4">
                   {files.map((path: string, idx: number) => {
-                    const fileUrl = `http://localhost:8000/storage/${path.replace(/\\/g, '/')}`;
+                    const fileUrl = `${process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'https://beaptika-production-3cee.up.railway.app'}/storage/${path.replace(/\\/g, '/')}`;
                     const fileName = path.split('/').pop() || `Lampiran_${idx + 1}`;
                     const isPdf = fileName.toLowerCase().endsWith('.pdf');
                     const uploadDate = formatDate(ticket.created_at).split(',')[0]; // Ambil tanggalnya saja

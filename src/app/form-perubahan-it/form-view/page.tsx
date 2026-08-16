@@ -26,9 +26,7 @@ export default function FormView({ onSuccess }: { onSuccess: (data: any) => void
   const [opdList, setOpdList] = useState<OpdItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
-
-  const API_BASE_URL = 'http://localhost:8000/api'; 
-
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://beaptika-production-3cee.up.railway.app/api';
   const [pemohon, setPemohon] = useState('');
   const [unitKerja, setUnitKerja] = useState('');
   const [perangkatDaerahId, setPerangkatDaerahId] = useState('');
