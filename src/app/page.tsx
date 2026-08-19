@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   GraduationCap,
@@ -11,7 +11,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
-import { login, createMagang } from "@/services/api";
+import { login, createMagang, getBidangs } from "@/services/api";
 
 function UserIcon() {
   return (
@@ -50,16 +50,31 @@ export default function Home() {
   const [isMagangModalOpen, setIsMagangModalOpen] = useState(false);
   const [magangSubmitting, setMagangSubmitting] = useState(false);
   const [magangSuccess, setMagangSuccess] = useState(false);
+  const [bidangs, setBidangs] = useState<any[]>([]);
 
   const [formData, setFormData] = useState({
     nama: "",
     nama_kampus: "",
+    bidang_id: "3", // default APTIKA
     tgl_mulai_magang: "",
     tgl_selesai_magang: "",
     sertifikat: "Belum menerima",
     keterangan: "",
   });
   const [cvFile, setCvFile] = useState<File | null>(null);
+
+  useEffect(() => {
+    getBidangs()
+      .then((res) => {
+        if (res && res.data) {
+          setBidangs(res.data);
+          if (res.data.length > 0 && !formData.bidang_id) {
+            setFormData((prev) => ({ ...prev, bidang_id: String(res.data[0].id) }));
+          }
+        }
+      })
+      .catch((err) => console.error("Gagal memuat bidang:", err));
+  }, []);
 
   // Hitung status magang otomatis
   const computeStatusMagang = (tglMulai: string, tglSelesai: string) => {
@@ -86,6 +101,7 @@ export default function Home() {
     setFormData({
       nama: "",
       nama_kampus: "",
+      bidang_id: bidangs.length > 0 ? String(bidangs[0].id) : "3",
       tgl_mulai_magang: "",
       tgl_selesai_magang: "",
       sertifikat: "Belum menerima",
@@ -149,9 +165,14 @@ export default function Home() {
       const payload = new FormData();
       payload.append("nama", formData.nama);
       payload.append("nama_kampus", formData.nama_kampus);
+      payload.append("bidang_id", formData.bidang_id);
       payload.append("tgl_mulai_magang", formData.tgl_mulai_magang);
       payload.append("tgl_selesai_magang", formData.tgl_selesai_magang);
       payload.append("sertifikat", formData.sertifikat);
+      if (formData.keterangan) payload.append("keterangan", formData.keterangan);
+      if (cvFile) {
+        payload.append("cv_magang", cvFile);
+      }
       if (formData.keterangan) payload.append("keterangan", formData.keterangan);
       if (cvFile) {
         payload.append("cv_magang", cvFile);
@@ -553,6 +574,25 @@ export default function Home() {
                   className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all"
                   placeholder="Masukkan institusi"
                 />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Pilih Bidang Tujuan Magang <span className="text-red-500">*</span>
+                </label>
+                <select
+                  required
+                  value={formData.bidang_id}
+                  onChange={(e) => setFormData({ ...formData, bidang_id: e.target.value })}
+                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all bg-white"
+                >
+                  <option value="">-- Pilih Bidang / Unit Kerja --</option>
+                  {bidangs.map((b) => (
+                    <option key={b.id} value={b.id}>
+                      {b.name} ({b.code})
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div>

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getAdminUsers, createAdminUser, updateAdminUser, deleteAdminUser } from "@/services/api";
+import { getAdminUsers, createAdminUser, updateAdminUser, deleteAdminUser, getBidangs } from "@/services/api";
 import Button from "@/components/ui/Button";
 import Badge from "@/components/ui/Badge";
 import { Plus, Pencil, Trash2 } from "lucide-react";
@@ -20,7 +20,7 @@ const S = {
   th: { backgroundColor: "#f8fafc", borderBottom: "2px solid #e2e8f0", padding: "12px 16px", fontWeight: "700", color: "#475569", textAlign: "left" as const, fontSize: "11px", letterSpacing: "0.5px", textTransform: "uppercase" as const } as React.CSSProperties,
   td: { borderBottom: "1px solid #e2e8f0", padding: "14px 16px", color: "#334155", verticalAlign: "middle" } as React.CSSProperties,
   modalOverlay: { position: "fixed" as const, top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(15,23,42,0.4)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 },
-  modalContent: { backgroundColor: "white", borderRadius: "14px", border: "1px solid #e2e8f0", width: "450px", maxWidth: "90%", padding: "24px", boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)" } as React.CSSProperties,
+  modalContent: { backgroundColor: "white", borderRadius: "14px", border: "1px solid #e2e8f0", width: "480px", maxWidth: "90%", padding: "24px", boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)" } as React.CSSProperties,
   modalTitle: { fontSize: "15px", fontWeight: "700", color: "#0f172a", marginBottom: "18px" } as React.CSSProperties,
   formGroup: { marginBottom: "14px" } as React.CSSProperties,
   label: { display: "block", fontSize: "11px", fontWeight: "700", color: "#475569", letterSpacing: "0.8px", textTransform: "uppercase" as const, marginBottom: "6px" } as React.CSSProperties,
@@ -35,6 +35,7 @@ export default function UsersCrudPage() {
   const [authorized, setAuthorized] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [users, setUsers] = useState<any[]>([]);
+  const [bidangs, setBidangs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Modal State
@@ -47,6 +48,7 @@ export default function UsersCrudPage() {
   const [formEmail, setFormEmail] = useState("");
   const [formPassword, setFormPassword] = useState("");
   const [formRole, setFormRole] = useState("user");
+  const [formBidangId, setFormBidangId] = useState<string>("3");
   const [formIsActive, setFormIsActive] = useState(1);
   const [formPosition, setFormPosition] = useState("");
   const [formPhone, setFormPhone] = useState("");
@@ -77,10 +79,16 @@ export default function UsersCrudPage() {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const data = await getAdminUsers();
-      setUsers(data);
+      const [userData, bidangData] = await Promise.all([
+        getAdminUsers(),
+        getBidangs().catch(() => ({ data: [] })),
+      ]);
+      setUsers(userData);
+      if (bidangData?.data) {
+        setBidangs(bidangData.data);
+      }
     } catch {
-      alert("Gagal memuat daftar pengguna.");
+      showToast.error("Gagal memuat daftar pengguna.");
     } finally {
       setLoading(false);
     }
@@ -97,6 +105,7 @@ export default function UsersCrudPage() {
     setFormEmail("");
     setFormPassword("");
     setFormRole("user");
+    setFormBidangId(bidangs.length > 0 ? String(bidangs[0].id) : "3");
     setFormIsActive(1);
     setFormPosition("");
     setFormPhone("");
@@ -109,6 +118,7 @@ export default function UsersCrudPage() {
     setFormEmail(user.email);
     setFormPassword("");
     setFormRole(user.role);
+    setFormBidangId(user.bidang_id ? String(user.bidang_id) : "3");
     setFormIsActive(Number(user.is_active));
     setFormPosition(user.position || user.jabatan || "");
     setFormPhone(user.phone || user.no_telp || "");
@@ -121,10 +131,6 @@ export default function UsersCrudPage() {
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDeleteClick = (user: any) => {
-    if (user.id === currentUser?.id) {
-      showToast.error("Anda tidak dapat menghapus akun Anda sendiri.");
-      return;
-    }
     setDeleteTargetUser(user);
     setIsDeleteModalOpen(true);
   };
@@ -159,6 +165,7 @@ export default function UsersCrudPage() {
         email: formEmail,
         password: formPassword,
         role: formRole,
+        bidang_id: Number(formBidangId),
         is_active: Number(formIsActive),
         position: formPosition,
         phone: formPhone,
@@ -186,6 +193,7 @@ export default function UsersCrudPage() {
         name: formName,
         email: formEmail,
         role: formRole,
+        bidang_id: Number(formBidangId),
         is_active: Number(formIsActive),
         position: formPosition,
         phone: formPhone,
@@ -258,6 +266,7 @@ export default function UsersCrudPage() {
                   <tr>
                     <th style={S.th}>Nama</th>
                     <th style={S.th}>Email</th>
+                    <th style={S.th}>Bidang / Unit Kerja</th>
                     <th style={S.th}>Jabatan</th>
                     <th style={S.th}>No. Telp</th>
                     <th style={S.th}>Role</th>
@@ -282,6 +291,16 @@ export default function UsersCrudPage() {
                         </div>
                       </td>
                       <td style={S.td}>{u.email}</td>
+                      <td style={S.td}>
+                        <div className="flex flex-col gap-0.5">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-extrabold bg-blue-50 text-blue-700 border border-blue-200 w-fit">
+                            {u.bidang?.code || "APTIKA"}
+                          </span>
+                          <span className="text-[11px] text-slate-500 font-semibold truncate max-w-[150px]">
+                            {u.bidang?.name || "Bidang Aplikasi Informatika"}
+                          </span>
+                        </div>
+                      </td>
                       <td style={S.td}>
                         <span className="text-xs text-slate-600 font-medium">
                           {u.position || u.jabatan || "-"}
@@ -375,6 +394,17 @@ export default function UsersCrudPage() {
                 </div>
 
                 <div style={S.formGroup}>
+                  <label style={S.label}>Bidang / Unit Kerja <span style={{ color: "#ef4444" }}>*</span></label>
+                  <select value={formBidangId} onChange={(e) => setFormBidangId(e.target.value)} style={S.select} className="select-focus" required>
+                    {bidangs.map((b) => (
+                      <option key={b.id} value={b.id}>
+                        {b.name} ({b.code})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div style={S.formGroup}>
                   <label style={S.label}>Hak Akses (Role) <span style={{ color: "#ef4444" }}>*</span></label>
                   <select value={formRole} onChange={(e) => setFormRole(e.target.value)} style={S.select} className="select-focus">
                     <option value="user">User biasa (Hanya CRUD 6 Service)</option>
@@ -421,6 +451,17 @@ export default function UsersCrudPage() {
                   <div style={S.inputWrap} className="input-focus">
                     <input type="email" value={formEmail} onChange={(e) => setFormEmail(e.target.value)} placeholder="email@domain.com" style={S.input} required />
                   </div>
+                </div>
+
+                <div style={S.formGroup}>
+                  <label style={S.label}>Bidang / Unit Kerja <span style={{ color: "#ef4444" }}>*</span></label>
+                  <select value={formBidangId} onChange={(e) => setFormBidangId(e.target.value)} style={S.select} className="select-focus" required>
+                    {bidangs.map((b) => (
+                      <option key={b.id} value={b.id}>
+                        {b.name} ({b.code})
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 <div style={S.formGroup}>

@@ -4,10 +4,11 @@ import { useState, useEffect } from "react";
 import { api } from "@/services/api";
 import { showToast } from "@/components/ui/Toast";
 import ServiceRouteGuard from "@/components/auth/ServiceRouteGuard";
-import { ShieldCog, RefreshCw, CheckCircle2, XCircle } from "lucide-react";
+import { ShieldCog, RefreshCw, CheckCircle2, XCircle, FileText, Layers, LayoutGrid } from "lucide-react";
 
 interface ServiceItem {
   service_id: number;
+  parent_id?: number | null;
   code: string;
   name: string;
   is_enabled: boolean;
@@ -24,6 +25,7 @@ export default function AdminBidangServicesPage() {
   const [matrix, setMatrix] = useState<BidangMatrix[]>([]);
   const [loading, setLoading] = useState(true);
   const [updatingKey, setUpdatingKey] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<"MAIN" | "SURAT" | "IKI">("MAIN");
 
   const fetchMatrix = async () => {
     setLoading(true);
@@ -44,7 +46,7 @@ export default function AdminBidangServicesPage() {
     fetchMatrix();
   }, []);
 
-  const handleToggle = async (bidangId: number, serviceId: number, currentStatus: boolean, bidangCode: string, serviceCode: string) => {
+  const handleToggle = async (bidangId: number, serviceId: number, currentStatus: boolean, bidangCode: string, serviceName: string) => {
     const key = `${bidangId}-${serviceId}`;
     setUpdatingKey(key);
     const newStatus = !currentStatus;
@@ -57,7 +59,7 @@ export default function AdminBidangServicesPage() {
       });
 
       if (res.data && res.data.success) {
-        showToast.success(`Layanan ${serviceCode} untuk Bidang ${bidangCode} berhasil diubah ke ${newStatus ? 'Aktif' : 'Nonaktif'}.`);
+        showToast.success(`Layanan "${serviceName}" untuk Bidang ${bidangCode} diubah ke ${newStatus ? 'Aktif' : 'Nonaktif'}.`);
         setMatrix((prev) =>
           prev.map((b) => {
             if (b.bidang_id === bidangId) {
@@ -80,6 +82,38 @@ export default function AdminBidangServicesPage() {
     }
   };
 
+  // List of columns depending on active tab
+  const getTabColumns = () => {
+    if (activeTab === "MAIN") {
+      return [
+        { code: "ADMINISTRASI_SURAT", label: "Administrasi Surat" },
+        { code: "IKI_REPORT", label: "IKI Report" },
+        { code: "MANAJEMEN_TUGAS", label: "Manajemen Tugas Digital" },
+        { code: "MAGANG", label: "Magang" },
+      ];
+    }
+    if (activeTab === "SURAT") {
+      return [
+        { code: "SURAT_NOTA_DINAS", label: "Nota Dinas" },
+        { code: "SURAT_SPD", label: "Surat Perjalanan Dinas (SPD)" },
+        { code: "SURAT_HASIL_PENTEST", label: "Laporan Hasil Pentest" },
+        { code: "SURAT_KERENTANAN", label: "Laporan Kerentanan" },
+        { code: "SURAT_PERMOHONAN_TI", label: "Form Perubahan IT (RFC)" },
+      ];
+    }
+    // IKI TAB
+    return [
+      { code: "IKI_INTEGRASI", label: "Integrasi Interoperabilitas" },
+      { code: "IKI_PENGELOLAAN", label: "Pengelolaan Aplikasi" },
+      { code: "IKI_REKAYASA", label: "Rekayasa Aplikasi" },
+      { code: "IKI_SIDEBAR", label: "Sidebar Jabar" },
+      { code: "IKI_SMARTJABAR", label: "Smart Jabar" },
+      { code: "IKI_SADAJABAR", label: "Sada Jabar" },
+    ];
+  };
+
+  const columns = getTabColumns();
+
   return (
     <ServiceRouteGuard requireAdminAptika>
       <div className="p-6 max-w-7xl mx-auto space-y-6">
@@ -91,10 +125,10 @@ export default function AdminBidangServicesPage() {
             </div>
             <div>
               <h1 className="text-lg font-extrabold text-[#0b2146] dark:text-white">
-                Konfigurasi Layanan Bidang
+                Konfigurasi Hak Akses Layanan Bidang
               </h1>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Pengaturan hak akses modul (Service Permission Toggle) untuk 7 Unit Kerja / Bidang.
+                Pengaturan hak akses modul & jenis dokumen/surat (Service & Sub-Service Toggle) untuk 7 Unit Kerja.
               </p>
             </div>
           </div>
@@ -106,6 +140,45 @@ export default function AdminBidangServicesPage() {
           >
             <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
             Muat Ulang Data
+          </button>
+        </div>
+
+        {/* Tab Selection */}
+        <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-2">
+          <button
+            onClick={() => setActiveTab("MAIN")}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-extrabold transition-all ${
+              activeTab === "MAIN"
+                ? "bg-blue-600 text-white shadow-md shadow-blue-500/20"
+                : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700"
+            }`}
+          >
+            <LayoutGrid size={15} />
+            Modul Utama (4 Service)
+          </button>
+
+          <button
+            onClick={() => setActiveTab("SURAT")}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-extrabold transition-all ${
+              activeTab === "SURAT"
+                ? "bg-amber-600 text-white shadow-md shadow-amber-500/20"
+                : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700"
+            }`}
+          >
+            <FileText size={15} />
+            Jenis Surat (Administrasi Surat)
+          </button>
+
+          <button
+            onClick={() => setActiveTab("IKI")}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-extrabold transition-all ${
+              activeTab === "IKI"
+                ? "bg-purple-600 text-white shadow-md shadow-purple-500/20"
+                : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700"
+            }`}
+          >
+            <Layers size={15} />
+            Sub-Modul (IKI Report)
           </button>
         </div>
 
@@ -121,11 +194,12 @@ export default function AdminBidangServicesPage() {
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
                   <tr className="bg-slate-50 dark:bg-slate-900/60 border-b border-slate-200 dark:border-slate-800 text-[#0b2146] dark:text-slate-200 font-extrabold">
-                    <th className="py-4 px-6">Nama Bidang / Unit Kerja</th>
-                    <th className="py-4 px-4 text-center">Administrasi Surat</th>
-                    <th className="py-4 px-4 text-center">IKI Report</th>
-                    <th className="py-4 px-4 text-center">Manajemen Tugas Digital</th>
-                    <th className="py-4 px-4 text-center">Magang</th>
+                    <th className="py-4 px-6 min-w-[200px]">Nama Bidang / Unit Kerja</th>
+                    {columns.map((col) => (
+                      <th key={col.code} className="py-4 px-4 text-center min-w-[140px]">
+                        {col.label}
+                      </th>
+                    ))}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
@@ -143,50 +217,48 @@ export default function AdminBidangServicesPage() {
                         </div>
                       </td>
 
-                      {/* Render 4 Toggle Cells */}
-                      {["ADMINISTRASI_SURAT", "IKI_REPORT", "MANAJEMEN_TUGAS", "MAGANG"].map(
-                        (svcCode) => {
-                          const svc = b.services.find((s) => s.code === svcCode);
-                          const isEnabled = svc ? svc.is_enabled : false;
-                          const key = `${b.bidang_id}-${svc?.service_id}`;
-                          const isUpdating = updatingKey === key;
+                      {/* Render Dynamic Service Toggle Cells */}
+                      {columns.map((col) => {
+                        const svc = b.services.find((s) => s.code === col.code);
+                        const isEnabled = svc ? svc.is_enabled : false;
+                        const key = `${b.bidang_id}-${svc?.service_id}`;
+                        const isUpdating = updatingKey === key;
 
-                          return (
-                            <td key={svcCode} className="py-4 px-4 text-center">
-                              {svc ? (
-                                <button
-                                  onClick={() =>
-                                    handleToggle(
-                                      b.bidang_id,
-                                      svc.service_id,
-                                      isEnabled,
-                                      b.bidang_code,
-                                      svc.code
-                                    )
-                                  }
-                                  disabled={isUpdating}
-                                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-extrabold transition-all border ${
-                                    isEnabled
-                                      ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800/80 hover:bg-emerald-100"
-                                      : "bg-slate-100 text-slate-500 border-slate-200 dark:bg-slate-900 dark:text-slate-400 dark:border-slate-800 hover:bg-slate-200"
-                                  }`}
-                                >
-                                  {isUpdating ? (
-                                    <RefreshCw size={12} className="animate-spin" />
-                                  ) : isEnabled ? (
-                                    <CheckCircle2 size={13} className="text-emerald-600 dark:text-emerald-400" />
-                                  ) : (
-                                    <XCircle size={13} className="text-slate-400" />
-                                  )}
-                                  <span>{isEnabled ? "Aktif" : "Nonaktif"}</span>
-                                </button>
-                              ) : (
-                                <span className="text-slate-400 text-[10px]">-</span>
-                              )}
-                            </td>
-                          );
-                        }
-                      )}
+                        return (
+                          <td key={col.code} className="py-4 px-4 text-center">
+                            {svc ? (
+                              <button
+                                onClick={() =>
+                                  handleToggle(
+                                    b.bidang_id,
+                                    svc.service_id,
+                                    isEnabled,
+                                    b.bidang_code,
+                                    col.label
+                                  )
+                                }
+                                disabled={isUpdating}
+                                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-extrabold transition-all border ${
+                                  isEnabled
+                                    ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800/80 hover:bg-emerald-100"
+                                    : "bg-slate-100 text-slate-500 border-slate-200 dark:bg-slate-900 dark:text-slate-400 dark:border-slate-800 hover:bg-slate-200"
+                                }`}
+                              >
+                                {isUpdating ? (
+                                  <RefreshCw size={12} className="animate-spin" />
+                                ) : isEnabled ? (
+                                  <CheckCircle2 size={13} className="text-emerald-600 dark:text-emerald-400" />
+                                ) : (
+                                  <XCircle size={13} className="text-slate-400" />
+                                )}
+                                <span>{isEnabled ? "Aktif" : "Nonaktif"}</span>
+                              </button>
+                            ) : (
+                              <span className="text-slate-400 text-[10px]">-</span>
+                            )}
+                          </td>
+                        );
+                      })}
                     </tr>
                   ))}
                 </tbody>

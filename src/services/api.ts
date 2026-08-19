@@ -36,7 +36,12 @@ api.interceptors.response.use(
   }
 );
 
-// ─── AUTH ────────────────────────────────────────────────
+// ─── AUTH & MASTER ──────────────────────────────────────
+export const getBidangs = async () => {
+  const res = await api.get("/bidangs");
+  return res.data; // expects { success: true, data: [...] }
+};
+
 export const login = async (email: string, password: string) => {
   const res = await api.post("/login", { email, password });
   return res.data; // expects { token, user }
