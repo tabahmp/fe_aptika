@@ -18,97 +18,40 @@ import {
   PanelLeftOpen,
   ChevronDown,
   ChevronRight,
+  ShieldCog,
 } from "lucide-react";
 import Avatar from "@/components/ui/Avatar";
 import { useSidebarStore } from "@/store/useSidebarStore";
 import { useTaskStore } from "@/store/useTaskStore";
-
-const MENU_ITEMS = [
-  {
-    type: "single" as const,
-    name: "Administrasi Surat",
-    key: "administrasisurat",
-    icon: FileText,
-    iconColor: "text-amber-600 bg-amber-50 border border-amber-200/60"
-  },
-  {
-    type: "group" as const,
-    name: "IKI Report",
-    icon: Layers,
-    iconColor: "text-purple-600 bg-purple-50 border border-purple-200/60",
-    subItems: [
-      {
-        name: "Integrasi Interoperabilitas",
-        key: "integrasiinteroperabilitas",
-        icon: Network,
-        iconColor: "text-blue-600 bg-blue-50 border border-blue-200/60"
-      },
-      {
-        name: "Pengelolaan Aplikasi",
-        key: "pengelolaanaplikasi",
-        icon: Layers,
-        iconColor: "text-purple-600 bg-purple-50 border border-purple-200/60"
-      },
-      {
-        name: "Rekayasa Aplikasi",
-        key: "rekayasaaplikasi",
-        icon: Cpu,
-        iconColor: "text-cyan-600 bg-cyan-50 border border-cyan-200/60"
-      },
-      {
-        name: "Sidebar Jabar",
-        key: "sidebarjabar",
-        icon: LayoutTemplate,
-        iconColor: "text-emerald-600 bg-emerald-50 border border-emerald-200/60"
-      },
-      {
-        name: "Smart Jabar",
-        key: "smartjabar",
-        icon: Smartphone,
-        iconColor: "text-violet-600 bg-violet-50 border border-violet-200/60"
-      },
-      {
-        name: "Sada Jabar",
-        key: "sadajabar",
-        icon: Database,
-        iconColor: "text-sky-600 bg-sky-50 border border-sky-200/60"
-      },
-    ]
-  },
-  {
-    type: "single" as const,
-    name: "Manajemen Tugas Digital",
-    key: "manajementugasdigital",
-    icon: Briefcase,
-    iconColor: "text-rose-600 bg-rose-50 border border-rose-200/60"
-  },
-  {
-    type: "single" as const,
-    name: "Magang",
-    key: "magang",
-    icon: Users,
-    iconColor: "text-indigo-600 bg-indigo-50 border border-indigo-200/60"
-  },
-];
+import { useAuthStore } from "@/store/useAuthStore";
 
 export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { isCollapsed, isOpenMobile, toggleCollapsed, setOpenMobile, initStore } = useSidebarStore();
   const { currentUser, loadCurrentUser } = useTaskStore();
-  const [isAdmin, setIsAdmin] = useState(false);
+
+  const { fetchProfile, bidang, services, isAdminAptika, hasServicePermission } = useAuthStore();
+
   const [userName, setUserName] = useState("User");
 
   const activeSegment = pathname.split("/")[1] || "dashboard";
 
-  const appGroupKeys = ["integrasiinteroperabilitas", "pengelolaanaplikasi", "rekayasaaplikasi", "sidebarjabar", "smartjabar", "sadajabar"];
+  const appGroupKeys = [
+    "integrasiinteroperabilitas",
+    "pengelolaanaplikasi",
+    "rekayasaaplikasi",
+    "sidebarjabar",
+    "smartjabar",
+    "sadajabar",
+  ];
   const isAppGroupActive = appGroupKeys.includes(activeSegment);
-
   const [isAppGroupOpen, setIsAppGroupOpen] = useState(isAppGroupActive);
 
   useEffect(() => {
     loadCurrentUser();
-  }, [loadCurrentUser]);
+    fetchProfile();
+  }, [loadCurrentUser, fetchProfile]);
 
   useEffect(() => {
     if (isAppGroupActive) {
@@ -124,15 +67,102 @@ export default function Sidebar() {
         if (uStr) {
           const uObj = JSON.parse(uStr);
           setUserName(uObj?.name || "User");
-          if (uObj?.role === "admin") {
-            setIsAdmin(true);
-          }
         }
       } catch (err) {
         console.error(err);
       }
     }
   }, [initStore]);
+
+  // Dynamic Navigation Items Evaluation
+  const canAccessSurat = hasServicePermission("ADMINISTRASI_SURAT");
+  const canAccessIki = hasServicePermission("IKI_REPORT");
+  const canAccessTugas = hasServicePermission("MANAJEMEN_TUGAS");
+  const canAccessMagang = hasServicePermission("MAGANG");
+
+  const dynamicMenuItems = [
+    ...(canAccessSurat
+      ? [
+          {
+            type: "single" as const,
+            name: "Administrasi Surat",
+            key: "administrasisurat",
+            icon: FileText,
+            iconColor: "text-amber-600 bg-amber-50 border border-amber-200/60",
+          },
+        ]
+      : []),
+    ...(canAccessIki
+      ? [
+          {
+            type: "group" as const,
+            name: "IKI Report",
+            icon: Layers,
+            iconColor: "text-purple-600 bg-purple-50 border border-purple-200/60",
+            subItems: [
+              {
+                name: "Integrasi Interoperabilitas",
+                key: "integrasiinteroperabilitas",
+                icon: Network,
+                iconColor: "text-blue-600 bg-blue-50 border border-blue-200/60",
+              },
+              {
+                name: "Pengelolaan Aplikasi",
+                key: "pengelolaanaplikasi",
+                icon: Layers,
+                iconColor: "text-purple-600 bg-purple-50 border border-purple-200/60",
+              },
+              {
+                name: "Rekayasa Aplikasi",
+                key: "rekayasaaplikasi",
+                icon: Cpu,
+                iconColor: "text-cyan-600 bg-cyan-50 border border-cyan-200/60",
+              },
+              {
+                name: "Sidebar Jabar",
+                key: "sidebarjabar",
+                icon: LayoutTemplate,
+                iconColor: "text-emerald-600 bg-emerald-50 border border-emerald-200/60",
+              },
+              {
+                name: "Smart Jabar",
+                key: "smartjabar",
+                icon: Smartphone,
+                iconColor: "text-violet-600 bg-violet-50 border border-violet-200/60",
+              },
+              {
+                name: "Sada Jabar",
+                key: "sadajabar",
+                icon: Database,
+                iconColor: "text-sky-600 bg-sky-50 border border-sky-200/60",
+              },
+            ],
+          },
+        ]
+      : []),
+    ...(canAccessTugas
+      ? [
+          {
+            type: "single" as const,
+            name: "Manajemen Tugas Digital",
+            key: "manajementugasdigital",
+            icon: Briefcase,
+            iconColor: "text-rose-600 bg-rose-50 border border-rose-200/60",
+          },
+        ]
+      : []),
+    ...(canAccessMagang
+      ? [
+          {
+            type: "single" as const,
+            name: "Magang",
+            key: "magang",
+            icon: Users,
+            iconColor: "text-indigo-600 bg-indigo-50 border border-indigo-200/60",
+          },
+        ]
+      : []),
+  ];
 
   const handleTeamClick = (key: string) => {
     setOpenMobile(false);
@@ -148,8 +178,11 @@ export default function Sidebar() {
   const handleLogout = async () => {
     try {
       await logout();
-      document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
-    } catch { }
+      useAuthStore.getState().clearAuth();
+      if (typeof document !== "undefined") {
+        document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
+      }
+    } catch {}
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     router.push("/");
@@ -177,7 +210,8 @@ export default function Sidebar() {
       )}
 
       {/* Sidebar Navigation - Adaptive Light/Dark Theme */}
-      <aside className={`
+      <aside
+        className={`
         fixed inset-y-0 left-0 z-40 flex flex-col h-screen
         bg-white text-[#0b2146] border-r border-slate-200 shadow-sm
         dark:bg-[#071733] dark:text-white dark:border-slate-800/80
@@ -185,10 +219,13 @@ export default function Sidebar() {
         print:hidden
         ${isCollapsed ? "w-[76px]" : "w-[260px]"}
         ${isOpenMobile ? "translate-x-0" : "-translate-x-full"}
-      `}>
+      `}
+      >
         {/* Brand Header */}
         <div
-          className={`flex items-center justify-between border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-[#071733] ${isCollapsed ? "px-3 py-5" : "px-6 py-6"}`}
+          className={`flex flex-col border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-[#071733] ${
+            isCollapsed ? "px-3 py-5 items-center" : "px-6 py-5"
+          }`}
         >
           {isCollapsed ? (
             <button
@@ -199,25 +236,34 @@ export default function Sidebar() {
               <PanelLeftOpen size={20} />
             </button>
           ) : (
-            <div className="flex items-center justify-between w-full">
-              <div
-                className="cursor-pointer flex-grow animate-in fade-in duration-200"
-                onClick={() => router.push("/dashboard")}
-              >
-                <h1 className="text-[15px] font-extrabold tracking-wide uppercase text-[#0b2146] dark:text-white">
-                  Aptika Tools
-                </h1>
-                <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 tracking-wider mt-0.5">
-                  Rekap Data Aptika
-                </p>
+            <div className="flex flex-col gap-1.5 w-full">
+              <div className="flex items-center justify-between w-full">
+                <div
+                  className="cursor-pointer flex-grow animate-in fade-in duration-200"
+                  onClick={() => router.push("/dashboard")}
+                >
+                  <h1 className="text-[15px] font-extrabold tracking-wide uppercase text-[#0b2146] dark:text-white">
+                    Aptika Tools
+                  </h1>
+                </div>
+                <button
+                  onClick={toggleCollapsed}
+                  className="flex p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 hover:text-[#0b2146] dark:hover:text-white transition-all ml-2"
+                  title="Collapse Sidebar"
+                >
+                  <PanelLeftClose size={18} />
+                </button>
               </div>
-              <button
-                onClick={toggleCollapsed}
-                className="flex p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 hover:text-[#0b2146] dark:hover:text-white transition-all ml-2"
-                title="Collapse Sidebar"
-              >
-                <PanelLeftClose size={18} />
-              </button>
+
+              {/* Dynamic Bidang Badge */}
+              {bidang && (
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-blue-50 dark:bg-blue-950/60 border border-blue-200/80 dark:border-blue-800/60 w-fit">
+                  <span className="w-1.5 h-1.5 rounded-full bg-blue-600 dark:bg-blue-400" />
+                  <span className="text-[10.5px] font-bold text-blue-700 dark:text-blue-300 truncate max-w-[190px]">
+                    {bidang.name}
+                  </span>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -228,11 +274,11 @@ export default function Sidebar() {
           <div className="space-y-1">
             {!isCollapsed && (
               <span className="px-4 text-[10px] font-extrabold text-slate-400 dark:text-slate-400 tracking-widest uppercase select-none">
-                Service
+                Layanan
               </span>
             )}
             <div className="pt-2 space-y-1">
-              {MENU_ITEMS.map((item) => {
+              {dynamicMenuItems.map((item) => {
                 if (item.type === "single") {
                   const Icon = item.icon;
                   const isActive = activeSegment === item.key;
@@ -244,19 +290,26 @@ export default function Sidebar() {
                         w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left text-xs font-semibold
                         transition-all duration-150 select-none outline-none group
                         ${isCollapsed ? "justify-center px-2" : ""}
-                        ${isActive
-                          ? "bg-blue-50/80 text-[#0b2146] font-extrabold shadow-xs border border-blue-200/70 dark:bg-[#1d4ed8] dark:text-white dark:border-blue-500/50 dark:shadow-blue-500/20"
-                          : "text-[#0b2146]/90 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-[#0b2146] dark:hover:text-white font-bold"
+                        ${
+                          isActive
+                            ? "bg-blue-50/80 text-[#0b2146] font-extrabold shadow-xs border border-blue-200/70 dark:bg-[#1d4ed8] dark:text-white dark:border-blue-500/50 dark:shadow-blue-500/20"
+                            : "text-[#0b2146]/90 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-[#0b2146] dark:hover:text-white font-bold"
                         }
                       `}
                       onClick={() => handleTeamClick(item.key)}
                     >
-                      <div className={`p-1.5 rounded-lg flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-105 ${item.iconColor}`}>
+                      <div
+                        className={`p-1.5 rounded-lg flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-105 ${item.iconColor}`}
+                      >
                         <Icon size={16} />
                       </div>
                       {!isCollapsed && <span className="flex-1 truncate text-[12.5px]">{item.name}</span>}
                       {isActive && (
-                        <span className={`w-2 h-2 rounded-full bg-blue-600 dark:bg-sky-400 shadow-[0_0_6px_rgba(37,99,235,0.6)] ${isCollapsed ? "absolute right-2" : ""}`} />
+                        <span
+                          className={`w-2 h-2 rounded-full bg-blue-600 dark:bg-sky-400 shadow-[0_0_6px_rgba(37,99,235,0.6)] ${
+                            isCollapsed ? "absolute right-2" : ""
+                          }`}
+                        />
                       )}
                     </button>
                   );
@@ -270,9 +323,10 @@ export default function Sidebar() {
                           w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left text-xs font-semibold
                           transition-all duration-150 select-none outline-none group
                           ${isCollapsed ? "justify-center px-2" : ""}
-                          ${isAppGroupActive
-                            ? "bg-purple-50/80 text-[#0b2146] font-extrabold shadow-xs border border-purple-200/70 dark:bg-[#1d4ed8]/80 dark:text-white dark:border-blue-500/50"
-                            : "text-[#0b2146]/90 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-[#0b2146] dark:hover:text-white font-bold"
+                          ${
+                            isAppGroupActive
+                              ? "bg-purple-50/80 text-[#0b2146] font-extrabold shadow-xs border border-purple-200/70 dark:bg-[#1d4ed8]/80 dark:text-white dark:border-blue-500/50"
+                              : "text-[#0b2146]/90 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-[#0b2146] dark:hover:text-white font-bold"
                           }
                         `}
                         onClick={() => {
@@ -284,7 +338,9 @@ export default function Sidebar() {
                           }
                         }}
                       >
-                        <div className={`p-1.5 rounded-lg flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-105 ${item.iconColor}`}>
+                        <div
+                          className={`p-1.5 rounded-lg flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-105 ${item.iconColor}`}
+                        >
                           <Icon size={16} />
                         </div>
                         {!isCollapsed && (
@@ -312,14 +368,17 @@ export default function Sidebar() {
                                 className={`
                                   w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-left text-xs font-semibold
                                   transition-all duration-150 select-none outline-none group
-                                  ${isSubActive
-                                    ? "bg-blue-50/90 text-blue-700 font-extrabold shadow-xs border border-blue-200/70 dark:bg-[#1d4ed8] dark:text-white dark:border-blue-500/50"
-                                    : "text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-[#0b2146] dark:hover:text-white"
+                                  ${
+                                    isSubActive
+                                      ? "bg-blue-50/90 text-blue-700 font-extrabold shadow-xs border border-blue-200/70 dark:bg-[#1d4ed8] dark:text-white dark:border-blue-500/50"
+                                      : "text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-[#0b2146] dark:hover:text-white"
                                   }
                                 `}
                                 onClick={() => handleTeamClick(sub.key)}
                               >
-                                <div className={`p-1 rounded-md flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-105 ${sub.iconColor}`}>
+                                <div
+                                  className={`p-1 rounded-md flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-105 ${sub.iconColor}`}
+                                >
                                   <SubIcon size={14} />
                                 </div>
                                 <span className="flex-1 truncate text-[12px]">{sub.name}</span>
@@ -338,8 +397,8 @@ export default function Sidebar() {
             </div>
           </div>
 
-          {/* Admin Panel Section */}
-          {isAdmin && (
+          {/* Admin Panel Section (HANYA Admin Aptika) */}
+          {isAdminAptika && (
             <div className="space-y-1 pt-4 border-t border-slate-100 dark:border-slate-800">
               {!isCollapsed && (
                 <span className="px-4 text-[10px] font-extrabold text-slate-400 dark:text-slate-400 tracking-widest uppercase select-none">
@@ -347,14 +406,16 @@ export default function Sidebar() {
                 </span>
               )}
               <div className="pt-2 space-y-1">
+                {/* Manajemen User */}
                 <button
                   className={`
                     w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left text-xs font-semibold
                     transition-all duration-150 select-none outline-none group
                     ${isCollapsed ? "justify-center px-2" : ""}
-                    ${activeSegment === "admin"
-                      ? "bg-amber-50/80 text-[#0b2146] font-extrabold shadow-xs border border-amber-200/70 dark:bg-amber-900/40 dark:text-amber-200 dark:border-amber-700/50"
-                      : "text-[#0b2146]/90 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-[#0b2146] dark:hover:text-white font-bold"
+                    ${
+                      pathname === "/admin/users"
+                        ? "bg-amber-50/80 text-[#0b2146] font-extrabold shadow-xs border border-amber-200/70 dark:bg-amber-900/40 dark:text-amber-200 dark:border-amber-700/50"
+                        : "text-[#0b2146]/90 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-[#0b2146] dark:hover:text-white font-bold"
                     }
                   `}
                   onClick={() => {
@@ -366,8 +427,44 @@ export default function Sidebar() {
                     <Users size={16} />
                   </div>
                   {!isCollapsed && <span className="flex-1 truncate text-[12.5px]">Manajemen User</span>}
-                  {activeSegment === "admin" && (
-                    <span className={`w-2 h-2 rounded-full bg-amber-600 dark:bg-amber-400 shadow-[0_0_6px_rgba(217,119,6,0.6)] ${isCollapsed ? "absolute right-2" : ""}`} />
+                  {pathname === "/admin/users" && (
+                    <span
+                      className={`w-2 h-2 rounded-full bg-amber-600 dark:bg-amber-400 shadow-[0_0_6px_rgba(217,119,6,0.6)] ${
+                        isCollapsed ? "absolute right-2" : ""
+                      }`}
+                    />
+                  )}
+                </button>
+
+                {/* Konfigurasi Layanan Bidang */}
+                <button
+                  className={`
+                    w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left text-xs font-semibold
+                    transition-all duration-150 select-none outline-none group
+                    ${isCollapsed ? "justify-center px-2" : ""}
+                    ${
+                      pathname === "/admin/bidang-services"
+                        ? "bg-amber-50/80 text-[#0b2146] font-extrabold shadow-xs border border-amber-200/70 dark:bg-amber-900/40 dark:text-amber-200 dark:border-amber-700/50"
+                        : "text-[#0b2146]/90 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-[#0b2146] dark:hover:text-white font-bold"
+                    }
+                  `}
+                  onClick={() => {
+                    setOpenMobile(false);
+                    router.push("/admin/bidang-services");
+                  }}
+                >
+                  <div className="p-1.5 rounded-lg flex items-center justify-center flex-shrink-0 text-emerald-600 bg-emerald-50 border border-emerald-200/60 transition-transform group-hover:scale-105">
+                    <ShieldCog size={16} />
+                  </div>
+                  {!isCollapsed && (
+                    <span className="flex-1 truncate text-[12.5px]">Konfigurasi Layanan</span>
+                  )}
+                  {pathname === "/admin/bidang-services" && (
+                    <span
+                      className={`w-2 h-2 rounded-full bg-amber-600 dark:bg-amber-400 shadow-[0_0_6px_rgba(217,119,6,0.6)] ${
+                        isCollapsed ? "absolute right-2" : ""
+                      }`}
+                    />
                   )}
                 </button>
               </div>
@@ -376,7 +473,11 @@ export default function Sidebar() {
         </div>
 
         {/* Footer Area with Profile and Logout */}
-        <div className={`p-4 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-[#071733] flex flex-col gap-3 ${isCollapsed ? "items-center" : ""}`}>
+        <div
+          className={`p-4 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-[#071733] flex flex-col gap-3 ${
+            isCollapsed ? "items-center" : ""
+          }`}
+        >
           <div
             className={`flex items-center gap-3 px-2 cursor-pointer group ${isCollapsed ? "justify-center" : ""}`}
             onClick={() => router.push("/profile")}
@@ -385,15 +486,21 @@ export default function Sidebar() {
             <Avatar name={userName} src={currentUser?.avatar_url || currentUser?.avatar} size="sm" />
             {!isCollapsed && (
               <div className="flex-1 min-w-0">
-                <h4 className="text-xs font-bold text-[#0b2146] dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors truncate">{userName}</h4>
+                <h4 className="text-xs font-bold text-[#0b2146] dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors truncate">
+                  {userName}
+                </h4>
                 <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 truncate">
-                  {currentUser?.position || currentUser?.jabatan || (isAdmin ? "Administrator" : "Anggota Tim")}
+                  {currentUser?.position ||
+                    currentUser?.jabatan ||
+                    (isAdminAptika ? "Admin Aptika" : bidang?.name || "Anggota Tim")}
                 </p>
               </div>
             )}
           </div>
           <button
-            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-600 dark:text-slate-300 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors text-xs font-bold ${isCollapsed ? "justify-center" : ""}`}
+            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-600 dark:text-slate-300 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors text-xs font-bold ${
+              isCollapsed ? "justify-center" : ""
+            }`}
             onClick={handleLogout}
           >
             <LogOut size={14} />
@@ -403,4 +510,4 @@ export default function Sidebar() {
       </aside>
     </>
   );
-}
+}
