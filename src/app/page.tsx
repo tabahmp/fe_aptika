@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { login, createMagang, getBidangs } from "@/services/api";
+import { useAuthStore } from "@/store/useAuthStore";
 
 function UserIcon() {
   return (
@@ -143,6 +144,7 @@ export default function Home() {
         )
       );
       document.cookie = `token=${token}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`;
+      await useAuthStore.getState().fetchProfile();
       router.push("/dashboard");
     } catch (err: any) {
       setLoginError(err.response?.data?.message || "Email atau password salah.");

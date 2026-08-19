@@ -100,42 +100,66 @@ export default function Sidebar() {
             icon: Layers,
             iconColor: "text-purple-600 bg-purple-50 border border-purple-200/60",
             subItems: [
-              {
-                name: "Integrasi Interoperabilitas",
-                key: "integrasiinteroperabilitas",
-                icon: Network,
-                iconColor: "text-blue-600 bg-blue-50 border border-blue-200/60",
-              },
-              {
-                name: "Pengelolaan Aplikasi",
-                key: "pengelolaanaplikasi",
-                icon: Layers,
-                iconColor: "text-purple-600 bg-purple-50 border border-purple-200/60",
-              },
-              {
-                name: "Rekayasa Aplikasi",
-                key: "rekayasaaplikasi",
-                icon: Cpu,
-                iconColor: "text-cyan-600 bg-cyan-50 border border-cyan-200/60",
-              },
-              {
-                name: "Sidebar Jabar",
-                key: "sidebarjabar",
-                icon: LayoutTemplate,
-                iconColor: "text-emerald-600 bg-emerald-50 border border-emerald-200/60",
-              },
-              {
-                name: "Smart Jabar",
-                key: "smartjabar",
-                icon: Smartphone,
-                iconColor: "text-violet-600 bg-violet-50 border border-violet-200/60",
-              },
-              {
-                name: "Sada Jabar",
-                key: "sadajabar",
-                icon: Database,
-                iconColor: "text-sky-600 bg-sky-50 border border-sky-200/60",
-              },
+              ...(hasServicePermission("IKI_INTEGRASI")
+                ? [
+                    {
+                      name: "Integrasi Interoperabilitas",
+                      key: "integrasiinteroperabilitas",
+                      icon: Network,
+                      iconColor: "text-blue-600 bg-blue-50 border border-blue-200/60",
+                    },
+                  ]
+                : []),
+              ...(hasServicePermission("IKI_PENGELOLAAN")
+                ? [
+                    {
+                      name: "Pengelolaan Aplikasi",
+                      key: "pengelolaanaplikasi",
+                      icon: Layers,
+                      iconColor: "text-purple-600 bg-purple-50 border border-purple-200/60",
+                    },
+                  ]
+                : []),
+              ...(hasServicePermission("IKI_REKAYASA")
+                ? [
+                    {
+                      name: "Rekayasa Aplikasi",
+                      key: "rekayasaaplikasi",
+                      icon: Cpu,
+                      iconColor: "text-cyan-600 bg-cyan-50 border border-cyan-200/60",
+                    },
+                  ]
+                : []),
+              ...(hasServicePermission("IKI_SIDEBAR")
+                ? [
+                    {
+                      name: "Sidebar Jabar",
+                      key: "sidebarjabar",
+                      icon: LayoutTemplate,
+                      iconColor: "text-emerald-600 bg-emerald-50 border border-emerald-200/60",
+                    },
+                  ]
+                : []),
+              ...(hasServicePermission("IKI_SMARTJABAR")
+                ? [
+                    {
+                      name: "Smart Jabar",
+                      key: "smartjabar",
+                      icon: Smartphone,
+                      iconColor: "text-violet-600 bg-violet-50 border border-violet-200/60",
+                    },
+                  ]
+                : []),
+              ...(hasServicePermission("IKI_SADAJABAR")
+                ? [
+                    {
+                      name: "Sada Jabar",
+                      key: "sadajabar",
+                      icon: Database,
+                      iconColor: "text-sky-600 bg-sky-50 border border-sky-200/60",
+                    },
+                  ]
+                : []),
             ],
           },
         ]

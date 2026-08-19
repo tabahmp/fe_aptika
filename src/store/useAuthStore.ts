@@ -86,8 +86,43 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   hasServicePermission: (serviceCode: string) => {
-    const services = get().services;
+    const { isAdminAptika, services } = get();
+    if (isAdminAptika) return true;
+
     const service = services.find((s) => s.code === serviceCode);
-    return service ? Boolean(service.is_enabled) : false;
+    if (!service || !service.is_enabled) return false;
+
+    // Jika layanan induk IKI_REPORT, pastikan minimal 1 sub-service aktif
+    if (serviceCode === "IKI_REPORT") {
+      const ikiSubServices = [
+        "IKI_INTEGRASI",
+        "IKI_PENGELOLAAN",
+        "IKI_REKAYASA",
+        "IKI_SIDEBAR",
+        "IKI_SMARTJABAR",
+        "IKI_SADAJABAR",
+      ];
+      const hasAnySubEnabled = services.some(
+        (s) => ikiSubServices.includes(s.code) && s.is_enabled
+      );
+      return hasAnySubEnabled;
+    }
+
+    // Jika layanan induk ADMINISTRASI_SURAT, pastikan minimal 1 jenis surat aktif
+    if (serviceCode === "ADMINISTRASI_SURAT") {
+      const suratSubServices = [
+        "SURAT_NOTA_DINAS",
+        "SURAT_SPD",
+        "SURAT_HASIL_PENTEST",
+        "SURAT_KERENTANAN",
+        "SURAT_PERMOHONAN_TI",
+      ];
+      const hasAnySuratEnabled = services.some(
+        (s) => suratSubServices.includes(s.code) && s.is_enabled
+      );
+      return hasAnySuratEnabled;
+    }
+
+    return true;
   },
 }));
