@@ -13,10 +13,14 @@ import {
   ShieldCheck,
 } from "lucide-react";
 
+import { useAuthStore } from "@/store/useAuthStore";
+
 export default function Homepage() {
   const router = useRouter();
   const [userName, setUserName] = useState("User");
   const [userRole, setUserRole] = useState("");
+
+  const { hasServicePermission, isAdminAptika } = useAuthStore();
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -33,12 +37,11 @@ export default function Homepage() {
     }
   }, []);
 
-  const isAdmin = userRole.toLowerCase() === "admin";
-
-  const cards = [
+  const allCards = [
     {
       id: "iki-report",
-      title: "1. IKI Report",
+      code: "IKI_REPORT",
+      title: "IKI Report",
       desc: "Layanan rekapitulasi data IKI Aptika (Integrasi Interoperabilitas, Pengelolaan Aplikasi, Rekayasa Aplikasi, Sidebar Jabar, Smart Jabar, Sada Jabar).",
       icon: <Layers size={22} className="text-purple-600" />,
       iconBg: "bg-purple-100",
@@ -48,7 +51,8 @@ export default function Homepage() {
     },
     {
       id: "administrasi-surat",
-      title: "2. Administrasi Surat",
+      code: "ADMINISTRASI_SURAT",
+      title: "Administrasi Surat",
       desc: "Layanan administrasi Nota Dinas, Hasil Pentest, Kerentanan, SPD, dan Permohonan TI.",
       icon: <FileText size={22} className="text-amber-700" />,
       iconBg: "bg-amber-100",
@@ -58,7 +62,8 @@ export default function Homepage() {
     },
     {
       id: "manajemen-tugas-digital",
-      title: "3. Manajemen Tugas Digital",
+      code: "MANAJEMEN_TUGAS",
+      title: "Manajemen Tugas Digital",
       desc: "Monitoring penugasan, alur kerja digital, dan manajemen penyelesaian tugas tim.",
       icon: <Briefcase size={22} className="text-teal-600" />,
       iconBg: "bg-teal-100",
@@ -68,7 +73,8 @@ export default function Homepage() {
     },
     {
       id: "magang",
-      title: "4. Magang",
+      code: "MAGANG",
+      title: "Magang",
       desc: "Pengelolaan data peserta magang, presensi, penugasan, dan administrasi magang Aptika.",
       icon: <Users size={22} className="text-orange-600" />,
       iconBg: "bg-orange-100",
@@ -76,22 +82,27 @@ export default function Homepage() {
       actionColor: "text-orange-600",
       path: "/magang/dashboard",
     },
-    ...(isAdmin
+    ...(isAdminAptika
       ? [
-          {
-            id: "manajemen-user",
-            title: "5. Manajemen User",
-            desc: "Pengelolaan akun pengguna, hak akses, peranan (role), dan status keaktifan user dalam sistem APTIKA.",
-            icon: <UserCog size={22} className="text-violet-600" />,
-            iconBg: "bg-violet-100",
-            actionText: "Kelola User",
-            actionColor: "text-violet-600",
-            badge: "Admin Only",
-            path: "/admin/users",
-          },
-        ]
+        {
+          id: "manajemen-user",
+          code: "ADMIN_PANEL",
+          title: "Manajemen User",
+          desc: "Pengelolaan akun pengguna, hak akses, peranan (role), dan status keaktifan user dalam sistem APTIKA.",
+          icon: <UserCog size={22} className="text-violet-600" />,
+          iconBg: "bg-violet-100",
+          actionText: "Kelola User",
+          actionColor: "text-violet-600",
+          badge: "Admin Only",
+          path: "/admin/users",
+        },
+      ]
       : []),
   ];
+
+  const cards = allCards.filter(
+    (c) => c.code === "ADMIN_PANEL" || hasServicePermission(c.code)
+  );
 
   return (
     <div className="flex flex-col gap-6 pb-6">
