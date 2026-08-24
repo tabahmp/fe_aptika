@@ -136,16 +136,25 @@ export default function Home() {
         data?.data?.token ||
         data?.data?.access_token ||
         "dummy-token-aptika";
+      const loggedUser = data.user || data?.data?.user;
       localStorage.setItem("token", token);
       localStorage.setItem(
         "user",
         JSON.stringify(
-          data.user || data?.data?.user || { name: "User APTIKA Tools" }
+          loggedUser || { name: "User APTIKA Tools" }
         )
       );
       document.cookie = `token=${token}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`;
       await useAuthStore.getState().fetchProfile();
-      router.push("/dashboard");
+
+      const authState = useAuthStore.getState();
+      const isAdmin = loggedUser?.role === "admin" || authState.user?.role === "admin" || authState.isAdminAptika;
+
+      if (isAdmin) {
+        router.push("/admin");
+      } else {
+        router.push("/dashboard");
+      }
     } catch (err: any) {
       setLoginError(err.response?.data?.message || "Email atau password salah.");
     } finally {

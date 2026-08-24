@@ -31,7 +31,24 @@ export default function Sidebar() {
   const { isCollapsed, isOpenMobile, toggleCollapsed, setOpenMobile, initStore } = useSidebarStore();
   const { currentUser, loadCurrentUser } = useTaskStore();
 
-  const { fetchProfile, bidang, services, isAdminAptika, hasServicePermission } = useAuthStore();
+  const { fetchProfile, user, bidang, services, isAdminAptika, hasServicePermission } = useAuthStore();
+  const [hasAdminRole, setHasAdminRole] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const uStr = localStorage.getItem("user");
+        if (uStr) {
+          const uObj = JSON.parse(uStr);
+          if (uObj?.role === "admin") {
+            setHasAdminRole(true);
+          }
+        }
+      } catch {}
+    }
+  }, []);
+
+  const hasAdminAccess = isAdminAptika || user?.role === "admin" || hasAdminRole;
 
   const [userName, setUserName] = useState("User");
 
@@ -420,80 +437,6 @@ export default function Sidebar() {
               })}
             </div>
           </div>
-
-          {/* Admin Panel Section (HANYA Admin Aptika) */}
-          {isAdminAptika && (
-            <div className="space-y-1 pt-4 border-t border-slate-100 dark:border-slate-800">
-              {!isCollapsed && (
-                <span className="px-4 text-[10px] font-extrabold text-slate-400 dark:text-slate-400 tracking-widest uppercase select-none">
-                  Admin Panel
-                </span>
-              )}
-              <div className="pt-2 space-y-1">
-                {/* Manajemen User */}
-                <button
-                  className={`
-                    w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left text-xs font-semibold
-                    transition-all duration-150 select-none outline-none group
-                    ${isCollapsed ? "justify-center px-2" : ""}
-                    ${
-                      pathname === "/admin/users"
-                        ? "bg-amber-50/80 text-[#0b2146] font-extrabold shadow-xs border border-amber-200/70 dark:bg-amber-900/40 dark:text-amber-200 dark:border-amber-700/50"
-                        : "text-[#0b2146]/90 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-[#0b2146] dark:hover:text-white font-bold"
-                    }
-                  `}
-                  onClick={() => {
-                    setOpenMobile(false);
-                    router.push("/admin/users");
-                  }}
-                >
-                  <div className="p-1.5 rounded-lg flex items-center justify-center flex-shrink-0 text-amber-600 bg-amber-50 border border-amber-200/60 transition-transform group-hover:scale-105">
-                    <Users size={16} />
-                  </div>
-                  {!isCollapsed && <span className="flex-1 truncate text-[12.5px]">Manajemen User</span>}
-                  {pathname === "/admin/users" && (
-                    <span
-                      className={`w-2 h-2 rounded-full bg-amber-600 dark:bg-amber-400 shadow-[0_0_6px_rgba(217,119,6,0.6)] ${
-                        isCollapsed ? "absolute right-2" : ""
-                      }`}
-                    />
-                  )}
-                </button>
-
-                {/* Konfigurasi Layanan Bidang */}
-                <button
-                  className={`
-                    w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left text-xs font-semibold
-                    transition-all duration-150 select-none outline-none group
-                    ${isCollapsed ? "justify-center px-2" : ""}
-                    ${
-                      pathname === "/admin/bidang-services"
-                        ? "bg-amber-50/80 text-[#0b2146] font-extrabold shadow-xs border border-amber-200/70 dark:bg-amber-900/40 dark:text-amber-200 dark:border-amber-700/50"
-                        : "text-[#0b2146]/90 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-[#0b2146] dark:hover:text-white font-bold"
-                    }
-                  `}
-                  onClick={() => {
-                    setOpenMobile(false);
-                    router.push("/admin/bidang-services");
-                  }}
-                >
-                  <div className="p-1.5 rounded-lg flex items-center justify-center flex-shrink-0 text-emerald-600 bg-emerald-50 border border-emerald-200/60 transition-transform group-hover:scale-105">
-                    <ShieldCog size={16} />
-                  </div>
-                  {!isCollapsed && (
-                    <span className="flex-1 truncate text-[12.5px]">Konfigurasi Layanan</span>
-                  )}
-                  {pathname === "/admin/bidang-services" && (
-                    <span
-                      className={`w-2 h-2 rounded-full bg-amber-600 dark:bg-amber-400 shadow-[0_0_6px_rgba(217,119,6,0.6)] ${
-                        isCollapsed ? "absolute right-2" : ""
-                      }`}
-                    />
-                  )}
-                </button>
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Footer Area with Profile and Logout */}

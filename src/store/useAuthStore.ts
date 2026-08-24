@@ -38,27 +38,82 @@ interface AuthState {
   hasServicePermission: (serviceCode: string) => boolean;
 }
 
+const getInitialState = () => {
+  if (typeof window === "undefined") {
+    return {
+      user: null,
+      bidang: null,
+      services: [],
+      isAdminAptika: false,
+      loading: true,
+      initialized: false,
+    };
+  }
+  try {
+    const userStr = localStorage.getItem("user");
+    const bidangStr = localStorage.getItem("bidang");
+    const servicesStr = localStorage.getItem("services");
+
+    const user = userStr ? JSON.parse(userStr) : null;
+    const bidang = bidangStr ? JSON.parse(bidangStr) : null;
+    const services = servicesStr ? JSON.parse(servicesStr) : [];
+    const isAdminAptika = user?.role === "admin" && (user?.bidang_id === 3 || bidang?.code === "APTIKA");
+
+    return {
+      user,
+      bidang,
+      services,
+      isAdminAptika: Boolean(isAdminAptika),
+      loading: false,
+      initialized: Boolean(user && services.length > 0),
+    };
+  } catch {
+    return {
+      user: null,
+      bidang: null,
+      services: [],
+      isAdminAptika: false,
+      loading: true,
+      initialized: false,
+    };
+  }
+};
+
+const initial = getInitialState();
+
 export const useAuthStore = create<AuthState>((set, get) => ({
-  user: null,
-  bidang: null,
-  services: [],
-  isAdminAptika: false,
-  loading: true,
-  initialized: false,
+  user: initial.user,
+  bidang: initial.bidang,
+  services: initial.services,
+  isAdminAptika: initial.isAdminAptika,
+  loading: initial.loading,
+  initialized: initial.initialized,
   error: null,
 
   fetchProfile: async () => {
-    set({ loading: true, error: null });
     try {
       const res = await api.get("/me");
       if (res.data && res.data.success) {
+        const userData = res.data.user;
+        const bidangData = res.data.bidang;
+        const servicesData = res.data.services || [];
+        const adminAptikaStatus = res.data.is_admin_aptika || false;
+
+        // Simpan ke localStorage agar tidak hilang saat refresh
+        if (typeof window !== "undefined") {
+          localStorage.setItem("user", JSON.stringify(userData));
+          if (bidangData) localStorage.setItem("bidang", JSON.stringify(bidangData));
+          localStorage.setItem("services", JSON.stringify(servicesData));
+        }
+
         set({
-          user: res.data.user,
-          bidang: res.data.bidang,
-          services: res.data.services || [],
-          isAdminAptika: res.data.is_admin_aptika || false,
+          user: userData,
+          bidang: bidangData,
+          services: servicesData,
+          isAdminAptika: adminAptikaStatus,
           loading: false,
           initialized: true,
+          error: null,
         });
       } else {
         set({ loading: false, initialized: true });
@@ -74,6 +129,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   clearAuth: () => {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("user");
+      localStorage.removeItem("bidang");
+      localStorage.removeItem("services");
+    }
     set({
       user: null,
       bidang: null,
@@ -86,9 +146,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   hasServicePermission: (serviceCode: string) => {
-    const { isAdminAptika, services } = get();
-    if (isAdminAptika) return true;
+    const { services } = get();
 
+    // Cari service permission berdasarkan kode layanan
     const service = services.find((s) => s.code === serviceCode);
     if (!service || !service.is_enabled) return false;
 

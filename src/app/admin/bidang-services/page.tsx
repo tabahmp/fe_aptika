@@ -115,7 +115,7 @@ export default function AdminBidangServicesPage() {
   const columns = getTabColumns();
 
   return (
-    <ServiceRouteGuard requireAdminAptika>
+    <ServiceRouteGuard requireAdmin>
       <div className="p-6 max-w-7xl mx-auto space-y-6">
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-white dark:bg-[#0b2146] p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">

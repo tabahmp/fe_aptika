@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Users, Eye, Edit, Trash2, Plus, Printer, Upload, FileText } from "lucide-react";
-import { getMagangList, deleteMagang, createMagang, updateMagang, uploadMagangNda } from "@/services/api";
+import { Users, Eye, Edit, Trash2, Plus, Printer, Upload, FileText, Search, RotateCcw } from "lucide-react";
+import { getMagangList, deleteMagang, createMagang, updateMagang, uploadMagangNda, getBidangs } from "@/services/api";
 import { Modal } from "@/components/ui/Modal";
+import { useAuthStore } from "@/store/useAuthStore";
 
 const formatDate = (dateString: string) => {
   if (!dateString) return "-";
@@ -105,7 +106,9 @@ const formatCertificatePeriod = (tglMulaiStr: string, tglSelesaiStr: string) => 
 };
 
 export default function MagangDashboard() {
+  const { bidang: authBidang, isAdminAptika } = useAuthStore();
   const [magangs, setMagangs] = useState<any[]>([]);
+  const [bidangs, setBidangs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Modal state
@@ -542,7 +545,7 @@ export default function MagangDashboard() {
         try {
           const parsed = JSON.parse(saved);
           if (Array.isArray(parsed)) return parsed.map(String);
-        } catch (e) {}
+        } catch (e) { }
       }
     }
     return [];
@@ -558,6 +561,7 @@ export default function MagangDashboard() {
   const [formData, setFormData] = useState({
     nama: "",
     nama_kampus: "",
+    bidang_id: "",
     tgl_mulai_magang: "",
     tgl_selesai_magang: "",
     sertifikat: "Belum menerima",
@@ -585,10 +589,16 @@ export default function MagangDashboard() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const res = await getMagangList();
-      if (res?.data) {
-        const sorted = [...res.data].sort((a: any, b: any) => (a.id || 0) - (b.id || 0));
+      const [resMagang, resBidang] = await Promise.all([
+        getMagangList(),
+        getBidangs().catch(() => ({ data: [] })),
+      ]);
+      if (resMagang?.data) {
+        const sorted = [...resMagang.data].sort((a: any, b: any) => (a.id || 0) - (b.id || 0));
         setMagangs(sorted);
+      }
+      if (resBidang?.data) {
+        setBidangs(resBidang.data);
       }
     } catch (error) {
       console.error("Failed to fetch magang data", error);
@@ -624,6 +634,7 @@ export default function MagangDashboard() {
       setFormData({
         nama: data.nama || "",
         nama_kampus: data.nama_kampus || "",
+        bidang_id: data.bidang_id ? String(data.bidang_id) : (data.bidang?.id ? String(data.bidang.id) : (authBidang?.id ? String(authBidang.id) : "")),
         tgl_mulai_magang: data.tgl_mulai || "",
         tgl_selesai_magang: data.tgl_selesai || "",
         sertifikat: data.sertifikat || "Belum menerima",
@@ -634,6 +645,7 @@ export default function MagangDashboard() {
       setFormData({
         nama: "",
         nama_kampus: "",
+        bidang_id: authBidang?.id ? String(authBidang.id) : "",
         tgl_mulai_magang: "",
         tgl_selesai_magang: "",
         sertifikat: "Belum menerima",
@@ -1004,6 +1016,14 @@ export default function MagangDashboard() {
       const payload = new FormData();
       payload.append("nama", formData.nama);
       payload.append("nama_kampus", formData.nama_kampus);
+
+      const effectiveBidangId = (!isAdminAptika && authBidang?.id)
+        ? String(authBidang.id)
+        : formData.bidang_id;
+
+      if (effectiveBidangId) {
+        payload.append("bidang_id", effectiveBidangId);
+      }
       payload.append("tgl_mulai_magang", formData.tgl_mulai_magang);
       payload.append("tgl_selesai_magang", formData.tgl_selesai_magang);
       payload.append("sertifikat", formData.sertifikat);
@@ -1031,6 +1051,45 @@ export default function MagangDashboard() {
       }
       console.error(error);
     }
+  };
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterBidang, setFilterBidang] = useState<string>("all");
+  const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [filterSertifikat, setFilterSertifikat] = useState<string>("all");
+
+  const filteredMagangs = magangs.filter((item) => {
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      const matchNama = (item.nama || "").toLowerCase().includes(q);
+      const matchKampus = (item.nama_kampus || "").toLowerCase().includes(q);
+      if (!matchNama && !matchKampus) return false;
+    }
+
+    if (filterBidang !== "all") {
+      const itemBidangId = String(item.bidang_id || item.bidang?.id || "");
+      if (itemBidangId !== filterBidang) return false;
+    }
+
+    if (filterStatus !== "all") {
+      if (item.status_magang !== filterStatus) return false;
+    }
+
+    if (filterSertifikat !== "all") {
+      const cert = item.sertifikat || "Belum menerima";
+      if (cert !== filterSertifikat) return false;
+    }
+
+    return true;
+  });
+
+  const isFiltered = searchQuery.trim() !== "" || filterBidang !== "all" || filterStatus !== "all" || filterSertifikat !== "all";
+
+  const handleResetFilter = () => {
+    setSearchQuery("");
+    setFilterBidang("all");
+    setFilterStatus("all");
+    setFilterSertifikat("all");
   };
 
   const activeMagangs = magangs.filter(m => m.status_magang === 'Sedang magang').length;
@@ -1061,17 +1120,94 @@ export default function MagangDashboard() {
         </div>
       </div>
 
-      {/* ── HEADER ACTION ── */}
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-lg font-bold text-slate-800">Daftar Anak Magang</h2>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => handleOpenModal("add")}
-            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-sm transition-all"
-          >
-            <Plus size={18} />
-            Tambah Data Magang
-          </button>
+      {/* ── HEADER ACTION & FILTER BAR ── */}
+      <div className="space-y-4 mb-6">
+        <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+          <div>
+            <h2 className="text-lg font-bold text-slate-800">Daftar Anak Magang</h2>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Menampilkan {filteredMagangs.length} dari {magangs.length} data anak magang
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => handleOpenModal("add")}
+              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-sm transition-all whitespace-nowrap"
+            >
+              <Plus size={18} />
+              Tambah Data Magang
+            </button>
+          </div>
+        </div>
+
+        {/* ── FILTER CONTROLS ── */}
+        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            {/* Search Input */}
+            <div className="relative">
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Cari nama atau kampus..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-9 pr-3 py-2 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all"
+              />
+            </div>
+
+            {/* Filter Bidang (Khusus Admin / Semua) */}
+            <div>
+              <select
+                value={filterBidang}
+                onChange={(e) => setFilterBidang(e.target.value)}
+                className="w-full px-3 py-2 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all text-slate-700 font-medium cursor-pointer"
+              >
+                <option value="all">Semua Bidang / Unit Kerja</option>
+                {bidangs.map((b) => (
+                  <option key={b.id} value={String(b.id)}>
+                    {b.name} ({b.code})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Filter Status Magang */}
+            <div>
+              <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="w-full px-3 py-2 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all text-slate-700 font-medium cursor-pointer"
+              >
+                <option value="all">Semua Status Magang</option>
+                <option value="Sedang magang">Sedang magang</option>
+                <option value="Selesai magang">Selesai magang</option>
+                <option value="Belum mulai">Belum mulai</option>
+              </select>
+            </div>
+
+            {/* Filter Sertifikat */}
+            <div className="flex items-center gap-2">
+              <select
+                value={filterSertifikat}
+                onChange={(e) => setFilterSertifikat(e.target.value)}
+                className="w-full px-3 py-2 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all text-slate-700 font-medium cursor-pointer"
+              >
+                <option value="all">Semua Status Sertifikat</option>
+                <option value="Sudah menerima">Sudah menerima</option>
+                <option value="Belum menerima">Belum menerima</option>
+              </select>
+
+              {isFiltered && (
+                <button
+                  onClick={handleResetFilter}
+                  title="Reset Filter"
+                  className="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all border border-slate-200 flex-shrink-0"
+                >
+                  <RotateCcw size={16} />
+                </button>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
@@ -1084,6 +1220,7 @@ export default function MagangDashboard() {
                 <th className="px-3 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider w-10 text-center">No</th>
                 <th className="px-3 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Nama</th>
                 <th className="px-3 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Kampus</th>
+                <th className="px-3 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Bidang</th>
                 <th className="px-3 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Periode</th>
                 <th className="px-3 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Status Magang</th>
                 <th className="px-3 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Sertifikat</th>
@@ -1094,25 +1231,36 @@ export default function MagangDashboard() {
             <tbody className="divide-y divide-slate-100">
               {loading ? (
                 <tr>
-                  <td colSpan={8} className="text-center py-10 text-slate-500">Memuat data...</td>
+                  <td colSpan={9} className="text-center py-10 text-slate-500">Memuat data...</td>
                 </tr>
-              ) : magangs.length === 0 ? (
+              ) : filteredMagangs.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="text-center py-10 text-slate-500">Tidak ada data magang</td>
+                  <td colSpan={9} className="text-center py-10 text-slate-500">
+                    {isFiltered ? "Tidak ada data anak magang yang sesuai filter" : "Tidak ada data magang"}
+                  </td>
                 </tr>
               ) : (
-                magangs.map((item, idx) => (
+                filteredMagangs.map((item, idx) => (
                   <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
                     <td className="px-3 py-3 text-sm text-slate-500 font-medium text-center">{idx + 1}</td>
                     <td className="px-3 py-3 text-sm font-semibold text-slate-800">{item.nama}</td>
                     <td className="px-3 py-3 text-sm text-slate-600">{item.nama_kampus}</td>
+                    <td className="px-3 py-3 text-sm text-slate-600">
+                      {item.bidang ? (
+                        <span className="inline-flex items-center text-xs font-bold text-blue-700 bg-blue-50 border border-blue-100 px-2.5 py-1 rounded-lg">
+                          {item.bidang.name}
+                        </span>
+                      ) : (
+                        <span className="text-slate-400 text-xs italic">-</span>
+                      )}
+                    </td>
                     <td className="px-3 py-3 text-sm text-slate-600 whitespace-nowrap">
                       {formatDate(item.tgl_mulai)} - {formatDate(item.tgl_selesai)}
                     </td>
                     <td className="px-3 py-3">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold whitespace-nowrap ${item.status_magang === 'Sedang magang' ? 'bg-blue-100 text-blue-800' :
-                          item.status_magang === 'Selesai magang' ? 'bg-green-100 text-green-800' :
-                            'bg-slate-100 text-slate-800'
+                        item.status_magang === 'Selesai magang' ? 'bg-green-100 text-green-800' :
+                          'bg-slate-100 text-slate-800'
                         }`}>
                         {item.status_magang}
                       </span>
@@ -1153,11 +1301,10 @@ export default function MagangDashboard() {
                         </button>
                         <button
                           onClick={() => handleOpenUploadNdaModal(item)}
-                          className={`p-1.5 rounded-lg transition-colors ${
-                            item.nda_file
+                          className={`p-1.5 rounded-lg transition-colors ${item.nda_file
                               ? 'text-blue-600 bg-blue-50 hover:bg-blue-100'
                               : 'text-slate-400 hover:text-blue-600 hover:bg-blue-50'
-                          }`}
+                            }`}
                           title={item.nda_file ? "Ganti File NDA" : "Upload File NDA"}
                         >
                           <Upload size={16} />
@@ -1214,6 +1361,12 @@ export default function MagangDashboard() {
               <span className="col-span-2 font-semibold text-slate-900">{selectedMagang.nama_kampus}</span>
             </div>
             <div className="grid grid-cols-3 border-b border-slate-100 pb-3">
+              <span className="text-slate-500 font-medium">Bidang / Unit Kerja</span>
+              <span className="col-span-2 font-semibold text-blue-700">
+                {selectedMagang.bidang ? `${selectedMagang.bidang.name} (${selectedMagang.bidang.code})` : "-"}
+              </span>
+            </div>
+            <div className="grid grid-cols-3 border-b border-slate-100 pb-3">
               <span className="text-slate-500 font-medium">Tgl Mulai</span>
               <span className="col-span-2 font-semibold text-slate-900">{formatDate(selectedMagang.tgl_mulai)}</span>
             </div>
@@ -1250,7 +1403,9 @@ export default function MagangDashboard() {
           <form onSubmit={handleSave} className="space-y-5">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Nama Lengkap</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Nama Lengkap <span className="text-red-500">*</span>
+                </label>
                 <input
                   type="text"
                   required
@@ -1261,7 +1416,9 @@ export default function MagangDashboard() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Nama Kampus / Sekolah</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Nama Kampus / Sekolah <span className="text-red-500">*</span>
+                </label>
                 <input
                   type="text"
                   required
@@ -1271,8 +1428,35 @@ export default function MagangDashboard() {
                   placeholder="Masukkan institusi"
                 />
               </div>
+              <div className="md:col-span-2">
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Bidang Tujuan Magang {!isAdminAptika && authBidang && <span className="text-slate-400 font-normal"></span>} <span className="text-red-500">*</span>
+                </label>
+                {isAdminAptika ? (
+                  <select
+                    required
+                    value={formData.bidang_id}
+                    onChange={(e) => setFormData({ ...formData, bidang_id: e.target.value })}
+                    className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all bg-white"
+                  >
+                    <option value="">-- Pilih Bidang / Unit Kerja --</option>
+                    {bidangs.map((b) => (
+                      <option key={b.id} value={b.id}>
+                        {b.name} ({b.code})
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <div className="w-full border border-slate-200 bg-slate-50/90 rounded-lg px-3 py-2 text-sm font-semibold text-blue-700 flex items-center justify-between">
+                    <span>{authBidang?.name ? `${authBidang.name} (${authBidang.code})` : "Bidang Pengguna"}</span>
+                    <span className="text-xs font-normal text-slate-400 italic">Terisi otomatis</span>
+                  </div>
+                )}
+              </div>
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Tanggal Mulai</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Tanggal Mulai <span className="text-red-500">*</span>
+                </label>
                 <input
                   type="date"
                   required
@@ -1282,7 +1466,9 @@ export default function MagangDashboard() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Tanggal Selesai</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Tanggal Selesai <span className="text-red-500">*</span>
+                </label>
                 <input
                   type="date"
                   required
@@ -1294,12 +1480,11 @@ export default function MagangDashboard() {
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">Status Magang</label>
-                <div className={`w-full rounded-lg px-3 py-2 text-sm font-semibold border ${
-                  currentStatus === 'Sedang magang' ? 'bg-blue-50 text-blue-700 border-blue-200' :
-                  currentStatus === 'Selesai magang' ? 'bg-green-50 text-green-700 border-green-200' :
-                  currentStatus === 'Belum mulai' ? 'bg-slate-50 text-slate-700 border-slate-200' :
-                  'bg-slate-50 text-slate-400 border-slate-200'
-                }`}>
+                <div className={`w-full rounded-lg px-3 py-2 text-sm font-semibold border ${currentStatus === 'Sedang magang' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                    currentStatus === 'Selesai magang' ? 'bg-green-50 text-green-700 border-green-200' :
+                      currentStatus === 'Belum mulai' ? 'bg-slate-50 text-slate-700 border-slate-200' :
+                        'bg-slate-50 text-slate-400 border-slate-200'
+                  }`}>
                   {currentStatus}
                 </div>
               </div>

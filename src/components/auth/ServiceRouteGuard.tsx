@@ -9,15 +9,17 @@ interface Props {
   children: React.ReactNode;
   requiredService?: "ADMINISTRASI_SURAT" | "IKI_REPORT" | "MANAJEMEN_TUGAS" | "MAGANG";
   requireAdminAptika?: boolean;
+  requireAdmin?: boolean;
 }
 
 export default function ServiceRouteGuard({
   children,
   requiredService,
   requireAdminAptika,
+  requireAdmin,
 }: Props) {
   const router = useRouter();
-  const { loading, initialized, isAdminAptika, hasServicePermission, fetchProfile } =
+  const { loading, initialized, user, isAdminAptika, hasServicePermission, fetchProfile } =
     useAuthStore();
 
   useEffect(() => {
@@ -29,8 +31,15 @@ export default function ServiceRouteGuard({
   useEffect(() => {
     if (loading || !initialized) return;
 
-    if (requireAdminAptika && !isAdminAptika) {
-      showToast.error("Akses ditolak. Fitur Admin Panel hanya diperuntukkan bagi Administrator Aptika.");
+    // Cek hak akses admin (seluruh admin bidang)
+    if (requireAdmin && user?.role !== "admin" && !isAdminAptika) {
+      showToast.error("Akses ditolak. Fitur Admin Panel hanya diperuntukkan bagi Administrator.");
+      router.replace("/dashboard");
+      return;
+    }
+
+    if (requireAdminAptika && !isAdminAptika && user?.role !== "admin") {
+      showToast.error("Akses ditolak. Fitur Admin Panel hanya diperuntukkan bagi Administrator.");
       router.replace("/dashboard");
       return;
     }
@@ -40,7 +49,7 @@ export default function ServiceRouteGuard({
       router.replace("/dashboard");
       return;
     }
-  }, [loading, initialized, isAdminAptika, requiredService, requireAdminAptika, router, hasServicePermission]);
+  }, [loading, initialized, user, isAdminAptika, requiredService, requireAdminAptika, requireAdmin, router, hasServicePermission]);
 
   if (loading || !initialized) {
     return (
