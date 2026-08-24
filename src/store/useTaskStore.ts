@@ -10,6 +10,8 @@ import {
   updateBoard,
   joinProject as joinProjectApi, 
   createProject,
+  updateProject,
+  deleteProject,
   approveTask as approveTaskApi
 } from "@/services/api";
 import { showToast } from "@/components/ui/Toast";
@@ -35,6 +37,8 @@ export interface Project {
   description: string;
   manager: string;
   deadline: string;
+  start_date?: string;
+  end_date?: string;
   members: { name: string; avatarUrl?: string }[];
   totalMembersCount: number;
   isJoined?: boolean;
@@ -42,6 +46,9 @@ export interface Project {
   type?: "web" | "mobile" | "api" | "security";
   created_by?: number;
   status?: string;
+  bidang_id?: number;
+  bidang?: { id: number; name: string; code: string };
+  pm?: { id: number; name: string; email?: string };
 }
 
 export interface AppNotification {
@@ -116,8 +123,10 @@ interface TaskStore {
 
   setCurrentUser: (user: any) => void;
   loadCurrentUser: () => void;
-  fetchProjects: () => Promise<void>;
-  addProject: (payload: { name: string; description: string; deadline: string; type: "web" | "mobile" | "api" | "security" }) => Promise<boolean>;
+  fetchProjects: (params?: { search?: string; bidang_id?: number | string; status?: string }) => Promise<void>;
+  addProject: (payload: { name: string; description: string; deadline?: string; start_date?: string; status?: string; type?: "web" | "mobile" | "api" | "security"; bidang_id?: number | string }) => Promise<boolean>;
+  editProject: (id: number, payload: { name?: string; description?: string; deadline?: string; start_date?: string; status?: string; bidang_id?: number | string }) => Promise<boolean>;
+  removeProject: (id: number) => Promise<boolean>;
   joinProject: (id: number) => Promise<boolean>;
   fetchTasks: (projectId: number) => Promise<void>;
   addTask: (projectId: number, title: string, priority: "low" | "medium" | "high", assigneeId: number | null, columnKey: string, groupBy: string, color?: string) => Promise<boolean>;
@@ -160,7 +169,7 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
     }
   },
 
-  fetchProjects: async () => {
+  fetchProjects: async (params) => {
     // Only show full loading spinner if we don't have projects loaded yet
     if (get().projects.length === 0) {
       set({ loadingProjects: true, error: null });
@@ -171,7 +180,7 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
         set({ currentUser: user });
       }
 
-      const res = await getProjects();
+      const res = await getProjects(params);
       if (res && res.data) {
         const mapped = res.data.map((b: any) => {
           // Check if current user is in members list with joined or accepted status
@@ -203,19 +212,43 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
 
   addProject: async (payload) => {
     try {
-      const backendPayload = {
+      await createProject({
         name: payload.name,
         description: payload.description,
-        end_date: payload.deadline,
-        status: "active",
-        visibility: "public" as const
-      };
-      await createProject(backendPayload as any);
+        deadline: payload.deadline,
+        start_date: payload.start_date,
+        status: payload.status || "active",
+        bidang_id: payload.bidang_id,
+      });
       get().addNotification("Proyek Baru", `Proyek "${payload.name}" berhasil dibuat.`);
       await get().fetchProjects();
       return true;
     } catch (err) {
       console.error("Failed creating project:", err);
+      return false;
+    }
+  },
+
+  editProject: async (id, payload) => {
+    try {
+      await updateProject(id, payload);
+      get().addNotification("Proyek Diperbarui", `Proyek "${payload.name || id}" berhasil diperbarui.`);
+      await get().fetchProjects();
+      return true;
+    } catch (err) {
+      console.error("Failed updating project:", err);
+      return false;
+    }
+  },
+
+  removeProject: async (id) => {
+    try {
+      await deleteProject(id);
+      get().addNotification("Proyek Dihapus", `Proyek telah dihapus.`);
+      await get().fetchProjects();
+      return true;
+    } catch (err) {
+      console.error("Failed deleting project:", err);
       return false;
     }
   },

@@ -1100,21 +1100,59 @@ export const deleteAdminUser = async (id: number) => {
 // Projects & Tasks API (Manajemen Tugas Digital)
 // ==========================================
 
-export const getProjects = async () => {
-  const res = await api.get("/task-management/boards");
+export const getProjects = async (params?: { search?: string; bidang_id?: number | string; status?: string }) => {
+  const res = await api.get("/task-management/boards", { params });
   return res.data;
 };
 
-export const createProject = async (payload: { name: string; description: string; deadline: string }) => {
-  // Map frontend form properties to backend Board model
+export const createProject = async (payload: {
+  name: string;
+  description: string;
+  deadline?: string;
+  start_date?: string;
+  status?: string;
+  bidang_id?: number | string;
+}) => {
   const backendPayload = {
     name: payload.name,
     description: payload.description,
-    end_date: payload.deadline,
-    status: "active",
-    visibility: "public"
+    start_date: payload.start_date || undefined,
+    end_date: payload.deadline || undefined,
+    status: payload.status || "active",
+    visibility: "public",
+    bidang_id: payload.bidang_id ? Number(payload.bidang_id) : undefined,
   };
   const res = await api.post("/task-management/boards", backendPayload);
+  return res.data;
+};
+
+export const updateProject = async (
+  id: number,
+  payload: {
+    name?: string;
+    description?: string;
+    deadline?: string;
+    start_date?: string;
+    status?: string;
+    bidang_id?: number | string;
+  }
+) => {
+  const backendPayload: any = {};
+  if (payload.name !== undefined) backendPayload.name = payload.name;
+  if (payload.description !== undefined) backendPayload.description = payload.description;
+  if (payload.start_date !== undefined) backendPayload.start_date = payload.start_date;
+  if (payload.deadline !== undefined) backendPayload.end_date = payload.deadline;
+  if (payload.status !== undefined) backendPayload.status = payload.status;
+  if (payload.bidang_id !== undefined && payload.bidang_id !== "") {
+    backendPayload.bidang_id = Number(payload.bidang_id);
+  }
+
+  const res = await api.put(`/task-management/boards/${id}`, backendPayload);
+  return res.data;
+};
+
+export const deleteProject = async (id: number) => {
+  const res = await api.delete(`/task-management/boards/${id}`);
   return res.data;
 };
 
