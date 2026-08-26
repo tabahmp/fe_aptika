@@ -1236,6 +1236,13 @@ export const rejectJoinRequest = async (boardId: number, userId: number) => {
   return res.data;
 };
 
+export const updateBoardMemberPermission = async (boardId: number, userId: number, canCreateTask: boolean) => {
+  const res = await api.patch(`/task-management/boards/${boardId}/members/${userId}/permission`, {
+    can_create_task: canCreateTask,
+  });
+  return res.data;
+};
+
 // ─── TASK COMMENTS (API) ──────────────────────────────────
 export const getTaskComments = async (taskId: number) => {
   const res = await api.get("/task-management/task-comments", {

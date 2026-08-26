@@ -1118,51 +1118,85 @@ export default function ManajemenTugasDigitalPage() {
             setProjectToJoin(null);
           }
         }}
-        title="Konfirmasi Join Proyek"
+        title={projectToJoin?.isPending ? "Permintaan Bergabung Sedang Diproses" : "Konfirmasi Join Proyek"}
         size="sm"
         footer={
-          <>
+          projectToJoin?.isPending ? (
             <Button
-              variant="outline"
-              disabled={joining}
               onClick={() => {
                 setIsJoinConfirmOpen(false);
                 setProjectToJoin(null);
               }}
-              className="text-xs font-semibold px-4 h-9 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300"
+              className="bg-slate-900 dark:bg-slate-700 text-white text-xs font-semibold px-4 h-9 hover:bg-slate-800"
             >
-              Batal
+              Mengerti
             </Button>
-            <Button
-              disabled={joining}
-              onClick={confirmJoinRequest}
-              className="bg-blue-900 dark:bg-blue-700 text-white text-xs font-bold px-4 h-9 hover:bg-blue-800"
-            >
-              {joining ? (
-                <div className="flex items-center gap-1.5">
-                  <Loader2 size={14} className="animate-spin" />
-                  <span>Memproses...</span>
-                </div>
-              ) : (
-                "Ya, Bergabung"
-              )}
-            </Button>
-          </>
+          ) : (
+            <>
+              <Button
+                variant="outline"
+                disabled={joining}
+                onClick={() => {
+                  setIsJoinConfirmOpen(false);
+                  setProjectToJoin(null);
+                }}
+                className="text-xs font-semibold px-4 h-9 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300"
+              >
+                Batal
+              </Button>
+              <Button
+                disabled={joining}
+                onClick={confirmJoinRequest}
+                className="bg-blue-900 dark:bg-blue-700 text-white text-xs font-bold px-4 h-9 hover:bg-blue-800"
+              >
+                {joining ? (
+                  <div className="flex items-center gap-1.5">
+                    <Loader2 size={14} className="animate-spin" />
+                    <span>Memproses...</span>
+                  </div>
+                ) : (
+                  "Ya, Bergabung"
+                )}
+              </Button>
+            </>
+          )
         }
       >
-        <div className="space-y-3 text-left">
-          <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-            Anda akan mengirim permintaan untuk bergabung ke proyek <strong>{projectToJoin?.name}</strong>.
-          </p>
-          <p className="text-[10px] text-slate-400 leading-relaxed">
-            Permintaan Anda perlu disetujui terlebih dahulu oleh <strong>Project Manager</strong> sebelum Anda dapat mengakses papan kanban dan berkontribusi pada proyek ini.
-          </p>
-          <div className="flex items-center gap-2 p-2.5 bg-blue-50 dark:bg-blue-500/10 rounded-lg border border-blue-100 dark:border-blue-500/20">
-            <span className="text-[10px] text-blue-700 dark:text-blue-300 font-semibold">
-              💡 PM proyek akan mendapat notifikasi dan dapat menyetujui atau menolak permintaan Anda.
-            </span>
+        {projectToJoin?.isPending ? (
+          <div className="space-y-3.5 text-left">
+            <div className="flex items-center gap-2 p-3 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/25 rounded-xl">
+              <Clock size={18} className="text-amber-600 dark:text-amber-400 flex-shrink-0 animate-pulse" />
+              <div>
+                <p className="text-xs font-bold text-amber-800 dark:text-amber-300">
+                  Menunggu Persetujuan Project Manager
+                </p>
+                <p className="text-[10px] text-amber-700/80 dark:text-amber-400/80 mt-0.5">
+                  Permintaan Anda telah tercatat dan sedang dalam antrean peninjauan.
+                </p>
+              </div>
+            </div>
+            <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+              Anda telah mengajukan permohonan bergabung ke proyek <strong>{projectToJoin?.name}</strong> sebelumnya.
+            </p>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+              Silakan menunggu hingga <strong>Project Manager</strong> menyetujui permohonan Anda. Setelah disetujui, papan Kanban akan otomatis dapat diakses dan Anda dapat mulai membuat serta mengelola tugas.
+            </p>
           </div>
-        </div>
+        ) : (
+          <div className="space-y-3 text-left">
+            <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+              Anda akan mengirim permintaan untuk bergabung ke proyek <strong>{projectToJoin?.name}</strong>.
+            </p>
+            <p className="text-[10px] text-slate-400 leading-relaxed">
+              Permintaan Anda perlu disetujui terlebih dahulu oleh <strong>Project Manager</strong> sebelum Anda dapat mengakses papan kanban dan berkontribusi pada proyek ini.
+            </p>
+            <div className="flex items-center gap-2 p-2.5 bg-blue-50 dark:bg-blue-500/10 rounded-lg border border-blue-100 dark:border-blue-500/20">
+              <span className="text-[10px] text-blue-700 dark:text-blue-300 font-semibold">
+                💡 PM proyek akan mendapat notifikasi dan dapat menyetujui atau menolak permintaan Anda.
+              </span>
+            </div>
+          </div>
+        )}
       </Modal>
     </div>
   );

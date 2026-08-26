@@ -12,7 +12,8 @@ import {
   createProject,
   updateProject,
   deleteProject,
-  approveTask as approveTaskApi
+  approveTask as approveTaskApi,
+  updateBoardMemberPermission
 } from "@/services/api";
 import { showToast } from "@/components/ui/Toast";
 
@@ -128,6 +129,7 @@ interface TaskStore {
   editProject: (id: number, payload: { name?: string; description?: string; deadline?: string; start_date?: string; status?: string; bidang_id?: number | string }) => Promise<boolean>;
   removeProject: (id: number) => Promise<boolean>;
   joinProject: (id: number) => Promise<boolean>;
+  updateMemberPermission: (boardId: number, userId: number, canCreateTask: boolean) => Promise<boolean>;
   fetchTasks: (projectId: number) => Promise<void>;
   addTask: (projectId: number, title: string, priority: "low" | "medium" | "high", assigneeId: number | null, columnKey: string, groupBy: string, color?: string) => Promise<boolean>;
   setTaskColor: (taskId: number, color: string) => void;
@@ -262,6 +264,26 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
       return true;
     } catch (err) {
       console.error("Failed to join project:", err);
+      return false;
+    }
+  },
+
+  updateMemberPermission: async (boardId, userId, canCreateTask) => {
+    try {
+      const res = await updateBoardMemberPermission(boardId, userId, canCreateTask);
+      if (res && res.success) {
+        set((state) => ({
+          members: state.members.map((m) =>
+            m.user?.id === userId || m.user_id === userId
+              ? { ...m, can_create_task: canCreateTask }
+              : m
+          ),
+        }));
+        return true;
+      }
+      return false;
+    } catch (err) {
+      console.error("Failed updating member permission:", err);
       return false;
     }
   },
