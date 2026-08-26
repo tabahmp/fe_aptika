@@ -10,7 +10,10 @@ import {
   X,
   Search,
   Loader2,
-  Sliders
+  Sliders,
+  LockKeyhole,
+  UserPlus,
+  Clock
 } from "lucide-react";
 import { KanbanColumn } from "@/components/manajementugas/KanbanColumn";
 import { useTaskStore, Task } from "@/store/useTaskStore";
@@ -79,6 +82,10 @@ export default function KanbanBoardPage() {
   const [, setLoadingRequests] = useState(false);
   const [isMembersModalOpen, setIsMembersModalOpen] = useState(false);
   const [processingRequestId, setProcessingRequestId] = useState<number | null>(null);
+
+  // Join gate states
+  const [isJoinGateModalOpen, setIsJoinGateModalOpen] = useState(false);
+  const [isJoiningBoard, setIsJoiningBoard] = useState(false);
 
   // Selected task detail modal states
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
@@ -160,6 +167,41 @@ export default function KanbanBoardPage() {
   const isPm = useMemo(() => {
     return currentProject ? (currentProject.created_by === currentUser?.id || currentUser?.role === "admin") : false;
   }, [currentProject, currentUser]);
+
+  // Check if current user is a member (joined or PM/admin)
+  const isMember = useMemo(() => {
+    if (!currentProject || !currentUser) return false;
+    if (currentUser.role === "admin" || currentUser.isAdminAptika) return true;
+    if (currentProject.created_by === currentUser.id) return true;
+    if (currentProject.pm?.id === currentUser.id) return true;
+    return currentProject.isJoined === true;
+  }, [currentProject, currentUser]);
+
+  // Is user pending approval
+  const isPending = useMemo(() => {
+    return currentProject?.isPending === true;
+  }, [currentProject]);
+
+  // Handle join request from the board page
+  const handleJoinBoard = async () => {
+    if (!currentProject) return;
+    setIsJoiningBoard(true);
+    try {
+      const { joinProject } = useTaskStore.getState();
+      const success = await joinProject(currentProject.id);
+      if (success) {
+        showToast.success("Permintaan bergabung berhasil dikirim! Tunggu persetujuan Project Manager.");
+        await fetchProjects();
+      } else {
+        showToast.error("Gagal mengirim permintaan bergabung.");
+      }
+    } catch {
+      showToast.error("Terjadi kesalahan. Coba lagi.");
+    } finally {
+      setIsJoiningBoard(false);
+      setIsJoinGateModalOpen(false);
+    }
+  };
 
 
   useEffect(() => {
@@ -621,6 +663,136 @@ export default function KanbanBoardPage() {
       <div className="flex flex-col items-center justify-center py-24 gap-4 select-none">
         <RefreshCw className="animate-spin text-blue-600 w-9 h-9 stroke-[2.5]" />
         <span className="text-xs font-semibold text-slate-400 tracking-wider">Memuat Papan Kanban...</span>
+      </div>
+    );
+  }
+
+  // Show join gate if user is not a member yet
+  if (currentProject && !isMember && !loadingTasks) {
+    return (
+      <div className="space-y-6 select-none pb-12">
+        {/* Header */}
+        <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white dark:bg-[#0b1630] border border-slate-200 dark:border-slate-800/80 rounded-2xl px-6 py-4 shadow-sm">
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={() => router.push("/manajementugasdigital")}
+              className="p-2 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 transition-colors"
+              title="Kembali ke Daftar Proyek"
+            >
+              <ArrowLeft size={16} />
+            </button>
+            <div className="flex flex-col">
+              <h2 className="text-sm font-extrabold text-slate-800 dark:text-white tracking-wide leading-none">{currentProject?.name || "Proyek"}</h2>
+              <span className="text-[10px] text-slate-400 font-bold tracking-wide mt-1.5 uppercase">Papan Kanban / Sprint Aktif</span>
+            </div>
+          </div>
+        </header>
+
+        {/* Join Gate Banner */}
+        <div className="relative rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800/80 shadow-sm">
+          {/* Blurred preview background */}
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 p-4 blur-sm pointer-events-none opacity-40 min-h-[400px]">
+            {["TO DO", "IN PROGRESS", "IN REVIEW", "DONE"].map((col) => (
+              <div key={col} className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-3 min-h-[350px] border border-slate-100 dark:border-slate-700">
+                <div className="text-[9px] font-extrabold text-slate-400 uppercase tracking-widest mb-3">{col}</div>
+                {[1,2].map(i => (
+                  <div key={i} className="bg-white dark:bg-slate-700 rounded-lg p-3 mb-2 border border-slate-100 dark:border-slate-600 h-16" />
+                ))}
+              </div>
+            ))}
+          </div>
+
+          {/* Overlay gate */}
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/80 dark:bg-[#0b1630]/85 backdrop-blur-sm">
+            <div className="flex flex-col items-center gap-5 text-center max-w-sm px-6">
+              <div className="w-16 h-16 rounded-2xl bg-amber-50 dark:bg-amber-500/15 border border-amber-200 dark:border-amber-500/30 flex items-center justify-center shadow-lg">
+                <LockKeyhole size={28} className="text-amber-500 dark:text-amber-400" />
+              </div>
+              <div>
+                <h3 className="text-base font-extrabold text-slate-800 dark:text-white mb-1.5">
+                  Akses Terbatas
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                  Anda belum bergabung dengan proyek <strong className="text-slate-700 dark:text-slate-300">{currentProject?.name}</strong>. Bergabung terlebih dahulu untuk melihat papan kanban, menambahkan tugas, dan berkontribusi.
+                </p>
+              </div>
+
+              {isPending ? (
+                <div className="flex items-center gap-2 px-4 py-2.5 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/25 rounded-xl text-amber-700 dark:text-amber-400">
+                  <Clock size={14} />
+                  <span className="text-xs font-bold">Permintaan bergabung sedang menunggu persetujuan PM</span>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center gap-2 w-full">
+                  <Button
+                    onClick={() => setIsJoinGateModalOpen(true)}
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs h-10 rounded-xl shadow-md shadow-blue-600/20 flex items-center justify-center gap-2"
+                  >
+                    <UserPlus size={15} />
+                    Minta Bergabung ke Proyek Ini
+                  </Button>
+                  <button
+                    onClick={() => router.push("/manajementugasdigital")}
+                    className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors font-medium"
+                  >
+                    ← Kembali ke Daftar Proyek
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Join Confirmation Modal */}
+        <Modal
+          isOpen={isJoinGateModalOpen}
+          onClose={() => !isJoiningBoard && setIsJoinGateModalOpen(false)}
+          title="Minta Bergabung ke Proyek"
+          size="sm"
+          footer={
+            <>
+              <Button
+                variant="outline"
+                disabled={isJoiningBoard}
+                onClick={() => setIsJoinGateModalOpen(false)}
+                className="text-xs font-semibold px-4 h-9 border-slate-200"
+              >
+                Batal
+              </Button>
+              <Button
+                onClick={handleJoinBoard}
+                disabled={isJoiningBoard}
+                className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-4 h-9"
+              >
+                {isJoiningBoard ? (
+                  <div className="flex items-center gap-1.5">
+                    <Loader2 size={13} className="animate-spin" />
+                    <span>Mengirim...</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1.5">
+                    <UserPlus size={13} />
+                    <span>Ya, Kirim Permintaan</span>
+                  </div>
+                )}
+              </Button>
+            </>
+          }
+        >
+          <div className="space-y-3 text-left">
+            <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+              Anda akan mengirim permintaan untuk bergabung ke proyek <strong>{currentProject?.name}</strong>.
+            </p>
+            <p className="text-[10px] text-slate-400 leading-relaxed">
+              Permintaan Anda perlu disetujui terlebih dahulu oleh <strong>Project Manager</strong> sebelum Anda dapat mengakses papan kanban dan berkontribusi pada proyek ini.
+            </p>
+            <div className="flex items-center gap-2 p-2.5 bg-blue-50 dark:bg-blue-500/10 rounded-lg border border-blue-100 dark:border-blue-500/20">
+              <span className="text-[10px] text-blue-700 dark:text-blue-300 font-semibold">
+                💡 PM proyek akan mendapat notifikasi dan dapat menyetujui atau menolak permintaan Anda.
+              </span>
+            </div>
+          </div>
+        </Modal>
       </div>
     );
   }

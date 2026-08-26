@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { 
   Globe, 
   Smartphone, 
@@ -22,7 +23,8 @@ import {
   Archive,
   ArrowRight,
   User,
-  Users
+  Users,
+  LockKeyhole
 } from "lucide-react";
 import Link from "next/link";
 import { SearchBar } from "@/components/ui/SearchBar";
@@ -40,6 +42,7 @@ import { useAuthStore } from "@/store/useAuthStore";
 import { getBidangs } from "@/services/api";
 
 export default function ManajemenTugasDigitalPage() {
+  const router = useRouter();
   const {
     projects,
     loadingProjects,
@@ -357,6 +360,13 @@ export default function ManajemenTugasDigitalPage() {
           security: Shield,
         };
         const Icon = IconMap[row.type as "web" | "mobile" | "api" | "security"] || Globe;
+        const handleProjectNameClick = (e: React.MouseEvent) => {
+          if (!row.isJoined && !canManageProject(row)) {
+            e.preventDefault();
+            setProjectToJoin(row);
+            setIsJoinConfirmOpen(true);
+          }
+        };
         return (
           <div className="flex items-center gap-3">
             <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 flex-shrink-0 border border-blue-100 dark:border-blue-500/20">
@@ -365,10 +375,14 @@ export default function ManajemenTugasDigitalPage() {
             <div className="flex flex-col text-left">
               <Link 
                 href={`/manajementugasdigital/board/${row.id}`}
+                onClick={handleProjectNameClick}
                 className="text-xs font-bold text-slate-800 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 transition-colors hover:underline cursor-pointer flex items-center gap-1.5"
-                title="Buka Papan Kanban"
+                title={row.isJoined || canManageProject(row) ? "Buka Papan Kanban" : "Bergabung diperlukan untuk akses kanban"}
               >
                 {val}
+                {!row.isJoined && !canManageProject(row) && (
+                  <LockKeyhole size={10} className="text-amber-400 flex-shrink-0" />
+                )}
               </Link>
               <span className="text-[11px] text-slate-500 dark:text-slate-400 font-normal truncate max-w-[220px] mt-0.5" title={row.description}>
                 {row.description || "Tidak ada deskripsi"}
@@ -504,13 +518,23 @@ export default function ManajemenTugasDigitalPage() {
             </button>
 
             {/* Link to Kanban Board */}
-            <Link
-              href={`/manajementugasdigital/board/${row.id}`}
-              className="p-1.5 text-blue-600 dark:text-blue-400 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-500/15 rounded-lg transition-all font-bold flex items-center gap-1 text-[11px]"
-              title="Buka Papan Kanban"
-            >
-              <ArrowRight size={15} />
-            </Link>
+            {row.isJoined || canManageProject(row) ? (
+              <Link
+                href={`/manajementugasdigital/board/${row.id}`}
+                className="p-1.5 text-blue-600 dark:text-blue-400 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-500/15 rounded-lg transition-all font-bold flex items-center gap-1 text-[11px]"
+                title="Buka Papan Kanban"
+              >
+                <ArrowRight size={15} />
+              </Link>
+            ) : (
+              <button
+                onClick={() => { setProjectToJoin(row); setIsJoinConfirmOpen(true); }}
+                className="p-1.5 text-amber-500 dark:text-amber-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-500/15 rounded-lg transition-all font-bold flex items-center gap-1 text-[11px]"
+                title={row.isPending ? "Permintaan bergabung sedang diproses" : "Bergabung diperlukan - klik untuk minta join"}
+              >
+                {row.isPending ? <Clock size={14} /> : <LockKeyhole size={14} />}
+              </button>
+            )}
 
             {/* Edit Button (PM / Admin only) */}
             {isManagerOrAdmin && (
@@ -535,18 +559,6 @@ export default function ManajemenTugasDigitalPage() {
               >
                 <Trash2 size={15} />
               </button>
-            )}
-
-            {/* Join Button (if not joined) */}
-            {!row.isJoined && (
-              <Button
-                variant="default"
-                size="sm"
-                onClick={() => initiateJoin(row)}
-                className="text-[10px] font-bold px-2.5 py-1 h-7 bg-blue-900 dark:bg-blue-700 text-white rounded-lg hover:bg-blue-800"
-              >
-                Join
-              </Button>
             )}
           </div>
         );
@@ -1140,11 +1152,16 @@ export default function ManajemenTugasDigitalPage() {
       >
         <div className="space-y-3 text-left">
           <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-            Apakah Anda yakin ingin bergabung sebagai anggota dalam proyek <strong>{projectToJoin?.name}</strong>?
+            Anda akan mengirim permintaan untuk bergabung ke proyek <strong>{projectToJoin?.name}</strong>.
           </p>
-          <p className="text-[10px] text-slate-400">
-            Setelah bergabung, nama Anda akan terdaftar sebagai anggota proyek ini, dan Anda akan dapat mengelola papan Kanban untuk tugas-tugas di dalamnya.
+          <p className="text-[10px] text-slate-400 leading-relaxed">
+            Permintaan Anda perlu disetujui terlebih dahulu oleh <strong>Project Manager</strong> sebelum Anda dapat mengakses papan kanban dan berkontribusi pada proyek ini.
           </p>
+          <div className="flex items-center gap-2 p-2.5 bg-blue-50 dark:bg-blue-500/10 rounded-lg border border-blue-100 dark:border-blue-500/20">
+            <span className="text-[10px] text-blue-700 dark:text-blue-300 font-semibold">
+              💡 PM proyek akan mendapat notifikasi dan dapat menyetujui atau menolak permintaan Anda.
+            </span>
+          </div>
         </div>
       </Modal>
     </div>
