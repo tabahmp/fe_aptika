@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { Search, User, Sun, Moon } from "lucide-react";
+import { Search, User, Sun, Moon, ShieldCog } from "lucide-react";
 import Avatar from "@/components/ui/Avatar";
 import Dropdown from "@/components/ui/Dropdown";
 import { useRouter } from "next/navigation";
@@ -39,6 +39,15 @@ export default function Header({ title, subtitle, showBrand = false }: HeaderPro
   };
 
   const profileMenuItems = [
+    ...(isAdmin
+      ? [
+          {
+            label: "Admin Panel",
+            onClick: () => router.push("/admin"),
+            icon: <ShieldCog size={14} className="text-amber-500" />,
+          },
+        ]
+      : []),
     {
       label: "Profil Saya",
       onClick: () => router.push("/profile"),
@@ -103,6 +112,19 @@ export default function Header({ title, subtitle, showBrand = false }: HeaderPro
         </button>
 
         <NotificationBell />
+
+        {/* Shortcut Button to Admin Panel for Admin users */}
+        {isAdmin && (
+          <button
+            type="button"
+            onClick={() => router.push("/admin")}
+            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-extrabold bg-amber-50 hover:bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:hover:bg-amber-900 dark:text-amber-300 transition-all border border-amber-200/90 dark:border-amber-700/80 shadow-2xs group"
+            title="Masuk ke Halaman Khusus Admin Panel"
+          >
+            <ShieldCog size={14} className="text-amber-600 dark:text-amber-400 group-hover:rotate-45 transition-transform duration-300" />
+            <span>Admin Panel</span>
+          </button>
+        )}
 
         <div className="h-6 w-[1px] bg-slate-200 dark:bg-slate-800" />
 

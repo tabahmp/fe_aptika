@@ -17,7 +17,8 @@ interface KanbanColumnProps {
   tasks: Task[];
   project: Project | null;
   currentUser: CurrentUserInput;
-  members: Array<{ id?: number; role?: string; user?: { id?: number; name?: string } }>;
+  members: Array<{ id?: number; role?: string; can_create_task?: boolean; user?: { id?: number; name?: string } }>;
+  canCreateTask?: boolean;
   isOver: boolean;
   activeInputColumn: string | null;
   newTaskTitle: string;
@@ -55,6 +56,7 @@ const KanbanColumnComponent: React.FC<KanbanColumnProps> = ({
   project,
   currentUser,
   members,
+  canCreateTask,
   isOver,
   activeInputColumn,
   newTaskTitle,
@@ -84,6 +86,8 @@ const KanbanColumnComponent: React.FC<KanbanColumnProps> = ({
 }) => {
 // Project.created_by may not exist in the mapped Project type; rely on role instead.
   const isPm = project ? (project.created_by === currentUser?.id || currentUser?.role === "admin") : false;
+  const currentMember = members.find((m) => (m.user?.id === currentUser?.id || m.id === currentUser?.id));
+  const canCreate = canCreateTask !== undefined ? canCreateTask : (isPm || Boolean(currentMember?.can_create_task));
 
   return (
     <div 
@@ -219,8 +223,8 @@ const KanbanColumnComponent: React.FC<KanbanColumnProps> = ({
             </div>
           </div>
         ) : (
-          /* Plus button to show creator (only if user is PM) */
-          isPm && (
+          /* Plus button to show creator (if PM or permitted member) */
+          canCreate && (
             <button 
               onClick={() => onStartCreateTask(colKey)} 
               className="w-full flex items-center justify-center gap-1.5 py-2 text-[10px] font-bold text-slate-500 hover:text-slate-800 hover:bg-slate-200/30 rounded-xl transition-all border border-dashed border-slate-200 hover:border-slate-300"

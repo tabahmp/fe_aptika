@@ -1,8 +1,7 @@
 import axios from "axios";
 
 export const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "https://beaptikatools.up.railway.app/api",
-  //  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api",
+  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api",
 });
 
 // ✅ Auto-attach token ke setiap request
@@ -36,7 +35,12 @@ api.interceptors.response.use(
   }
 );
 
-// ─── AUTH ────────────────────────────────────────────────
+// ─── AUTH & MASTER ──────────────────────────────────────
+export const getBidangs = async () => {
+  const res = await api.get("/bidangs");
+  return res.data; // expects { success: true, data: [...] }
+};
+
 export const login = async (email: string, password: string) => {
   const res = await api.post("/login", { email, password });
   return res.data; // expects { token, user }
@@ -1096,21 +1100,59 @@ export const deleteAdminUser = async (id: number) => {
 // Projects & Tasks API (Manajemen Tugas Digital)
 // ==========================================
 
-export const getProjects = async () => {
-  const res = await api.get("/task-management/boards");
+export const getProjects = async (params?: { search?: string; bidang_id?: number | string; status?: string }) => {
+  const res = await api.get("/task-management/boards", { params });
   return res.data;
 };
 
-export const createProject = async (payload: { name: string; description: string; deadline: string }) => {
-  // Map frontend form properties to backend Board model
+export const createProject = async (payload: {
+  name: string;
+  description: string;
+  deadline?: string;
+  start_date?: string;
+  status?: string;
+  bidang_id?: number | string;
+}) => {
   const backendPayload = {
     name: payload.name,
     description: payload.description,
-    end_date: payload.deadline,
-    status: "active",
-    visibility: "public"
+    start_date: payload.start_date || undefined,
+    end_date: payload.deadline || undefined,
+    status: payload.status || "active",
+    visibility: "public",
+    bidang_id: payload.bidang_id ? Number(payload.bidang_id) : undefined,
   };
   const res = await api.post("/task-management/boards", backendPayload);
+  return res.data;
+};
+
+export const updateProject = async (
+  id: number,
+  payload: {
+    name?: string;
+    description?: string;
+    deadline?: string;
+    start_date?: string;
+    status?: string;
+    bidang_id?: number | string;
+  }
+) => {
+  const backendPayload: any = {};
+  if (payload.name !== undefined) backendPayload.name = payload.name;
+  if (payload.description !== undefined) backendPayload.description = payload.description;
+  if (payload.start_date !== undefined) backendPayload.start_date = payload.start_date;
+  if (payload.deadline !== undefined) backendPayload.end_date = payload.deadline;
+  if (payload.status !== undefined) backendPayload.status = payload.status;
+  if (payload.bidang_id !== undefined && payload.bidang_id !== "") {
+    backendPayload.bidang_id = Number(payload.bidang_id);
+  }
+
+  const res = await api.put(`/task-management/boards/${id}`, backendPayload);
+  return res.data;
+};
+
+export const deleteProject = async (id: number) => {
+  const res = await api.delete(`/task-management/boards/${id}`);
   return res.data;
 };
 
@@ -1191,6 +1233,13 @@ export const approveJoinRequest = async (boardId: number, userId: number) => {
 
 export const rejectJoinRequest = async (boardId: number, userId: number) => {
   const res = await api.post(`/task-management/boards/${boardId}/members/${userId}/reject`);
+  return res.data;
+};
+
+export const updateBoardMemberPermission = async (boardId: number, userId: number, canCreateTask: boolean) => {
+  const res = await api.patch(`/task-management/boards/${boardId}/members/${userId}/permission`, {
+    can_create_task: canCreateTask,
+  });
   return res.data;
 };
 

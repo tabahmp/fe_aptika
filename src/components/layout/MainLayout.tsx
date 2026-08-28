@@ -21,6 +21,42 @@ export default function MainLayout({
   hideHeader = false,
   hideSidebar = false,
 }: MainLayoutProps) {
+  const [isImpersonating, setIsImpersonating] = React.useState(false);
+  const [impersonatedName, setImpersonatedName] = React.useState("");
+
+  React.useEffect(() => {
+    if (typeof window !== "undefined") {
+      const backupToken = localStorage.getItem("admin_token_backup");
+      const userStr = localStorage.getItem("user");
+      if (backupToken && userStr) {
+        setIsImpersonating(true);
+        try {
+          const u = JSON.parse(userStr);
+          setImpersonatedName(u.name || "Pengguna");
+        } catch {
+          setImpersonatedName("Pengguna");
+        }
+      } else {
+        setIsImpersonating(false);
+      }
+    }
+  }, []);
+
+  const handleStopImpersonation = () => {
+    const adminToken = localStorage.getItem("admin_token_backup");
+    const adminUser = localStorage.getItem("admin_user_backup");
+    if (adminToken) {
+      localStorage.setItem("token", adminToken);
+    }
+    if (adminUser) {
+      localStorage.setItem("user", adminUser);
+    }
+    localStorage.removeItem("admin_token_backup");
+    localStorage.removeItem("admin_user_backup");
+    localStorage.removeItem("impersonating_user_id");
+    window.location.href = "/admin/users";
+  };
+
   if (isPrintPage) {
     return (
       <>
@@ -44,6 +80,24 @@ export default function MainLayout({
 
   return (
     <div className="relative min-h-screen w-full bg-[#f8fafc] text-slate-800 overflow-x-hidden print:bg-white print:min-h-0 print:overflow-visible">
+      {/* Impersonation Banner */}
+      {isImpersonating && (
+        <div className="bg-gradient-to-r from-amber-600 to-orange-600 text-white px-4 py-2 text-xs font-bold flex items-center justify-between shadow-md relative z-50 animate-in slide-in-from-top duration-300">
+          <div className="flex items-center gap-2">
+            <span className="bg-white text-amber-700 px-2 py-0.5 rounded-full text-[10px] uppercase tracking-wider font-extrabold shadow-xs">
+              Mode Simulasi
+            </span>
+            <span>Anda sedang melihat sistem sebagai <strong>{impersonatedName}</strong></span>
+          </div>
+          <button
+            onClick={handleStopImpersonation}
+            className="bg-white/20 hover:bg-white/30 text-white border border-white/40 px-3 py-1 rounded-lg text-xs font-extrabold transition-all hover:scale-105 active:scale-95"
+          >
+            ← Kembali ke Admin Panel
+          </button>
+        </div>
+      )}
+
       {/* Diskominfo Jabar Logo Background Layer */}
       <div
         className="fixed inset-0 z-0 pointer-events-none bg-center bg-no-repeat transition-all opacity-[0.35] print:hidden"

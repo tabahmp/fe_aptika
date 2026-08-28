@@ -10,7 +10,13 @@ import {
   X,
   Search,
   Loader2,
-  Sliders
+  Sliders,
+  LockKeyhole,
+  UserPlus,
+  Clock,
+  Check,
+  ShieldCheck,
+  PenTool
 } from "lucide-react";
 import { KanbanColumn } from "@/components/manajementugas/KanbanColumn";
 import { useTaskStore, Task } from "@/store/useTaskStore";
@@ -41,7 +47,8 @@ export default function KanbanBoardPage() {
     removeTask,
     completeSprint,
     loadCurrentUser,
-    addNotification
+    addNotification,
+    updateMemberPermission
   } = useTaskStore();
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -79,6 +86,10 @@ export default function KanbanBoardPage() {
   const [, setLoadingRequests] = useState(false);
   const [isMembersModalOpen, setIsMembersModalOpen] = useState(false);
   const [processingRequestId, setProcessingRequestId] = useState<number | null>(null);
+
+  // Join gate states
+  const [isJoinGateModalOpen, setIsJoinGateModalOpen] = useState(false);
+  const [isJoiningBoard, setIsJoiningBoard] = useState(false);
 
   // Selected task detail modal states
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
@@ -160,6 +171,73 @@ export default function KanbanBoardPage() {
   const isPm = useMemo(() => {
     return currentProject ? (currentProject.created_by === currentUser?.id || currentUser?.role === "admin") : false;
   }, [currentProject, currentUser]);
+
+  // Check if current user is a member (joined or PM/admin)
+  const isMember = useMemo(() => {
+    if (!currentProject || !currentUser) return false;
+    if (currentUser.role === "admin" || currentUser.isAdminAptika) return true;
+    if (currentProject.created_by === currentUser.id) return true;
+    if (currentProject.pm?.id === currentUser.id) return true;
+    return currentProject.isJoined === true;
+  }, [currentProject, currentUser]);
+
+  // Is user pending approval
+  const isPending = useMemo(() => {
+    return currentProject?.isPending === true;
+  }, [currentProject]);
+
+  // Hak membuat tugas: PM, Admin, atau Member yang diberi izin oleh PM
+  const canCreateTask = useMemo(() => {
+    if (!currentUser) return false;
+    if (isPm) return true;
+    return members.some((m) => (m.user?.id === currentUser?.id || m.id === currentUser?.id) && Boolean(m.can_create_task));
+  }, [isPm, members, currentUser]);
+
+  const [togglingPermissionUserId, setTogglingPermissionUserId] = useState<number | null>(null);
+
+  // Toggle izin pembuatan tugas untuk member oleh PM
+  const handleTogglePermission = async (userId: number, currentPermission: boolean) => {
+    if (!isPm) {
+      showToast.error("Hanya Project Manager atau Admin yang dapat mengubah izin pembuatan tugas.");
+      return;
+    }
+    setTogglingPermissionUserId(userId);
+    try {
+      const newPermission = !currentPermission;
+      const ok = await updateMemberPermission(projectId, userId, newPermission);
+      if (ok) {
+        showToast.success(`Izin membuat tugas berhasil ${newPermission ? "diaktifkan" : "dinonaktifkan"}.`);
+      } else {
+        showToast.error("Gagal mengubah izin anggota.");
+      }
+    } catch (err) {
+      console.error("Failed to toggle permission:", err);
+      showToast.error("Gagal mengubah izin anggota.");
+    } finally {
+      setTogglingPermissionUserId(null);
+    }
+  };
+
+  // Handle join request from the board page
+  const handleJoinBoard = async () => {
+    if (!currentProject) return;
+    setIsJoiningBoard(true);
+    try {
+      const { joinProject } = useTaskStore.getState();
+      const success = await joinProject(currentProject.id);
+      if (success) {
+        showToast.success("Permintaan bergabung berhasil dikirim! Tunggu persetujuan Project Manager.");
+        await fetchProjects();
+      } else {
+        showToast.error("Gagal mengirim permintaan bergabung.");
+      }
+    } catch {
+      showToast.error("Terjadi kesalahan. Coba lagi.");
+    } finally {
+      setIsJoiningBoard(false);
+      setIsJoinGateModalOpen(false);
+    }
+  };
 
 
   useEffect(() => {
@@ -276,8 +354,8 @@ export default function KanbanBoardPage() {
       return;
     }
 
-    if (!isPm) {
-      showToast.error("Hanya Project Manager yang dapat membuat tugas.");
+    if (!canCreateTask) {
+      showToast.error("Anda belum diberikan izin oleh Project Manager untuk membuat tugas.");
       return;
     }
 
@@ -625,6 +703,136 @@ export default function KanbanBoardPage() {
     );
   }
 
+  // Show join gate if user is not a member yet
+  if (currentProject && !isMember && !loadingTasks) {
+    return (
+      <div className="space-y-6 select-none pb-12">
+        {/* Header */}
+        <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white dark:bg-[#0b1630] border border-slate-200 dark:border-slate-800/80 rounded-2xl px-6 py-4 shadow-sm">
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={() => router.push("/manajementugasdigital")}
+              className="p-2 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 transition-colors"
+              title="Kembali ke Daftar Proyek"
+            >
+              <ArrowLeft size={16} />
+            </button>
+            <div className="flex flex-col">
+              <h2 className="text-sm font-extrabold text-slate-800 dark:text-white tracking-wide leading-none">{currentProject?.name || "Proyek"}</h2>
+              <span className="text-[10px] text-slate-400 font-bold tracking-wide mt-1.5 uppercase">Papan Kanban / Sprint Aktif</span>
+            </div>
+          </div>
+        </header>
+
+        {/* Join Gate Banner */}
+        <div className="relative rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800/80 shadow-sm">
+          {/* Blurred preview background */}
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 p-4 blur-sm pointer-events-none opacity-40 min-h-[400px]">
+            {["TO DO", "IN PROGRESS", "IN REVIEW", "DONE"].map((col) => (
+              <div key={col} className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-3 min-h-[350px] border border-slate-100 dark:border-slate-700">
+                <div className="text-[9px] font-extrabold text-slate-400 uppercase tracking-widest mb-3">{col}</div>
+                {[1,2].map(i => (
+                  <div key={i} className="bg-white dark:bg-slate-700 rounded-lg p-3 mb-2 border border-slate-100 dark:border-slate-600 h-16" />
+                ))}
+              </div>
+            ))}
+          </div>
+
+          {/* Overlay gate */}
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/80 dark:bg-[#0b1630]/85 backdrop-blur-sm">
+            <div className="flex flex-col items-center gap-5 text-center max-w-sm px-6">
+              <div className="w-16 h-16 rounded-2xl bg-amber-50 dark:bg-amber-500/15 border border-amber-200 dark:border-amber-500/30 flex items-center justify-center shadow-lg">
+                <LockKeyhole size={28} className="text-amber-500 dark:text-amber-400" />
+              </div>
+              <div>
+                <h3 className="text-base font-extrabold text-slate-800 dark:text-white mb-1.5">
+                  Akses Terbatas
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                  Anda belum bergabung dengan proyek <strong className="text-slate-700 dark:text-slate-300">{currentProject?.name}</strong>. Bergabung terlebih dahulu untuk melihat papan kanban, menambahkan tugas, dan berkontribusi.
+                </p>
+              </div>
+
+              {isPending ? (
+                <div className="flex items-center gap-2 px-4 py-2.5 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/25 rounded-xl text-amber-700 dark:text-amber-400">
+                  <Clock size={14} />
+                  <span className="text-xs font-bold">Permintaan bergabung sedang menunggu persetujuan PM</span>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center gap-2 w-full">
+                  <Button
+                    onClick={() => setIsJoinGateModalOpen(true)}
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs h-10 rounded-xl shadow-md shadow-blue-600/20 flex items-center justify-center gap-2"
+                  >
+                    <UserPlus size={15} />
+                    Minta Bergabung ke Proyek Ini
+                  </Button>
+                  <button
+                    onClick={() => router.push("/manajementugasdigital")}
+                    className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors font-medium"
+                  >
+                    ← Kembali ke Daftar Proyek
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Join Confirmation Modal */}
+        <Modal
+          isOpen={isJoinGateModalOpen}
+          onClose={() => !isJoiningBoard && setIsJoinGateModalOpen(false)}
+          title="Minta Bergabung ke Proyek"
+          size="sm"
+          footer={
+            <>
+              <Button
+                variant="outline"
+                disabled={isJoiningBoard}
+                onClick={() => setIsJoinGateModalOpen(false)}
+                className="text-xs font-semibold px-4 h-9 border-slate-200"
+              >
+                Batal
+              </Button>
+              <Button
+                onClick={handleJoinBoard}
+                disabled={isJoiningBoard}
+                className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-4 h-9"
+              >
+                {isJoiningBoard ? (
+                  <div className="flex items-center gap-1.5">
+                    <Loader2 size={13} className="animate-spin" />
+                    <span>Mengirim...</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1.5">
+                    <UserPlus size={13} />
+                    <span>Ya, Kirim Permintaan</span>
+                  </div>
+                )}
+              </Button>
+            </>
+          }
+        >
+          <div className="space-y-3 text-left">
+            <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+              Anda akan mengirim permintaan untuk bergabung ke proyek <strong>{currentProject?.name}</strong>.
+            </p>
+            <p className="text-[10px] text-slate-400 leading-relaxed">
+              Permintaan Anda perlu disetujui terlebih dahulu oleh <strong>Project Manager</strong> sebelum Anda dapat mengakses papan kanban dan berkontribusi pada proyek ini.
+            </p>
+            <div className="flex items-center gap-2 p-2.5 bg-blue-50 dark:bg-blue-500/10 rounded-lg border border-blue-100 dark:border-blue-500/20">
+              <span className="text-[10px] text-blue-700 dark:text-blue-300 font-semibold">
+                💡 PM proyek akan mendapat notifikasi dan dapat menyetujui atau menolak permintaan Anda.
+              </span>
+            </div>
+          </div>
+        </Modal>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 select-none pb-12">
       {/* Figma Kanban Header */}
@@ -869,6 +1077,7 @@ export default function KanbanBoardPage() {
                 project={currentProject}
                 currentUser={currentUser}
                 members={members}
+                canCreateTask={canCreateTask}
                 isOver={isOver}
                 activeInputColumn={activeInputColumn}
                 newTaskTitle={newTaskTitle}
@@ -976,24 +1185,77 @@ export default function KanbanBoardPage() {
           <div>
             <h4 className="text-xs font-extrabold text-slate-400 uppercase tracking-widest mb-3">Daftar Anggota ({members.length})</h4>
             <div className="space-y-2.5 max-h-48 overflow-y-auto pr-1">
-              {members.map((m) => (
-                <div key={m.id} className="flex items-center justify-between p-2.5 bg-slate-50 border border-slate-100 rounded-xl">
-                  <div className="flex items-center gap-2.5">
-                    <Avatar name={m.user?.name || "User"} size="sm" />
-                    <div>
-                      <p className="text-xs font-bold text-slate-800">{m.user?.name}</p>
-                      <p className="text-[10px] text-slate-400 mt-0.5">{m.user?.email}</p>
+              {members.map((m) => {
+                const memberUserId = m.user?.id ?? m.user_id ?? m.id;
+                const isMemberPm = m.role === "pm";
+                const isToggling = togglingPermissionUserId === memberUserId;
+                const hasTaskPermission = Boolean(m.can_create_task);
+
+                return (
+                  <div key={m.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-700/60 rounded-xl gap-2.5">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <Avatar name={m.user?.name || "User"} size="sm" />
+                      <div className="truncate">
+                        <div className="flex items-center gap-1.5">
+                          <p className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">{m.user?.name}</p>
+                          {memberUserId === currentUser?.id && (
+                            <span className="text-[9px] font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/15 px-1.5 py-0.2 rounded border border-blue-200 dark:border-blue-500/30">Anda</span>
+                          )}
+                        </div>
+                        <p className="text-[10px] text-slate-400 truncate mt-0.5">{m.user?.email}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap self-end sm:self-auto">
+                      {/* Role Badge */}
+                      <span className={`px-2 py-0.5 text-[9px] font-extrabold rounded-md uppercase tracking-wider ${
+                        isMemberPm 
+                          ? "bg-blue-50 text-blue-600 border border-blue-100 dark:bg-blue-500/15 dark:text-blue-300 dark:border-blue-500/25" 
+                          : "bg-slate-100 text-slate-500 border border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700"
+                      }`}>
+                        {isMemberPm ? "Project Manager" : "Member"}
+                      </span>
+
+                      {/* Permission Toggle for PM / Admin */}
+                      {!isMemberPm && isPm && (
+                        <button
+                          type="button"
+                          disabled={isToggling}
+                          onClick={() => handleTogglePermission(memberUserId, hasTaskPermission)}
+                          className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all border shadow-2xs ${
+                            hasTaskPermission
+                              ? "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100 dark:bg-emerald-500/15 dark:text-emerald-300 dark:border-emerald-500/30"
+                              : "bg-white text-slate-500 border-slate-200 hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700"
+                          } ${isToggling ? "opacity-60 cursor-not-allowed" : "cursor-pointer"}`}
+                          title={hasTaskPermission ? "Klik untuk mencabut hak membuat tugas" : "Klik untuk memberikan hak membuat tugas"}
+                        >
+                          {isToggling ? (
+                            <Loader2 size={11} className="animate-spin text-blue-600" />
+                          ) : hasTaskPermission ? (
+                            <ShieldCheck size={12} className="text-emerald-600 dark:text-emerald-400" />
+                          ) : (
+                            <PenTool size={11} className="text-slate-400" />
+                          )}
+                          <span>
+                            {hasTaskPermission ? "Izin Buat Tugas: Aktif" : "Izin Buat Tugas: Nonaktif"}
+                          </span>
+                        </button>
+                      )}
+
+                      {/* Read-only permission badge for non-PM */}
+                      {!isMemberPm && !isPm && (
+                        <span className={`px-2 py-0.5 text-[9px] font-bold rounded-md border ${
+                          hasTaskPermission
+                            ? "bg-emerald-50 text-emerald-600 border-emerald-100 dark:bg-emerald-500/15 dark:text-emerald-400 dark:border-emerald-500/25"
+                            : "bg-slate-50 text-slate-400 border-slate-100 dark:bg-slate-800/60 dark:text-slate-500 dark:border-slate-700"
+                        }`}>
+                          {hasTaskPermission ? "Bisa Buat Tugas" : "Lihat Saja"}
+                        </span>
+                      )}
                     </div>
                   </div>
-                  <span className={`px-2.5 py-1 text-[9px] font-extrabold rounded-md uppercase tracking-wider ${
-                    m.role === "pm" 
-                      ? "bg-blue-50 text-blue-600 border border-blue-100" 
-                      : "bg-slate-100 text-slate-500 border border-slate-200"
-                  }`}>
-                    {m.role === "pm" ? "Project Manager" : "Member"}
-                  </span>
-                </div>
-              ))}
+                );
+              })}
               {members.length === 0 && (
                 <p className="text-xs text-slate-400 italic">Belum ada anggota.</p>
               )}
