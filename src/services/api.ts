@@ -1268,6 +1268,32 @@ export const getTaskActivities = async (taskId: number) => {
   return res.data;
 };
 
+// ─── TASK ATTACHMENTS (API) ───────────────────────────────
+export const getTaskAttachments = async (taskId: number) => {
+  const res = await api.get("/task-management/task-attachments", {
+    params: { task_id: taskId }
+  });
+  return res.data;
+};
+
+export const uploadTaskAttachment = async (taskId: number, file: File) => {
+  const formData = new FormData();
+  formData.append("task_id", String(taskId));
+  formData.append("file", file);
+
+  const res = await api.post("/task-management/task-attachments", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+  return res.data;
+};
+
+export const deleteTaskAttachment = async (id: number) => {
+  const res = await api.delete(`/task-management/task-attachments/${id}`);
+  return res.data;
+};
+
 // ─── MAGANG (API) ─────────────────────────────────────────
 export const getMagangList = async () => {
   const res = await api.get("/magang");

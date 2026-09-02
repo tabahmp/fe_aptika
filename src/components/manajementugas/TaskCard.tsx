@@ -20,6 +20,7 @@ interface TaskCardProps {
   members: Array<{
     id?: number;
     role?: string;
+    can_create_task?: boolean;
     user?: { id?: number; name?: string };
   }>;
   onToggleStatus?: (task: Task) => void;
@@ -67,11 +68,14 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
 
   const isPm = project ? (project.created_by === currentUser?.id || currentUser?.role === "admin") : false;
   const isAssignee = task.assigneeId === currentUser?.id;
+  const isCreator = (task as any).created_by === currentUser?.id || (task as any).creator_id === currentUser?.id;
+  const isActivatedMember = members.some((m) => (m.user?.id === currentUser?.id || m.id === currentUser?.id) && Boolean(m.can_create_task));
 
   const isDone = task.status === "done";
 
-  const canMemberMoveToDone = isPm; // hanya PM boleh ke done
-  const canModifyStatus = isPm || isAssignee;
+  const canMemberMoveToDone = isPm; // hanya PM / Admin boleh ke done
+  const canModifyStatus = isPm || isAssignee || isActivatedMember;
+  const canDelete = isPm || isCreator || isActivatedMember;
 
   const handleDragStartLocal = (e: React.DragEvent) => {
     if (isDone) {
@@ -80,16 +84,17 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
     }
     if (!canModifyStatus) {
       e.preventDefault();
-      showToast.error("Anda hanya boleh memindahkan tugas yang ditugaskan kepada Anda.");
+      showToast.error("Anda tidak memiliki izin memindahkan tugas ini.");
       return;
     }
     onDragStart(e, task.id);
   };
 
-  const handleToggleLocal = () => {
+  const handleToggleLocal = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
     if (isDone) return;
     if (!canModifyStatus) {
-      showToast.error("Anda hanya boleh mengubah status tugas yang ditugaskan kepada Anda.");
+      showToast.error("Anda tidak memiliki izin mengubah status tugas ini.");
       return;
     }
 
@@ -104,7 +109,8 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
     onToggleStatus?.(task);
   };
 
-  const handleMoveStatusLocal = (status: Task["status"]) => {
+  const handleMoveStatusLocal = (status: Task["status"], e?: React.MouseEvent) => {
+    e?.stopPropagation();
     if (!canModifyStatus) {
       showToast.error("Anda tidak berwenang mengubah status tugas ini.");
       return;
@@ -118,7 +124,8 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
     onMoveStatus(task.id, status);
   };
 
-  const handleAssignLocal = (assigneeId: number | null) => {
+  const handleAssignLocal = (assigneeId: number | null, e?: React.MouseEvent) => {
+    e?.stopPropagation();
     if (!isPm) {
       showToast.error("Hanya Project Manager yang dapat menugaskan anggota ke tugas.");
       return;
@@ -126,9 +133,10 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
     onAssign(task.id, assigneeId);
   };
 
-  const handleDeleteLocal = () => {
-    if (!isPm) {
-      showToast.error("Hanya Project Manager yang dapat menghapus tugas.");
+  const handleDeleteLocal = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    if (!canDelete) {
+      showToast.error("Anda tidak berwenang menghapus tugas ini.");
       return;
     }
     onDelete(task.id);
@@ -146,14 +154,14 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
       onDragStart={handleDragStartLocal}
       onDragEnd={onDragEnd}
       onClick={() => onOpenDetail?.(task)}
-      className={`rounded-xl pt-4 pb-3.5 px-3.5 border shadow-sm hover:shadow-md transition-all flex items-start gap-3 relative select-none cursor-pointer overflow-hidden backdrop-blur-md ${colorCfg.cardBg} ${
+      className={`rounded-xl pt-4 pb-3.5 px-3.5 border shadow-sm hover:shadow-md transition-all flex items-start gap-3 relative select-none cursor-pointer backdrop-blur-md ${colorCfg.cardBg} ${
         isDone
           ? "opacity-90 border-emerald-200/60 hover:shadow-sm"
           : canModifyStatus ? colorCfg.cardBorder : "opacity-90 border-slate-200/50"
       }`}
     >
       {/* Top Accent Color Bar */}
-      <div className={`absolute top-0 left-0 right-0 h-1.5 ${colorCfg.barBg}`} />
+      <div className={`absolute top-0 left-0 right-0 h-1.5 rounded-t-xl ${colorCfg.barBg}`} />
 
       {/* Checkbox status */}
       {canToggleCheckbox ? (
@@ -215,7 +223,7 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
             />
 
             {/* Options Menu */}
-            <div className="relative flex-shrink-0" ref={menuRef}>
+            <div className="relative flex-shrink-0" ref={menuRef} onClick={(e) => e.stopPropagation()}>
               {!isDone && (
                 <button 
                   onClick={(e) => {
@@ -229,7 +237,10 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
               )}
               
               {activeMenu && !isDone && (
-                <div className="absolute right-0 mt-1 w-40 bg-white border border-slate-200 shadow-xl rounded-xl z-20 py-1 text-[10px] text-slate-600">
+                <div 
+                  className="absolute right-0 mt-1 w-44 bg-white border border-slate-200 shadow-xl rounded-xl z-30 py-1 text-[10px] text-slate-600"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   {canModifyStatus && (
                     <>
                       <span className="px-2.5 py-1 text-[8px] font-extrabold text-slate-400 uppercase tracking-widest block">Ubah Status</span>
@@ -245,9 +256,10 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
                             task.status === opt.key ||
                             (!canMemberMoveToDone && opt.key === "done")
                           }
-                          onClick={() => {
+                          onClick={(e) => {
+                            e.stopPropagation();
                             setActiveMenu(false);
-                            handleMoveStatusLocal(opt.key as Task["status"]);
+                            handleMoveStatusLocal(opt.key as Task["status"], e);
                           }}
                           className="w-full text-left px-3 py-1.5 hover:bg-slate-50 disabled:opacity-40 disabled:hover:bg-transparent font-medium"
                         >
@@ -270,7 +282,7 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setActiveMenu(false);
-                                handleAssignLocal(m.user?.id ?? null);
+                                handleAssignLocal(m.user?.id ?? null, e);
                               }}
                               className="w-full text-left px-3 py-1.5 hover:bg-slate-50 disabled:opacity-40 disabled:hover:bg-transparent font-medium truncate"
                             >
@@ -282,7 +294,7 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
                             onClick={(e) => {
                               e.stopPropagation();
                               setActiveMenu(false);
-                              handleAssignLocal(null);
+                              handleAssignLocal(null, e);
                             }}
                             className="w-full text-left px-3 py-1.5 hover:bg-slate-50 disabled:opacity-40 disabled:hover:bg-transparent font-medium"
                           >
@@ -290,13 +302,17 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
                           </button>
                         </>
                       )}
-                      
+                    </>
+                  )}
+
+                  {canDelete && (
+                    <>
                       <div className="border-t border-slate-100 my-1" />
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           setActiveMenu(false);
-                          handleDeleteLocal();
+                          handleDeleteLocal(e);
                         }}
                         className="w-full text-left px-3 py-1.5 hover:bg-red-50 text-red-600 font-bold flex items-center gap-1.5"
                       >
@@ -306,7 +322,7 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
                     </>
                   )}
                   
-                  {!canModifyStatus && (
+                  {!canModifyStatus && !canDelete && (
                     <div className="px-2.5 py-2 z-20 text-center text-slate-400 italic">
                       Tidak ada aksi tersedia
                     </div>
