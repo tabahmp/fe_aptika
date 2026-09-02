@@ -37,6 +37,7 @@ const TAB_COLUMNS: Record<TabType, { code: string; label: string }[]> = {
     { code: "IKI_REPORT",         label: "IKI Report" },
     { code: "MANAJEMEN_TUGAS",    label: "Manajemen Tugas Digital" },
     { code: "MAGANG",             label: "Magang" },
+    { code: "SMKI",               label: "SMKI" },
   ],
   SURAT: [
     { code: "SURAT_NOTA_DINAS",     label: "Nota Dinas" },

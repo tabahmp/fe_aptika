@@ -7,7 +7,7 @@ import { showToast } from "@/components/ui/Toast";
 
 interface Props {
   children: React.ReactNode;
-  requiredService?: "ADMINISTRASI_SURAT" | "IKI_REPORT" | "MANAJEMEN_TUGAS" | "MAGANG";
+  requiredService?: "ADMINISTRASI_SURAT" | "IKI_REPORT" | "MANAJEMEN_TUGAS" | "MAGANG" | "SMKI" | string;
   requireAdminAptika?: boolean;
   requireAdmin?: boolean;
 }

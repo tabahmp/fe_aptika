@@ -19,6 +19,7 @@ import {
   ChevronDown,
   ChevronRight,
   ShieldCog,
+  ShieldCheck,
 } from "lucide-react";
 import Avatar from "@/components/ui/Avatar";
 import { useSidebarStore } from "@/store/useSidebarStore";
@@ -96,6 +97,7 @@ export default function Sidebar() {
   const canAccessIki = hasServicePermission("IKI_REPORT");
   const canAccessTugas = hasServicePermission("MANAJEMEN_TUGAS");
   const canAccessMagang = hasServicePermission("MAGANG");
+  const canAccessSmki = hasServicePermission("SMKI");
 
   const dynamicMenuItems = [
     ...(canAccessSurat
@@ -203,13 +205,24 @@ export default function Sidebar() {
           },
         ]
       : []),
+    ...(canAccessSmki
+      ? [
+          {
+            type: "single" as const,
+            name: "SMKI",
+            key: "smki",
+            icon: ShieldCheck,
+            iconColor: "text-emerald-600 bg-emerald-50 border border-emerald-200/60",
+          },
+        ]
+      : []),
   ];
 
   const handleTeamClick = (key: string) => {
     setOpenMobile(false);
     if (key === "dashboard") {
       router.push("/dashboard");
-    } else if (key === "administrasisurat" || key === "manajementugasdigital") {
+    } else if (key === "administrasisurat" || key === "manajementugasdigital" || key === "smki") {
       router.push(`/${key}`);
     } else {
       router.push(`/${key}/dashboard`);

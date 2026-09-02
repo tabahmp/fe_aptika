@@ -3,7 +3,7 @@ import { api } from "@/services/api";
 
 export interface ServicePermission {
   id: number;
-  code: "ADMINISTRASI_SURAT" | "IKI_REPORT" | "MANAJEMEN_TUGAS" | "MAGANG";
+  code: "ADMINISTRASI_SURAT" | "IKI_REPORT" | "MANAJEMEN_TUGAS" | "MAGANG" | "SMKI" | string;
   name: string;
   is_enabled: boolean;
 }
