@@ -1,5 +1,3 @@
-"use client";
-
 import React, { useState, useEffect, useRef } from "react";
 import { 
   X, 
@@ -11,18 +9,28 @@ import {
   Loader2, 
   Smile, 
   AtSign, 
-  ChevronDown,
-  Clock,
-  History,
-  MessageSquare,
-  Lock,
-  Palette,
-  Check
+  ChevronDown, 
+  Clock, 
+  History, 
+  MessageSquare, 
+  Lock, 
+  Palette, 
+  Check,
+  ExternalLink,
+  Download
 } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 import { Task, Project, useTaskStore } from "@/store/useTaskStore";
 import { showToast } from "@/components/ui/Toast";
-import { getTaskComments, createTaskComment, deleteTaskComment, getTaskActivities } from "@/services/api";
+import { 
+  getTaskComments, 
+  createTaskComment, 
+  deleteTaskComment, 
+  getTaskActivities,
+  getTaskAttachments,
+  uploadTaskAttachment,
+  deleteTaskAttachment
+} from "@/services/api";
 import { TASK_COLORS, getTaskColorConfig } from "@/utils/taskColors";
 
 interface TaskDetailModalProps {
@@ -33,6 +41,7 @@ interface TaskDetailModalProps {
   currentUser: any;
   members: any[];
   onUpdateTask: (taskId: number, payload: any) => Promise<boolean>;
+  onDeleteTask?: (taskId: number) => Promise<boolean | void> | void;
 }
 
 const statusConfig = {
@@ -50,6 +59,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
   currentUser,
   members,
   onUpdateTask,
+  onDeleteTask,
 }) => {
   const setTaskColor = useTaskStore((state) => state.setTaskColor);
 
@@ -70,8 +80,24 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
   const [loadingActivities, setLoadingActivities] = useState(false);
 
   // Attachments state
-  const [attachments, setAttachments] = useState<Array<{ id: string; name: string; size: string; progress?: number; done?: boolean }>>([]);
+  const [attachments, setAttachments] = useState<Array<{ 
+    id: number; 
+    task_id: number; 
+    file_name: string; 
+    file_path: string; 
+    file_url: string; 
+    uploaded_by: number; 
+    uploader_name?: string; 
+    created_at?: string; 
+  }>>([]);
+  const [loadingAttachments, setLoadingAttachments] = useState(false);
+  const [uploadingAttachment, setUploadingAttachment] = useState(false);
+  const [deletingAttachmentId, setDeletingAttachmentId] = useState<number | null>(null);
   const [draggingFile, setDraggingFile] = useState(false);
+
+  // Delete task state
+  const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
+  const [isDeletingTask, setIsDeletingTask] = useState(false);
 
   const commentInputRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -92,17 +118,20 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, task]);
 
-  // Load comments, activities, description, and color on task change
+  // Load comments, activities, attachments, description, and color on task change
   useEffect(() => {
     if (isOpen && task) {
       setSelectedColorKey(task.color || "blue");
       setEditedDescription(task.description || "");
       setIsEditingDescription(false);
+      setIsConfirmingDelete(false);
       fetchComments();
       fetchActivities();
+      fetchAttachments();
     } else {
       setComments([]);
       setActivities([]);
+      setAttachments([]);
     }
   }, [isOpen, task]);
 
@@ -148,11 +177,29 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
     }
   };
 
+  const fetchAttachments = async () => {
+    if (!task) return;
+    setLoadingAttachments(true);
+    try {
+      const res = await getTaskAttachments(task.id);
+      if (res && res.success) {
+        setAttachments(res.data || []);
+      }
+    } catch (e) {
+      console.error("Failed fetching attachments", e);
+    } finally {
+      setLoadingAttachments(false);
+    }
+  };
   if (!isOpen || !task) return null;
 
   const isPm = project ? (project.created_by === currentUser?.id || currentUser?.role === "admin") : false;
   const isAssignee = task.assigneeId === currentUser?.id;
-  const canModify = isPm || isAssignee;
+  const isCreator = (task as any).created_by === currentUser?.id || (task as any).creator_id === currentUser?.id;
+  const isActivatedMember = members.some((m) => (m.user?.id === currentUser?.id || m.id === currentUser?.id) && Boolean(m.can_create_task));
+
+  const canModify = isPm || isAssignee || isActivatedMember;
+  const canDelete = isPm || isCreator || isActivatedMember;
 
   const isDone = task.status === "done";
   const isReadOnly = isDone || !canModify;
@@ -177,6 +224,10 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
   const handleSaveDescription = async () => {
     if (isDone) {
       showToast.error("Completed tasks cannot be modified.");
+      return;
+    }
+    if (!canModify) {
+      showToast.error("Anda tidak memiliki izin mengedit deskripsi tugas ini.");
       return;
     }
     setSavingDescription(true);
@@ -229,12 +280,12 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
     commentInputRef.current?.focus();
   };
 
-  // Simulated File Upload Handling
+  // Real File Upload Handling via Backend API
   const handleFileDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setDraggingFile(false);
     const files = e.dataTransfer.files;
-    if (files.length > 0) {
+    if (files && files.length > 0) {
       processFiles(files);
     }
   };
@@ -243,40 +294,67 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
     const files = e.target.files;
     if (files && files.length > 0) {
       processFiles(files);
+      e.target.value = "";
     }
   };
 
-  const processFiles = (files: FileList) => {
-    Array.from(files).forEach(file => {
-      const id = Math.random().toString(36).substring(2, 9);
-      const sizeStr = file.size > 1024 * 1024 
-        ? `${(file.size / (1024 * 1024)).toFixed(1)} MB` 
-        : `${(file.size / 1024).toFixed(0)} KB`;
-        
-      const newAttach = { id, name: file.name, size: sizeStr, progress: 0, done: false };
-      setAttachments(prev => [...prev, newAttach]);
-
-      // Simulate upload progress
-      let currentProgress = 0;
-      const interval = setInterval(() => {
-        currentProgress += 10;
-        setAttachments(prev => prev.map(a => {
-          if (a.id === id) {
-            const updatedProgress = currentProgress;
-            if (updatedProgress >= 100) {
-              clearInterval(interval);
-              return { ...a, progress: 100, done: true };
-            }
-            return { ...a, progress: updatedProgress };
-          }
-          return a;
-        }));
-      }, 150);
-    });
+  const processFiles = async (files: FileList) => {
+    if (isReadOnly) return;
+    setUploadingAttachment(true);
+    let successCount = 0;
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      try {
+        const res = await uploadTaskAttachment(task.id, file);
+        if (res && res.success) {
+          setAttachments(prev => [res.data, ...prev]);
+          successCount++;
+        }
+      } catch (err: any) {
+        showToast.error(err?.response?.data?.message || `Gagal mengunggah ${file.name}`);
+      }
+    }
+    setUploadingAttachment(false);
+    if (successCount > 0) {
+      showToast.success(`${successCount} lampiran berhasil diunggah.`);
+      fetchActivities();
+    }
   };
 
-  const removeAttachment = (id: string) => {
-    setAttachments(prev => prev.filter(a => a.id !== id));
+  const handleDeleteAttachment = async (attachmentId: number) => {
+    if (isDone) return;
+    setDeletingAttachmentId(attachmentId);
+    try {
+      const res = await deleteTaskAttachment(attachmentId);
+      if (res && res.success) {
+        setAttachments(prev => prev.filter(a => a.id !== attachmentId));
+        showToast.success("Lampiran berhasil dihapus.");
+        fetchActivities();
+      }
+    } catch (err: any) {
+      showToast.error(err?.response?.data?.message || "Gagal menghapus lampiran.");
+    } finally {
+      setDeletingAttachmentId(null);
+    }
+  };
+
+  const handleDeleteTaskModal = async () => {
+    if (!canDelete) {
+      showToast.error("Anda tidak memiliki izin untuk menghapus tugas ini.");
+      return;
+    }
+    setIsDeletingTask(true);
+    try {
+      if (onDeleteTask) {
+        await onDeleteTask(task.id);
+      }
+      onClose();
+    } catch {
+      showToast.error("Gagal menghapus tugas.");
+    } finally {
+      setIsDeletingTask(false);
+      setIsConfirmingDelete(false);
+    }
   };
 
   // Helper date formatter
@@ -480,14 +558,14 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
             <div className="flex items-center justify-between">
               <h3 className="text-xs font-extrabold text-[#0b2540] uppercase tracking-wider flex items-center gap-1.5">
                 <Paperclip size={14} className="text-slate-400" />
-                <span>Attachments</span>
+                <span>Attachments ({attachments.length})</span>
               </h3>
               <button 
                 onClick={() => fileInputRef.current?.click()}
-                disabled={isReadOnly}
-                className={`text-xs font-bold text-blue-600 hover:text-blue-800 hover:underline transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
+                disabled={isReadOnly || uploadingAttachment}
+                className={`text-xs font-bold text-blue-600 hover:text-blue-800 hover:underline transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1`}
               >
-                + Add attachment
+                {uploadingAttachment ? <Loader2 size={12} className="animate-spin" /> : "+ Add attachment"}
               </button>
               <input 
                 type="file" 
@@ -502,19 +580,19 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
             <div 
               onDragOver={(e) => { 
                 e.preventDefault(); 
-                if (!isReadOnly) setDraggingFile(true);
+                if (!isReadOnly && !uploadingAttachment) setDraggingFile(true);
               }}
               onDragLeave={() => setDraggingFile(false)}
               onDrop={(e) => {
-                if (isReadOnly) return;
+                if (isReadOnly || uploadingAttachment) return;
                 handleFileDrop(e);
               }}
               onClick={() => {
-                if (isReadOnly) return;
+                if (isReadOnly || uploadingAttachment) return;
                 fileInputRef.current?.click();
               }}
               className={`border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all ${
-                isReadOnly
+                isReadOnly || uploadingAttachment
                   ? "border-slate-200/80 bg-slate-50 opacity-60 cursor-not-allowed"
                   : draggingFile 
                     ? "border-blue-500 bg-blue-50/50" 
@@ -522,56 +600,75 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
               }`}
             >
               <div className="p-3 bg-blue-50 rounded-full text-blue-600">
-                <UploadCloud size={20} />
+                {uploadingAttachment ? <Loader2 size={20} className="animate-spin" /> : <UploadCloud size={20} />}
               </div>
-              <p className="text-xs font-bold text-slate-700">Click or drag and drop to upload</p>
-              <p className="text-[10px] text-slate-400">Supporting PDF, JPG, PNG, and CSV up to 10MB</p>
+              <p className="text-xs font-bold text-slate-700">
+                {uploadingAttachment ? "Mengunggah berkas..." : "Click or drag and drop to upload"}
+              </p>
+              <p className="text-[10px] text-slate-400">Supporting PDF, DOCX, XLSX, JPG, PNG, CSV, and ZIP up to 10MB</p>
             </div>
 
             {/* Attachments List */}
-            {attachments.length > 0 && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3">
-                {attachments.map((file) => (
-                  <div key={file.id} className="flex items-center justify-between p-2.5 bg-white border border-slate-100 rounded-xl shadow-sm relative overflow-hidden">
-                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                      <div className="p-2 bg-blue-50 text-blue-600 rounded-lg text-xs font-bold flex-shrink-0">
-                        {file.name.split(".").pop()?.toUpperCase() || "FILE"}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-[11px] font-bold text-slate-800 truncate" title={file.name}>
-                          {file.name}
-                        </p>
-                        <p className="text-[9px] text-slate-400 mt-0.5">{file.size}</p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-1.5 ml-2">
-                      {!file.done ? (
-                        <div className="flex items-center gap-1">
-                          <Loader2 size={12} className="animate-spin text-blue-500" />
-                          <span className="text-[9px] text-slate-400 font-bold">{file.progress}%</span>
-                        </div>
-                      ) : (
-                        <button 
-                          onClick={(e) => { e.stopPropagation(); removeAttachment(file.id); }}
-                          className="p-1 hover:bg-red-50 text-slate-400 hover:text-red-600 rounded-md transition-colors"
-                        >
-                          <Trash2 size={12} />
-                        </button>
-                      )}
-                    </div>
-
-                    {/* Progress Bar background overlay */}
-                    {!file.done && (
-                      <div 
-                        className="absolute bottom-0 left-0 h-0.5 bg-blue-500/30 transition-all duration-150" 
-                        style={{ width: `${file.progress}%` }}
-                      />
-                    )}
-                  </div>
-                ))}
+            {loadingAttachments ? (
+              <div className="flex items-center justify-center py-4 gap-2 text-xs text-slate-400">
+                <Loader2 size={14} className="animate-spin" />
+                <span>Memuat lampiran...</span>
               </div>
-            )}
+            ) : attachments.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3">
+                {attachments.map((file) => {
+                  const canDeleteAtt = !isDone && (isPm || file.uploaded_by === currentUser?.id || isActivatedMember);
+                  const isDeleting = deletingAttachmentId === file.id;
+
+                  return (
+                    <div key={file.id} className="flex items-center justify-between p-2.5 bg-white border border-slate-200/80 rounded-xl shadow-xs relative overflow-hidden group hover:border-blue-300 transition-all">
+                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                        <div className="p-2 bg-blue-50 text-blue-600 rounded-lg text-[10px] font-extrabold flex-shrink-0 uppercase">
+                          {file.file_name.split(".").pop() || "FILE"}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-[11px] font-bold text-slate-800 truncate" title={file.file_name}>
+                            {file.file_name}
+                          </p>
+                          <p className="text-[9px] text-slate-400 mt-0.5 truncate">
+                            {file.uploader_name ? `Oleh ${file.uploader_name}` : "Lampiran"} {file.created_at ? `• ${formatDate(file.created_at)}` : ""}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-1 ml-2 flex-shrink-0">
+                        {/* Download / Open Link */}
+                        <a
+                          href={file.file_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="p-1 hover:bg-blue-50 text-slate-400 hover:text-blue-600 rounded-md transition-colors"
+                          title="Buka / Unduh Berkas"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <Download size={13} />
+                        </a>
+
+                        {/* Delete button */}
+                        {canDeleteAtt && (
+                          <button 
+                            disabled={isDeleting}
+                            onClick={(e) => { 
+                              e.stopPropagation(); 
+                              handleDeleteAttachment(file.id); 
+                            }}
+                            className="p-1 hover:bg-red-50 text-slate-400 hover:text-red-600 rounded-md transition-colors disabled:opacity-50"
+                            title="Hapus Lampiran"
+                          >
+                            {isDeleting ? <Loader2 size={12} className="animate-spin text-red-500" /> : <Trash2 size={13} />}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : null}
           </div>
 
           {/* Navigation Tabs */}
@@ -743,20 +840,54 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 bg-slate-100 border-t border-slate-200/60 flex items-center justify-between text-[10px] text-slate-500">
+        <div className="px-6 py-4 bg-slate-100 border-t border-slate-200/60 flex flex-wrap items-center justify-between gap-3 text-[10px] text-slate-500">
           <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-4 text-left">
             <span>Created {formatDate(task.createdAt)}</span>
             <span className="hidden sm:inline text-slate-300">•</span>
             <span>Updated {formatDate(task.updatedAt)}</span>
           </div>
 
-          <button 
-            onClick={() => showToast.success("Configuring task settings...")}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 hover:bg-slate-50 active:bg-slate-100 hover:border-slate-350 rounded-lg text-[10px] font-bold text-slate-600 shadow-sm transition-all"
-          >
-            <Settings size={12} className="text-slate-500" />
-            <span>Configure</span>
-          </button>
+          <div className="flex items-center gap-2 ml-auto">
+            {canDelete && !isDone && (
+              <>
+                {isConfirmingDelete ? (
+                  <div className="flex items-center gap-1.5 bg-red-50 border border-red-200 px-2 py-1 rounded-lg">
+                    <span className="text-red-700 font-bold text-[10px]">Hapus tugas ini?</span>
+                    <button
+                      disabled={isDeletingTask}
+                      onClick={handleDeleteTaskModal}
+                      className="px-2 py-0.5 bg-red-600 hover:bg-red-700 text-white rounded text-[10px] font-bold transition-colors disabled:opacity-50 flex items-center gap-1"
+                    >
+                      {isDeletingTask ? <Loader2 size={10} className="animate-spin" /> : "Ya, Hapus"}
+                    </button>
+                    <button
+                      disabled={isDeletingTask}
+                      onClick={() => setIsConfirmingDelete(false)}
+                      className="px-1.5 py-0.5 text-slate-500 hover:bg-slate-200 rounded text-[10px] font-semibold"
+                    >
+                      Batal
+                    </button>
+                  </div>
+                ) : (
+                  <button 
+                    onClick={() => setIsConfirmingDelete(true)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-red-200 hover:bg-red-50 active:bg-red-100 hover:border-red-300 rounded-lg text-[10px] font-bold text-red-600 shadow-2xs transition-all"
+                  >
+                    <Trash2 size={12} className="text-red-500" />
+                    <span>Hapus Tugas</span>
+                  </button>
+                )}
+              </>
+            )}
+
+            <button 
+              onClick={() => showToast.success("Pengaturan tugas terkonfigurasi otomatis.")}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 hover:bg-slate-50 active:bg-slate-100 hover:border-slate-350 rounded-lg text-[10px] font-bold text-slate-600 shadow-2xs transition-all"
+            >
+              <Settings size={12} className="text-slate-500" />
+              <span>Configure</span>
+            </button>
+          </div>
         </div>
 
       </div>

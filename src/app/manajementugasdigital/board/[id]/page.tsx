@@ -488,14 +488,17 @@ export default function KanbanBoardPage() {
   };
 
   const handleDeleteTask = async (id: number) => {
-    if (!isPm) {
-      showToast.error("Hanya Project Manager yang dapat menghapus tugas.");
+    if (!isPm && !canCreateTask && currentUser?.role !== "admin") {
+      showToast.error("Anda tidak memiliki izin untuk menghapus tugas.");
       return;
     }
 
     const success = await removeTask(id);
     if (success) {
       showToast.success("Tugas berhasil dihapus.");
+      if (selectedTask?.id === id) {
+        handleCloseDetailModal();
+      }
     } else {
       showToast.error("Gagal menghapus tugas.");
     }
@@ -1320,6 +1323,7 @@ export default function KanbanBoardPage() {
         currentUser={currentUser}
         members={members}
         onUpdateTask={handleUpdateTaskDetails}
+        onDeleteTask={handleDeleteTask}
       />
     </div>
   );
