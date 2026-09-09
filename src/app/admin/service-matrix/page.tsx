@@ -177,7 +177,7 @@ export default function AdminServiceMatrixPage() {
       <div className="flex items-center gap-2">
         {(
           [
-            { key: "MAIN",  label: "Modul Utama (4 Service)",        icon: LayoutGrid, color: "bg-blue-600 shadow-blue-500/20" },
+            { key: "MAIN",  label: "Modul Utama (5 Service)",        icon: LayoutGrid, color: "bg-blue-600 shadow-blue-500/20" },
             { key: "SURAT", label: "Jenis Surat (Administrasi)",     icon: FileText,   color: "bg-amber-600 shadow-amber-500/20" },
             { key: "IKI",   label: "Sub-Modul IKI Report",           icon: Layers,     color: "bg-purple-600 shadow-purple-500/20" },
           ] as const

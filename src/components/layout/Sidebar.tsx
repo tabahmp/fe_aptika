@@ -20,6 +20,7 @@ import {
   ChevronRight,
   ShieldCog,
   ShieldCheck,
+  Laptop,
 } from "lucide-react";
 import Avatar from "@/components/ui/Avatar";
 import { useSidebarStore } from "@/store/useSidebarStore";
@@ -66,6 +67,9 @@ export default function Sidebar() {
   const isAppGroupActive = appGroupKeys.includes(activeSegment);
   const [isAppGroupOpen, setIsAppGroupOpen] = useState(isAppGroupActive);
 
+  const isSmkiActive = activeSegment === "smki";
+  const [isSmkiGroupOpen, setIsSmkiGroupOpen] = useState(isSmkiActive);
+
   useEffect(() => {
     loadCurrentUser();
     fetchProfile();
@@ -76,6 +80,12 @@ export default function Sidebar() {
       setIsAppGroupOpen(true);
     }
   }, [isAppGroupActive]);
+
+  useEffect(() => {
+    if (isSmkiActive) {
+      setIsSmkiGroupOpen(true);
+    }
+  }, [isSmkiActive]);
 
   useEffect(() => {
     initStore();
@@ -208,11 +218,24 @@ export default function Sidebar() {
     ...(canAccessSmki
       ? [
           {
-            type: "single" as const,
+            type: "group" as const,
             name: "SMKI",
-            key: "smki",
             icon: ShieldCheck,
             iconColor: "text-emerald-600 bg-emerald-50 border border-emerald-200/60",
+            subItems: [
+              {
+                name: "Ringkasan SMKI",
+                key: "smki",
+                icon: ShieldCheck,
+                iconColor: "text-emerald-600 bg-emerald-50 border border-emerald-200/60",
+              },
+              {
+                name: "Software Standar",
+                key: "smki/software-standar",
+                icon: Laptop,
+                iconColor: "text-teal-600 bg-teal-50 border border-teal-200/60",
+              },
+            ],
           },
         ]
       : []),
@@ -223,6 +246,8 @@ export default function Sidebar() {
     if (key === "dashboard") {
       router.push("/dashboard");
     } else if (key === "administrasisurat" || key === "manajementugasdigital" || key === "smki") {
+      router.push(`/${key}`);
+    } else if (key.includes("/")) {
       router.push(`/${key}`);
     } else {
       router.push(`/${key}/dashboard`);
@@ -369,6 +394,10 @@ export default function Sidebar() {
                   );
                 } else {
                   const Icon = item.icon;
+                  const isSmki = item.name === "SMKI";
+                  const isThisGroupOpen = isSmki ? isSmkiGroupOpen : isAppGroupOpen;
+                  const setIsThisGroupOpen = isSmki ? setIsSmkiGroupOpen : setIsAppGroupOpen;
+                  const isThisGroupActive = isSmki ? isSmkiActive : isAppGroupActive;
                   return (
                     <div key={item.name} className="space-y-1">
                       <button
@@ -378,17 +407,19 @@ export default function Sidebar() {
                           transition-all duration-150 select-none outline-none group
                           ${isCollapsed ? "justify-center px-2" : ""}
                           ${
-                            isAppGroupActive
-                              ? "bg-purple-50/80 text-[#0b2146] font-extrabold shadow-xs border border-purple-200/70 dark:bg-[#1d4ed8]/80 dark:text-white dark:border-blue-500/50"
+                            isThisGroupActive
+                              ? isSmki
+                                ? "bg-emerald-50/80 text-[#0b2146] font-extrabold shadow-xs border border-emerald-200/70 dark:bg-emerald-800/80 dark:text-white dark:border-emerald-500/50"
+                                : "bg-purple-50/80 text-[#0b2146] font-extrabold shadow-xs border border-purple-200/70 dark:bg-[#1d4ed8]/80 dark:text-white dark:border-blue-500/50"
                               : "text-[#0b2146]/90 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-[#0b2146] dark:hover:text-white font-bold"
                           }
                         `}
                         onClick={() => {
                           if (isCollapsed) {
                             toggleCollapsed();
-                            setIsAppGroupOpen(true);
+                            setIsThisGroupOpen(true);
                           } else {
-                            setIsAppGroupOpen((prev) => !prev);
+                            setIsThisGroupOpen((prev) => !prev);
                           }
                         }}
                       >
@@ -401,21 +432,26 @@ export default function Sidebar() {
                           <>
                             <span className="flex-1 truncate text-[12.5px] font-bold">{item.name}</span>
                             <div className="text-slate-400 dark:text-slate-400 group-hover:text-slate-600 dark:group-hover:text-white transition-colors ml-1">
-                              {isAppGroupOpen ? <ChevronDown size={15} /> : <ChevronRight size={15} />}
+                              {isThisGroupOpen ? <ChevronDown size={15} /> : <ChevronRight size={15} />}
                             </div>
                           </>
                         )}
-                        {isCollapsed && isAppGroupActive && (
-                          <span className="w-2 h-2 rounded-full bg-purple-600 dark:bg-sky-400 shadow-[0_0_6px_rgba(147,51,234,0.6)] absolute right-2" />
+                        {isCollapsed && isThisGroupActive && (
+                          <span className={`w-2 h-2 rounded-full ${isSmki ? "bg-emerald-600" : "bg-purple-600"} dark:bg-sky-400 shadow-[0_0_6px_rgba(147,51,234,0.6)] absolute right-2`} />
                         )}
                       </button>
 
                       {/* Sub-items dropdown list */}
-                      {!isCollapsed && isAppGroupOpen && (
+                      {!isCollapsed && isThisGroupOpen && (
                         <div className="ml-3 pl-3 border-l-2 border-slate-100 dark:border-slate-800 space-y-1 pt-1 animate-in fade-in duration-200">
                           {item.subItems.map((sub) => {
                             const SubIcon = sub.icon;
-                            const isSubActive = activeSegment === sub.key;
+                            const isSubActive =
+                              sub.key === "smki"
+                                ? pathname === "/smki"
+                                : sub.key.includes("/")
+                                ? pathname === `/${sub.key}`
+                                : activeSegment === sub.key;
                             return (
                               <button
                                 key={sub.key}

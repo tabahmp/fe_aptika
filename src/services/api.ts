@@ -1487,6 +1487,96 @@ export const exportKerentanan = async (params?: { status?: string }) => {
   return res.data;
 };
 
+// ─── SMKI: MANAJEMEN DAFTAR SOFTWARE STANDAR ──────────────────
+export interface SmkiSoftwareItem {
+  id: number;
+  bidang_id?: number;
+  user_id?: number;
+  nomor_kelompok?: number | null;
+  nama_software: string;
+  versi: string;
+  tipe_software_id?: number;
+  penyedia_barang_id?: number;
+  kategori_id?: number;
+  keterangan?: string;
+  created_at?: string;
+  updated_at?: string;
+  kategori?: { id: number; nama_kategori: string };
+  tipe_software?: { id: number; nama_tipe_software: string };
+  penyedia_barang?: { id: number; nama_penyedia_barang: string };
+  user?: { id: number; name: string; email: string };
+}
+
+export const getSmkiSoftwareStandarList = async (params?: {
+  search?: string;
+  kategori_id?: string | number;
+  tipe_software_id?: string | number;
+  penyedia_barang_id?: string | number;
+  page?: number;
+  per_page?: number;
+}) => {
+  const res = await api.get("/smki/software-standar", { params });
+  return res.data;
+};
+
+export const getSmkiSoftwareStandarLookup = async () => {
+  const res = await api.get("/smki/software-standar/lookup");
+  return res.data;
+};
+
+export const createSmkiSoftwareStandar = async (payload: {
+  nomor_kelompok?: number | null;
+  nama_software: string;
+  versi: string;
+  kategori_id: number;
+  tipe_software_id: number;
+  penyedia_barang_id?: number | null;
+  penyedia_baru?: string;
+  keterangan?: string;
+}) => {
+  const res = await api.post("/smki/software-standar", payload);
+  return res.data;
+};
+
+export const updateSmkiSoftwareStandar = async (
+  id: number,
+  payload: {
+    nomor_kelompok?: number | null;
+    nama_software?: string;
+    versi?: string;
+    kategori_id?: number;
+    tipe_software_id?: number;
+    penyedia_barang_id?: number | null;
+    penyedia_baru?: string;
+    keterangan?: string;
+  }
+) => {
+  const res = await api.put(`/smki/software-standar/${id}`, payload);
+  return res.data;
+};
+
+export const deleteSmkiSoftwareStandar = async (id: number) => {
+  const res = await api.delete(`/smki/software-standar/${id}`);
+  return res.data;
+};
+
+export const downloadSmkiSoftwareStandarDocx = async (params?: {
+  id?: number;
+  search?: string;
+  kategori_id?: string | number;
+  tipe_software_id?: string | number;
+  penyedia_barang_id?: string | number;
+  no_dokumen?: string;
+  no_revisi?: string;
+  tanggal_berlaku?: string;
+}) => {
+  const res = await api.get("/smki/software-standar/export-docx", {
+    params,
+    responseType: "blob",
+  });
+  return res.data;
+};
+
 
 
 

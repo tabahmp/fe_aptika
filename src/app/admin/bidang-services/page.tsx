@@ -155,7 +155,7 @@ export default function AdminBidangServicesPage() {
             }`}
           >
             <LayoutGrid size={15} />
-            Modul Utama (4 Service)
+            Modul Utama (5 Service)
           </button>
 
           <button
