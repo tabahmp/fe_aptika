@@ -275,8 +275,18 @@ export default function SmkiSoftwareStandarPage() {
       triggerDocxBlobDownload(blob, `FR-017_Daftar_Software_Standar_${dateStr}.docx`);
       toast.success("Dokumen FR-017 (DOCX) berhasil diunduh!");
       setIsExportModalOpen(false);
-    } catch (err) {
-      toast.error("Gagal mengunduh dokumen template FR-017");
+    } catch (err: any) {
+      let errMsg = "Gagal mengunduh dokumen template FR-017";
+      if (err?.response?.data instanceof Blob) {
+        try {
+          const text = await err.response.data.text();
+          const json = JSON.parse(text);
+          if (json?.message) errMsg = json.message;
+        } catch (_) {}
+      } else if (err?.response?.data?.message) {
+        errMsg = err.response.data.message;
+      }
+      toast.error(errMsg);
     } finally {
       setDownloadingDocx(false);
     }
@@ -577,7 +587,7 @@ export default function SmkiSoftwareStandarPage() {
             <div className="flex items-center gap-2.5 flex-wrap">
               <button
                 onClick={() => handleOpenExportModal("all")}
-                disabled={downloadingDocx || items.length === 0}
+                disabled={downloadingDocx}
                 className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-teal-50 dark:bg-teal-950/40 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800/60 hover:bg-teal-100 dark:hover:bg-teal-900/50 font-bold text-xs shadow-sm transition-all disabled:opacity-50 cursor-pointer"
                 title="Unduh seluruh daftar software terfilter ke template dokumen FR-017 (.docx)"
               >
