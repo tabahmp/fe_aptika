@@ -11,7 +11,6 @@ import {
   RotateCcw,
   Pencil,
   Trash2,
-  ArrowLeft,
   Layers,
   Building2,
   Key,
@@ -278,7 +277,7 @@ export default function SmkiSoftwareStandarPage() {
           const text = await err.response.data.text();
           const json = JSON.parse(text);
           if (json?.message) errMsg = json.message;
-        } catch (_) {}
+        } catch (_) { }
       } else if (err?.response?.data?.message) {
         errMsg = err.response.data.message;
       }
@@ -463,27 +462,6 @@ export default function SmkiSoftwareStandarPage() {
   return (
     <ServiceRouteGuard requiredService="SMKI">
       <div className="flex flex-col gap-6 pb-12">
-        {/* Navigation & Breadcrumb */}
-        <div className="flex items-center justify-between flex-wrap gap-3">
-          <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-            <button onClick={() => router.push("/dashboard")} className="hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors">Dashboard</button>
-            <span>/</span>
-            <button onClick={() => router.push("/smki")} className="hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors">SMKI</button>
-            <span>/</span>
-            <span className="text-slate-800 dark:text-slate-200 font-bold">Daftar Software Standar</span>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <button onClick={() => router.push("/smki")} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 shadow-sm transition-all">
-              <ArrowLeft size={13} />
-              <span>Kembali ke Menu SMKI</span>
-            </button>
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800/60 text-emerald-700 dark:text-emerald-300 text-xs font-bold shadow-sm">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span>Aktif</span>
-            </div>
-          </div>
-        </div>
 
         {/* Hero Section */}
         <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#064e3b] via-[#047857] to-[#059669] p-6 sm:p-7 text-white shadow-lg">
@@ -491,10 +469,6 @@ export default function SmkiSoftwareStandarPage() {
           <div className="absolute right-40 -top-10 w-44 h-44 rounded-full bg-teal-300/15 blur-xl pointer-events-none" />
           <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div className="max-w-2xl">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 text-emerald-100 text-xs font-semibold backdrop-blur-sm border border-white/20 mb-3">
-                <ShieldCheck size={14} className="text-emerald-200" />
-                <span>Dokumen Standar: FR-017/KOM.03.05/SANDIKAMI</span>
-              </div>
               <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white mb-2">
                 Manajemen Daftar Software Standar
               </h1>
@@ -573,7 +547,7 @@ export default function SmkiSoftwareStandarPage() {
                 className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md shadow-emerald-500/20 transition-all cursor-pointer"
               >
                 <Plus size={15} />
-                <span>+ Tambah Software Standar</span>
+                <span>Tambah Software Standar</span>
               </button>
             </div>
           </div>
@@ -662,9 +636,8 @@ export default function SmkiSoftwareStandarPage() {
                       return (
                         <tr
                           key={item.id}
-                          className={`hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors ${
-                            isFirst && gIdx > 0 ? "border-t-2 border-emerald-100 dark:border-emerald-900/50" : ""
-                          }`}
+                          className={`hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors ${isFirst && gIdx > 0 ? "border-t-2 border-emerald-100 dark:border-emerald-900/50" : ""
+                            }`}
                         >
                           {/* NO: hanya tampil di baris pertama tiap kelompok */}
                           <td className="py-3.5 px-4 text-center font-bold text-slate-500 align-top">
