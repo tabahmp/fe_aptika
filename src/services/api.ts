@@ -1528,8 +1528,10 @@ export const createSmkiSoftwareStandar = async (payload: {
   nomor_kelompok?: number | null;
   nama_software: string;
   versi: string;
-  kategori_id: number;
-  tipe_software_id: number;
+  kategori_id?: number | null;
+  kategori_baru?: string;
+  tipe_software_id?: number | null;
+  tipe_software_baru?: string;
   penyedia_barang_id?: number | null;
   penyedia_baru?: string;
   keterangan?: string;
@@ -1544,8 +1546,10 @@ export const updateSmkiSoftwareStandar = async (
     nomor_kelompok?: number | null;
     nama_software?: string;
     versi?: string;
-    kategori_id?: number;
-    tipe_software_id?: number;
+    kategori_id?: number | null;
+    kategori_baru?: string;
+    tipe_software_id?: number | null;
+    tipe_software_baru?: string;
     penyedia_barang_id?: number | null;
     penyedia_baru?: string;
     keterangan?: string;

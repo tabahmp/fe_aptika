@@ -106,6 +106,31 @@ export default function SmkiSoftwareStandarPage() {
     nomor_terpakai: [],
   });
 
+  // Opsi fallback acuan standar jika lookup sedang dimuat atau database baru
+  const defaultKategoris = [
+    { id: 1, nama_kategori: "Lisensi", keterangan: "Software berbayar/lisensi komersial resmi" },
+    { id: 2, nama_kategori: "Open source", keterangan: "Software sumber terbuka dengan lisensi publik" },
+    { id: 3, nama_kategori: "In house", keterangan: "Software/aplikasi mandiri hasil pengembangan internal" },
+    { id: 4, nama_kategori: "Freeware", keterangan: "Software gratis untuk operasional" },
+  ];
+
+  const defaultTipes = [
+    { id: 1, nama_tipe_software: "Operating System" },
+    { id: 2, nama_tipe_software: "Aplikasi perkantoran" },
+    { id: 3, nama_tipe_software: "Web Application" },
+    { id: 4, nama_tipe_software: "Desktop Application" },
+    { id: 5, nama_tipe_software: "Browser" },
+    { id: 6, nama_tipe_software: "Development Tool" },
+    { id: 7, nama_tipe_software: "Communication" },
+    { id: 8, nama_tipe_software: "Security & Antivirus" },
+    { id: 9, nama_tipe_software: "System Software" },
+    { id: 10, nama_tipe_software: "Database Management" },
+    { id: 11, nama_tipe_software: "Design & Multimedia" },
+  ];
+
+  const availableKategoris = lookups.kategoris && lookups.kategoris.length > 0 ? lookups.kategoris : defaultKategoris;
+  const availableTipes = lookups.tipe_softwares && lookups.tipe_softwares.length > 0 ? lookups.tipe_softwares : defaultTipes;
+
   // ============================================================
   // MODAL FORM: Tambah / Edit Software
   // ============================================================
@@ -121,11 +146,22 @@ export default function SmkiSoftwareStandarPage() {
   // Form Fields
   const [formNama, setFormNama] = useState("");
   const [formVersi, setFormVersi] = useState("");
+
+  // Kategori (pilih dropdown/kartu atau input baru)
   const [formKategoriId, setFormKategoriId] = useState<number | "">("");
+  const [isCustomKategori, setIsCustomKategori] = useState(false);
+  const [formKategoriBaru, setFormKategoriBaru] = useState("");
+
+  // Tipe Software (pilih dropdown atau input baru)
   const [formTipeId, setFormTipeId] = useState<number | "">("");
+  const [isCustomTipe, setIsCustomTipe] = useState(false);
+  const [formTipeBaru, setFormTipeBaru] = useState("");
+
+  // Penyedia / Vendor (pilih dropdown atau input baru)
   const [formPenyediaId, setFormPenyediaId] = useState<number | "">("");
   const [isCustomVendor, setIsCustomVendor] = useState(false);
   const [formPenyediaBaru, setFormPenyediaBaru] = useState("");
+
   const [formKeterangan, setFormKeterangan] = useState("");
   const [autoDownloadDocx, setAutoDownloadDocx] = useState(false);
 
@@ -261,8 +297,12 @@ export default function SmkiSoftwareStandarPage() {
     setFormNomorKelompok(getNextNomorKelompok());
     setFormNama("");
     setFormVersi("");
-    setFormKategoriId(lookups.kategoris[0]?.id || "");
-    setFormTipeId(lookups.tipe_softwares[0]?.id || "");
+    setIsCustomKategori(false);
+    setFormKategoriBaru("");
+    setFormKategoriId(availableKategoris[0]?.id || 1);
+    setIsCustomTipe(false);
+    setFormTipeBaru("");
+    setFormTipeId(availableTipes[0]?.id || 1);
     setFormPenyediaId("");
     setIsCustomVendor(false);
     setFormPenyediaBaru("");
@@ -279,8 +319,12 @@ export default function SmkiSoftwareStandarPage() {
     setFormNomorKelompok(nomorKelompok);
     setFormNama(referenceItem.nama_software || "");
     setFormVersi("");
-    setFormKategoriId(referenceItem.kategori_id || lookups.kategoris[0]?.id || "");
-    setFormTipeId(referenceItem.tipe_software_id || lookups.tipe_softwares[0]?.id || "");
+    setIsCustomKategori(false);
+    setFormKategoriBaru("");
+    setFormKategoriId(referenceItem.kategori_id || availableKategoris[0]?.id || 1);
+    setIsCustomTipe(false);
+    setFormTipeBaru("");
+    setFormTipeId(referenceItem.tipe_software_id || availableTipes[0]?.id || 1);
     setFormPenyediaId(referenceItem.penyedia_barang_id || "");
     setIsCustomVendor(false);
     setFormPenyediaBaru("");
@@ -297,8 +341,12 @@ export default function SmkiSoftwareStandarPage() {
     setFormNomorKelompok(item.nomor_kelompok ?? "");
     setFormNama(item.nama_software || "");
     setFormVersi(item.versi || "");
-    setFormKategoriId(item.kategori_id || "");
-    setFormTipeId(item.tipe_software_id || "");
+    setIsCustomKategori(false);
+    setFormKategoriBaru("");
+    setFormKategoriId(item.kategori_id || availableKategoris[0]?.id || 1);
+    setIsCustomTipe(false);
+    setFormTipeBaru("");
+    setFormTipeId(item.tipe_software_id || availableTipes[0]?.id || 1);
     setFormPenyediaId(item.penyedia_barang_id || "");
     setIsCustomVendor(false);
     setFormPenyediaBaru("");
@@ -313,8 +361,22 @@ export default function SmkiSoftwareStandarPage() {
 
     if (!formNama.trim()) { toast.error("Nama software wajib diisi!"); return; }
     if (!formVersi.trim()) { toast.error("Versi software wajib diisi!"); return; }
-    if (!formKategoriId) { toast.error("Kategori wajib dipilih!"); return; }
-    if (!formTipeId) { toast.error("Tipe software wajib dipilih!"); return; }
+    if (isCustomKategori && !formKategoriBaru.trim()) {
+      toast.error("Nama kategori baru wajib diisi jika memilih opsi input baru!");
+      return;
+    }
+    if (!isCustomKategori && !formKategoriId) {
+      toast.error("Kategori software wajib dipilih!");
+      return;
+    }
+    if (isCustomTipe && !formTipeBaru.trim()) {
+      toast.error("Nama tipe software baru wajib diisi jika memilih opsi tipe baru!");
+      return;
+    }
+    if (!isCustomTipe && !formTipeId) {
+      toast.error("Tipe software wajib dipilih!");
+      return;
+    }
     if (isCustomVendor && !formPenyediaBaru.trim()) {
       toast.error("Nama penyedia baru wajib diisi jika memilih opsi vendor baru!");
       return;
@@ -326,8 +388,10 @@ export default function SmkiSoftwareStandarPage() {
         nomor_kelompok: formNomorKelompok !== "" ? Number(formNomorKelompok) : null,
         nama_software: formNama.trim(),
         versi: formVersi.trim(),
-        kategori_id: Number(formKategoriId),
-        tipe_software_id: Number(formTipeId),
+        kategori_id: isCustomKategori ? null : formKategoriId ? Number(formKategoriId) : null,
+        kategori_baru: isCustomKategori ? formKategoriBaru.trim() : undefined,
+        tipe_software_id: isCustomTipe ? null : formTipeId ? Number(formTipeId) : null,
+        tipe_software_baru: isCustomTipe ? formTipeBaru.trim() : undefined,
         penyedia_barang_id: isCustomVendor ? null : formPenyediaId ? Number(formPenyediaId) : null,
         penyedia_baru: isCustomVendor ? formPenyediaBaru.trim() : undefined,
         keterangan: formKeterangan.trim() || undefined,
@@ -537,14 +601,14 @@ export default function SmkiSoftwareStandarPage() {
               <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 mb-1">Kategori Lisensi:</label>
               <select value={kategoriId} onChange={(e) => { setKategoriId(e.target.value); setPage(1); }} className="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium text-slate-700 dark:text-slate-200">
                 <option value="">Semua Kategori</option>
-                {lookups.kategoris.map((k) => <option key={k.id} value={k.id}>{k.nama_kategori}</option>)}
+                {availableKategoris.map((k) => <option key={k.id} value={k.id}>{k.nama_kategori}</option>)}
               </select>
             </div>
             <div>
               <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 mb-1">Tipe Perangkat Lunak:</label>
               <select value={tipeSoftwareId} onChange={(e) => { setTipeSoftwareId(e.target.value); setPage(1); }} className="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium text-slate-700 dark:text-slate-200">
                 <option value="">Semua Tipe Software</option>
-                {lookups.tipe_softwares.map((t) => <option key={t.id} value={t.id}>{t.nama_tipe_software}</option>)}
+                {availableTipes.map((t) => <option key={t.id} value={t.id}>{t.nama_tipe_software}</option>)}
               </select>
             </div>
             <div>
@@ -846,41 +910,81 @@ export default function SmkiSoftwareStandarPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-200 mb-1.5">
-                      Tipe Software <span className="text-rose-500">*</span>
-                    </label>
-                    <select
-                      required
-                      value={formTipeId}
-                      onChange={(e) => setFormTipeId(Number(e.target.value))}
-                      className="w-full px-3.5 py-2 text-xs bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium text-slate-800 dark:text-white"
-                    >
-                      <option value="">Pilih Tipe Software</option>
-                      {lookups.tipe_softwares.map((t) => <option key={t.id} value={t.id}>{t.nama_tipe_software}</option>)}
-                    </select>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="text-xs font-bold text-slate-700 dark:text-slate-200">
+                        Tipe Software <span className="text-rose-500">*</span>
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => { setIsCustomTipe(!isCustomTipe); setFormTipeBaru(""); }}
+                        className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 hover:underline"
+                      >
+                        {isCustomTipe ? "Pilih dari Daftar Tipe" : "+ Input Tipe Baru"}
+                      </button>
+                    </div>
+                    {isCustomTipe ? (
+                      <input
+                        type="text"
+                        value={formTipeBaru}
+                        onChange={(e) => setFormTipeBaru(e.target.value)}
+                        placeholder="Contoh: Design Tool, CAD, Utility..."
+                        className="w-full px-3.5 py-2 text-xs bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium text-slate-800 dark:text-white"
+                      />
+                    ) : (
+                      <select
+                        required
+                        value={formTipeId}
+                        onChange={(e) => setFormTipeId(Number(e.target.value))}
+                        className="w-full px-3.5 py-2 text-xs bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium text-slate-800 dark:text-white"
+                      >
+                        <option value="">Pilih Tipe Software</option>
+                        {availableTipes.map((t) => <option key={t.id} value={t.id}>{t.nama_tipe_software}</option>)}
+                      </select>
+                    )}
                   </div>
                 </div>
 
                 {/* Kategori Software */}
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-200 mb-1.5">
-                    Kategori Software <span className="text-rose-500">*</span>
-                  </label>
-                  <div className="grid grid-cols-3 gap-2.5">
-                    {lookups.kategoris.map((k) => {
-                      const isSelected = formKategoriId === k.id;
-                      return (
-                        <div
-                          key={k.id}
-                          onClick={() => setFormKategoriId(k.id)}
-                          className={`p-3 rounded-xl border text-center cursor-pointer transition-all ${isSelected ? "bg-emerald-50 dark:bg-emerald-950/50 border-emerald-500 text-emerald-800 dark:text-emerald-300 font-bold shadow-sm" : "bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-slate-300"}`}
-                        >
-                          <div className="text-xs font-bold">{k.nama_kategori}</div>
-                          <div className="text-[10px] text-slate-400 mt-0.5 line-clamp-1">{k.keterangan || "-"}</div>
-                        </div>
-                      );
-                    })}
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="text-xs font-bold text-slate-700 dark:text-slate-200">
+                      Kategori Software <span className="text-rose-500">*</span>
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => { setIsCustomKategori(!isCustomKategori); setFormKategoriBaru(""); }}
+                      className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 hover:underline"
+                    >
+                      {isCustomKategori ? "Pilih dari Daftar Kategori" : "+ Input Kategori Baru"}
+                    </button>
                   </div>
+                  {isCustomKategori ? (
+                    <input
+                      type="text"
+                      value={formKategoriBaru}
+                      onChange={(e) => setFormKategoriBaru(e.target.value)}
+                      placeholder="Contoh: Subscription Cloud, Lisensi Pemerintah, Freeware..."
+                      className="w-full px-3.5 py-2 text-xs bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium text-slate-800 dark:text-white"
+                    />
+                  ) : (
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                      {availableKategoris.map((k) => {
+                        const isSelected = formKategoriId === k.id;
+                        return (
+                          <div
+                            key={k.id}
+                            onClick={() => setFormKategoriId(k.id)}
+                            className={`p-3 rounded-xl border text-center cursor-pointer transition-all ${isSelected ? "bg-emerald-50 dark:bg-emerald-950/50 border-emerald-500 text-emerald-800 dark:text-emerald-300 font-bold shadow-sm ring-1 ring-emerald-500" : "bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-slate-300"}`}
+                          >
+                            <div className="text-xs font-bold">{k.nama_kategori}</div>
+                            {k.keterangan && (
+                              <div className="text-[10px] text-slate-400 mt-0.5 line-clamp-1">{k.keterangan}</div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
 
                 {/* Penyedia Barang / Vendor */}
