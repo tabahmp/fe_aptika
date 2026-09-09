@@ -35,8 +35,10 @@ export default function Sidebar() {
 
   const { fetchProfile, user, bidang, services, isAdminAptika, hasServicePermission } = useAuthStore();
   const [hasAdminRole, setHasAdminRole] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
+    setIsMounted(true);
     if (typeof window !== "undefined") {
       try {
         const uStr = localStorage.getItem("user");
@@ -102,12 +104,12 @@ export default function Sidebar() {
     }
   }, [initStore]);
 
-  // Dynamic Navigation Items Evaluation
-  const canAccessSurat = hasServicePermission("ADMINISTRASI_SURAT");
-  const canAccessIki = hasServicePermission("IKI_REPORT");
-  const canAccessTugas = hasServicePermission("MANAJEMEN_TUGAS");
-  const canAccessMagang = hasServicePermission("MAGANG");
-  const canAccessSmki = hasServicePermission("SMKI");
+  // Dynamic Navigation Items Evaluation (guarded by isMounted to prevent SSR/Hydration mismatch)
+  const canAccessSurat = isMounted && hasServicePermission("ADMINISTRASI_SURAT");
+  const canAccessIki = isMounted && hasServicePermission("IKI_REPORT");
+  const canAccessTugas = isMounted && hasServicePermission("MANAJEMEN_TUGAS");
+  const canAccessMagang = isMounted && hasServicePermission("MAGANG");
+  const canAccessSmki = isMounted && hasServicePermission("SMKI");
 
   const dynamicMenuItems = [
     ...(canAccessSurat
@@ -335,7 +337,7 @@ export default function Sidebar() {
               </div>
 
               {/* Dynamic Bidang Badge */}
-              {bidang && (
+              {isMounted && bidang && (
                 <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-blue-50 dark:bg-blue-950/60 border border-blue-200/80 dark:border-blue-800/60 w-fit">
                   <span className="w-1.5 h-1.5 rounded-full bg-blue-600 dark:bg-blue-400" />
                   <span className="text-[10.5px] font-bold text-blue-700 dark:text-blue-300 truncate max-w-[190px]">
@@ -357,7 +359,7 @@ export default function Sidebar() {
               </span>
             )}
             <div className="pt-2 space-y-1">
-              {dynamicMenuItems.map((item) => {
+              {isMounted && dynamicMenuItems.map((item) => {
                 if (item.type === "single") {
                   const Icon = item.icon;
                   const isActive = activeSegment === item.key;
@@ -506,9 +508,11 @@ export default function Sidebar() {
                   {userName}
                 </h4>
                 <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 truncate">
-                  {currentUser?.position ||
-                    currentUser?.jabatan ||
-                    (isAdminAptika ? "Admin Aptika" : bidang?.name || "Anggota Tim")}
+                  {isMounted
+                    ? (currentUser?.position ||
+                        currentUser?.jabatan ||
+                        (isAdminAptika ? "Admin Aptika" : bidang?.name || "Anggota Tim"))
+                    : "Anggota Tim"}
                 </p>
               </div>
             )}

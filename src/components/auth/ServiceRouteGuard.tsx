@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/useAuthStore";
 import { showToast } from "@/components/ui/Toast";
@@ -19,17 +19,22 @@ export default function ServiceRouteGuard({
   requireAdmin,
 }: Props) {
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
   const { loading, initialized, user, isAdminAptika, hasServicePermission, fetchProfile } =
     useAuthStore();
 
   useEffect(() => {
-    if (!initialized && !loading) {
-      fetchProfile();
-    }
-  }, [initialized, loading, fetchProfile]);
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
-    if (loading || !initialized) return;
+    if (mounted && !initialized && !loading) {
+      fetchProfile();
+    }
+  }, [mounted, initialized, loading, fetchProfile]);
+
+  useEffect(() => {
+    if (!mounted || loading || !initialized) return;
 
     // Cek hak akses admin (seluruh admin bidang)
     if (requireAdmin && user?.role !== "admin" && !isAdminAptika) {
@@ -49,9 +54,9 @@ export default function ServiceRouteGuard({
       router.replace("/dashboard");
       return;
     }
-  }, [loading, initialized, user, isAdminAptika, requiredService, requireAdminAptika, requireAdmin, router, hasServicePermission]);
+  }, [mounted, loading, initialized, user, isAdminAptika, requiredService, requireAdminAptika, requireAdmin, router, hasServicePermission]);
 
-  if (loading || !initialized) {
+  if (!mounted || loading || !initialized) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="flex flex-col items-center gap-3">

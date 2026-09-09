@@ -111,7 +111,6 @@ export default function SmkiSoftwareStandarPage() {
     { id: 1, nama_kategori: "Lisensi", keterangan: "Software berbayar/lisensi komersial resmi" },
     { id: 2, nama_kategori: "Open source", keterangan: "Software sumber terbuka dengan lisensi publik" },
     { id: 3, nama_kategori: "In house", keterangan: "Software/aplikasi mandiri hasil pengembangan internal" },
-    { id: 4, nama_kategori: "Freeware", keterangan: "Software gratis untuk operasional" },
   ];
 
   const defaultTipes = [
@@ -147,10 +146,8 @@ export default function SmkiSoftwareStandarPage() {
   const [formNama, setFormNama] = useState("");
   const [formVersi, setFormVersi] = useState("");
 
-  // Kategori (pilih dropdown/kartu atau input baru)
+  // Kategori Software (dropdown)
   const [formKategoriId, setFormKategoriId] = useState<number | "">("");
-  const [isCustomKategori, setIsCustomKategori] = useState(false);
-  const [formKategoriBaru, setFormKategoriBaru] = useState("");
 
   // Tipe Software (pilih dropdown atau input baru)
   const [formTipeId, setFormTipeId] = useState<number | "">("");
@@ -163,7 +160,6 @@ export default function SmkiSoftwareStandarPage() {
   const [formPenyediaBaru, setFormPenyediaBaru] = useState("");
 
   const [formKeterangan, setFormKeterangan] = useState("");
-  const [autoDownloadDocx, setAutoDownloadDocx] = useState(false);
 
   // ============================================================
   // MODAL EXPORT DOCX: Input metadata header dokumen
@@ -307,8 +303,6 @@ export default function SmkiSoftwareStandarPage() {
     setFormNomorKelompok(getNextNomorKelompok());
     setFormNama("");
     setFormVersi("");
-    setIsCustomKategori(false);
-    setFormKategoriBaru("");
     setFormKategoriId(availableKategoris[0]?.id || 1);
     setIsCustomTipe(false);
     setFormTipeBaru("");
@@ -317,7 +311,6 @@ export default function SmkiSoftwareStandarPage() {
     setIsCustomVendor(false);
     setFormPenyediaBaru("");
     setFormKeterangan("");
-    setAutoDownloadDocx(false);
     setIsModalOpen(true);
   };
 
@@ -329,8 +322,6 @@ export default function SmkiSoftwareStandarPage() {
     setFormNomorKelompok(nomorKelompok);
     setFormNama(referenceItem.nama_software || "");
     setFormVersi("");
-    setIsCustomKategori(false);
-    setFormKategoriBaru("");
     setFormKategoriId(referenceItem.kategori_id || availableKategoris[0]?.id || 1);
     setIsCustomTipe(false);
     setFormTipeBaru("");
@@ -339,7 +330,6 @@ export default function SmkiSoftwareStandarPage() {
     setIsCustomVendor(false);
     setFormPenyediaBaru("");
     setFormKeterangan("");
-    setAutoDownloadDocx(false);
     setIsModalOpen(true);
   };
 
@@ -351,8 +341,6 @@ export default function SmkiSoftwareStandarPage() {
     setFormNomorKelompok(item.nomor_kelompok ?? "");
     setFormNama(item.nama_software || "");
     setFormVersi(item.versi || "");
-    setIsCustomKategori(false);
-    setFormKategoriBaru("");
     setFormKategoriId(item.kategori_id || availableKategoris[0]?.id || 1);
     setIsCustomTipe(false);
     setFormTipeBaru("");
@@ -361,7 +349,6 @@ export default function SmkiSoftwareStandarPage() {
     setIsCustomVendor(false);
     setFormPenyediaBaru("");
     setFormKeterangan(item.keterangan || "");
-    setAutoDownloadDocx(false);
     setIsModalOpen(true);
   };
 
@@ -371,11 +358,7 @@ export default function SmkiSoftwareStandarPage() {
 
     if (!formNama.trim()) { toast.error("Nama software wajib diisi!"); return; }
     if (!formVersi.trim()) { toast.error("Versi software wajib diisi!"); return; }
-    if (isCustomKategori && !formKategoriBaru.trim()) {
-      toast.error("Nama kategori baru wajib diisi jika memilih opsi input baru!");
-      return;
-    }
-    if (!isCustomKategori && !formKategoriId) {
+    if (!formKategoriId) {
       toast.error("Kategori software wajib dipilih!");
       return;
     }
@@ -398,8 +381,7 @@ export default function SmkiSoftwareStandarPage() {
         nomor_kelompok: formNomorKelompok !== "" ? Number(formNomorKelompok) : null,
         nama_software: formNama.trim(),
         versi: formVersi.trim(),
-        kategori_id: isCustomKategori ? null : formKategoriId ? Number(formKategoriId) : null,
-        kategori_baru: isCustomKategori ? formKategoriBaru.trim() : undefined,
+        kategori_id: Number(formKategoriId),
         tipe_software_id: isCustomTipe ? null : formTipeId ? Number(formTipeId) : null,
         tipe_software_baru: isCustomTipe ? formTipeBaru.trim() : undefined,
         penyedia_barang_id: isCustomVendor ? null : formPenyediaId ? Number(formPenyediaId) : null,
@@ -407,26 +389,17 @@ export default function SmkiSoftwareStandarPage() {
         keterangan: formKeterangan.trim() || undefined,
       };
 
-      let savedId: number | null = null;
-
       if (isEditMode && selectedItem) {
         const res = await updateSmkiSoftwareStandar(selectedItem.id, payload);
-        savedId = selectedItem.id;
         toast.success(res?.message || "Data software berhasil diperbarui!");
       } else {
         const res = await createSmkiSoftwareStandar(payload);
-        savedId = res?.data?.id || null;
         toast.success(res?.message || "Software standar berhasil ditambahkan!");
       }
 
       setIsModalOpen(false);
       await fetchList();
       await fetchLookups();
-
-      // Jika opsi unduh otomatis dicentang
-      if (autoDownloadDocx && savedId) {
-        handleOpenExportModal("single", savedId);
-      }
     } catch (err: any) {
       toast.error(err?.response?.data?.message || "Gagal menyimpan data software standar");
     } finally {
@@ -954,47 +927,24 @@ export default function SmkiSoftwareStandarPage() {
                   </div>
                 </div>
 
-                {/* Kategori Software */}
+                {/* Kategori Software (Dropdown) */}
                 <div>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <label className="text-xs font-bold text-slate-700 dark:text-slate-200">
-                      Kategori Software <span className="text-rose-500">*</span>
-                    </label>
-                    <button
-                      type="button"
-                      onClick={() => { setIsCustomKategori(!isCustomKategori); setFormKategoriBaru(""); }}
-                      className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 hover:underline"
-                    >
-                      {isCustomKategori ? "Pilih dari Daftar Kategori" : "+ Input Kategori Baru"}
-                    </button>
-                  </div>
-                  {isCustomKategori ? (
-                    <input
-                      type="text"
-                      value={formKategoriBaru}
-                      onChange={(e) => setFormKategoriBaru(e.target.value)}
-                      placeholder="Contoh: Subscription Cloud, Lisensi Pemerintah, Freeware..."
-                      className="w-full px-3.5 py-2 text-xs bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium text-slate-800 dark:text-white"
-                    />
-                  ) : (
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                      {availableKategoris.map((k) => {
-                        const isSelected = formKategoriId === k.id;
-                        return (
-                          <div
-                            key={k.id}
-                            onClick={() => setFormKategoriId(k.id)}
-                            className={`p-3 rounded-xl border text-center cursor-pointer transition-all ${isSelected ? "bg-emerald-50 dark:bg-emerald-950/50 border-emerald-500 text-emerald-800 dark:text-emerald-300 font-bold shadow-sm ring-1 ring-emerald-500" : "bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-slate-300"}`}
-                          >
-                            <div className="text-xs font-bold">{k.nama_kategori}</div>
-                            {k.keterangan && (
-                              <div className="text-[10px] text-slate-400 mt-0.5 line-clamp-1">{k.keterangan}</div>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-200 mb-1.5">
+                    Kategori Software <span className="text-rose-500">*</span>
+                  </label>
+                  <select
+                    required
+                    value={formKategoriId}
+                    onChange={(e) => setFormKategoriId(e.target.value ? Number(e.target.value) : "")}
+                    className="w-full px-3.5 py-2 text-xs bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 font-medium text-slate-800 dark:text-white"
+                  >
+                    <option value="">Pilih Kategori Software</option>
+                    {availableKategoris.map((k) => (
+                      <option key={k.id} value={k.id}>
+                        {k.nama_kategori} {k.keterangan ? `(${k.keterangan})` : ""}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 {/* Penyedia Barang / Vendor */}
@@ -1037,18 +987,7 @@ export default function SmkiSoftwareStandarPage() {
                   />
                 </div>
 
-                {/* Output Checkbox */}
-                {!isEditMode && (
-                  <div className="p-3.5 rounded-xl bg-teal-50 dark:bg-teal-950/40 border border-teal-200/80 dark:border-teal-800/60 flex items-start gap-2.5">
-                    <input type="checkbox" id="autoDownloadDocxCheck" checked={autoDownloadDocx} onChange={(e) => setAutoDownloadDocx(e.target.checked)} className="mt-0.5 rounded text-emerald-600 focus:ring-emerald-500 cursor-pointer" />
-                    <label htmlFor="autoDownloadDocxCheck" className="text-xs text-teal-900 dark:text-teal-200 cursor-pointer">
-                      <strong className="font-bold">Langsung Ekspor ke Template Dokumen Setelah Simpan</strong>
-                      <p className="text-[11px] text-teal-700 dark:text-teal-300 mt-0.5">
-                        Setelah data tersimpan, Anda akan diminta mengisi detail dokumen sebelum mengunduh ke format Word (.docx).
-                      </p>
-                    </label>
-                  </div>
-                )}
+
 
                 {/* Modal Footer / Actions */}
                 <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-2.5">
