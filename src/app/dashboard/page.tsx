@@ -131,10 +131,21 @@ export default function Homepage() {
       actionColor: "text-purple-600 dark:text-purple-400",
       path: "/integrasiinteroperabilitas/dashboard",
     },
+    {
+      id: "smki",
+      code: "SMKI",
+      title: "SMKI",
+      desc: "Layanan administrasi dan tata kelola Surat Manajemen Keamanan Informasi (SMKI).",
+      icon: <ShieldCheck size={22} className="text-emerald-600" />,
+      iconBg: "bg-emerald-100 dark:bg-emerald-950/60",
+      actionText: "Buka SMKI",
+      actionColor: "text-emerald-600 dark:text-emerald-400",
+      path: "/smki",
+    },
   ];
 
   // Penentuan modul yang tampil
-  // 1. Jika Super Admin & memilih 'all' → Tampilkan SELURUH 4 Modul Tanpa Batasan
+  // 1. Jika Super Admin & memilih 'all' → Tampilkan SELURUH Modul Tanpa Batasan
   // 2. Jika Super Admin & memilih ID bidang tertentu → Saring berdasarkan status is_enabled pada bidang tersebut
   // 3. Jika User biasa / Admin Bidang biasa → Saring berdasarkan hak akses pengguna
   const getFilteredCards = () => {

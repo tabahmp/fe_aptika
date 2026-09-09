@@ -90,6 +90,7 @@ export default function AdminBidangServicesPage() {
         { code: "IKI_REPORT", label: "IKI Report" },
         { code: "MANAJEMEN_TUGAS", label: "Manajemen Tugas Digital" },
         { code: "MAGANG", label: "Magang" },
+        { code: "SMKI", label: "SMKI" },
       ];
     }
     if (activeTab === "SURAT") {
@@ -154,7 +155,7 @@ export default function AdminBidangServicesPage() {
             }`}
           >
             <LayoutGrid size={15} />
-            Modul Utama (4 Service)
+            Modul Utama (5 Service)
           </button>
 
           <button
