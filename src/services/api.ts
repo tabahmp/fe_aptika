@@ -1581,6 +1581,146 @@ export const downloadSmkiSoftwareStandarDocx = async (params?: {
   return res.data;
 };
 
+// ============================================================
+// DAFTAR ASET TI (TEKNOLOGI INFORMASI - BIDANG APTIKA)
+// ============================================================
+
+export interface MasterLookupItem {
+  id: number;
+  nama?: string;
+  nama_kategori?: string;
+  nama_klasifikasi?: string;
+  nama_jenis?: string;
+  nama_merek?: string;
+  nama_tipe?: string;
+  nama_penyedia?: string;
+  nama_pj?: string;
+}
+
+export interface DaftarAsetTiLookupData {
+  kategoris: { id: number; nama_kategori: string }[];
+  klasifikasis: { id: number; nama_klasifikasi: string }[];
+  jeniss: { id: number; nama_jenis: string }[];
+  mereks: { id: number; nama_merek: string }[];
+  tipes: { id: number; nama_tipe: string }[];
+  penyedias: { id: number; nama_penyedia: string }[];
+  penanggung_jawabs: { id: number; nama_pj: string }[];
+  lokasis: string[];
+}
+
+export interface DaftarAsetTiItem {
+  id: number;
+  bidang_id?: number | null;
+  user_id?: number | null;
+  kode?: string | null;
+  nama_aset_id?: number | null;
+  nama_aset: string;
+  klasifikasi_id?: number | null;
+  jenis_id?: number | null;
+  kategori_id?: number | null;
+  no_seri?: string | null;
+  merek_id?: number | null;
+  tipe_id?: number | null;
+  spesifikasi_id?: number | null;
+  spesifikasi_teknis?: string | null;
+  pemanfaatan_id?: number | null;
+  pemanfaatan?: string | null;
+  penyedia_id?: number | null;
+  tahun_pembelian?: string | null;
+  garansi?: string | null;
+  date_end?: string | null; // Batas Akhir Layanan Dukungan (End of Support)
+  tanggal_akhir_masa_pakai?: string | null; // Batas Masa Pakai Produk (End of Life)
+  penanggung_jawab_id?: number | null;
+  lokasi?: string | null;
+  created_at?: string;
+  updated_at?: string;
+  nama_aset_rel?: { id: number; nama_aset: string };
+  klasifikasi?: { id: number; nama_klasifikasi: string };
+  jenis?: { id: number; nama_jenis: string };
+  kategori?: { id: number; nama_kategori: string };
+  merek?: { id: number; nama_merek: string };
+  tipe?: { id: number; nama_tipe: string };
+  spesifikasi?: { id: number; spesifikasi_teknis: string };
+  pemanfaatan_rel?: { id: number; pemanfaatan: string };
+  penyedia?: { id: number; nama_penyedia: string };
+  penanggung_jawab?: { id: number; nama_pj: string };
+}
+
+export const getDaftarAsetTiList = async (params?: {
+  search?: string;
+  kategori_id?: string | number;
+  kategori?: string;
+  lokasi?: string;
+  date_from?: string;
+  date_to?: string;
+  page?: number;
+  per_page?: number;
+}) => {
+  const res = await api.get("/daftar-aset-ti", { params });
+  return res.data;
+};
+
+export const getDaftarAsetTiLookup = async () => {
+  const res = await api.get("/daftar-aset-ti/lookup");
+  return res.data;
+};
+
+export const getDaftarAsetTiDetail = async (id: number) => {
+  const res = await api.get(`/daftar-aset-ti/${id}`);
+  return res.data;
+};
+
+export const createDaftarAsetTi = async (payload: Partial<DaftarAsetTiItem> & {
+  klasifikasi_baru?: string;
+  jenis_baru?: string;
+  kategori_baru?: string;
+  merek_baru?: string;
+  tipe_baru?: string;
+  penyedia_baru?: string;
+  penanggung_jawab_baru?: string;
+}) => {
+  const res = await api.post("/daftar-aset-ti", payload);
+  return res.data;
+};
+
+export const updateDaftarAsetTi = async (
+  id: number,
+  payload: Partial<DaftarAsetTiItem> & {
+    klasifikasi_baru?: string;
+    jenis_baru?: string;
+    kategori_baru?: string;
+    merek_baru?: string;
+    tipe_baru?: string;
+    penyedia_baru?: string;
+    penanggung_jawab_baru?: string;
+  }
+) => {
+  const res = await api.put(`/daftar-aset-ti/${id}`, payload);
+  return res.data;
+};
+
+export const deleteDaftarAsetTi = async (id: number) => {
+  const res = await api.delete(`/daftar-aset-ti/${id}`);
+  return res.data;
+};
+
+export const exportDaftarAsetTiExcel = async (params?: {
+  export_mode?: "all" | "filtered";
+  search?: string;
+  kategori_id?: string | number;
+  kategori?: string;
+  lokasi?: string;
+  date_from?: string;
+  date_to?: string;
+}) => {
+  const res = await api.get("/daftar-aset-ti/export-excel", {
+    params,
+    responseType: "blob",
+  });
+  return res.data;
+};
+
+
 
 
 

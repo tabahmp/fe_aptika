@@ -21,6 +21,7 @@ import {
   ShieldCog,
   ShieldCheck,
   Laptop,
+  Box,
 } from "lucide-react";
 import Avatar from "@/components/ui/Avatar";
 import { useSidebarStore } from "@/store/useSidebarStore";
@@ -69,7 +70,7 @@ export default function Sidebar() {
   const isAppGroupActive = appGroupKeys.includes(activeSegment);
   const [isAppGroupOpen, setIsAppGroupOpen] = useState(isAppGroupActive);
 
-  const isSmkiActive = activeSegment === "smki";
+  const isSmkiActive = activeSegment === "smki" || activeSegment === "daftar-aset-ti";
   const [isSmkiGroupOpen, setIsSmkiGroupOpen] = useState(isSmkiActive);
 
   useEffect(() => {
@@ -237,6 +238,12 @@ export default function Sidebar() {
                 icon: Laptop,
                 iconColor: "text-teal-600 bg-teal-50 border border-teal-200/60",
               },
+              {
+                name: "Daftar Aset TI",
+                key: "daftar-aset-ti",
+                icon: Box,
+                iconColor: "text-blue-600 bg-blue-50 border border-blue-200/60",
+              },
             ],
           },
         ]
@@ -247,7 +254,7 @@ export default function Sidebar() {
     setOpenMobile(false);
     if (key === "dashboard") {
       router.push("/dashboard");
-    } else if (key === "administrasisurat" || key === "manajementugasdigital" || key === "smki") {
+    } else if (key === "administrasisurat" || key === "manajementugasdigital" || key === "smki" || key === "daftar-aset-ti") {
       router.push(`/${key}`);
     } else if (key.includes("/")) {
       router.push(`/${key}`);
@@ -451,6 +458,8 @@ export default function Sidebar() {
                             const isSubActive =
                               sub.key === "smki"
                                 ? pathname === "/smki"
+                                : sub.key === "daftar-aset-ti"
+                                ? pathname === "/daftar-aset-ti" || pathname === "/smki/daftar-aset-ti"
                                 : sub.key.includes("/")
                                 ? pathname === `/${sub.key}`
                                 : activeSegment === sub.key;

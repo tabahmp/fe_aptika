@@ -46,8 +46,9 @@ export default function SmkiPage() {
           </div>
         </div>
 
-        {/* Card: Manajemen Software Standar */}
+        {/* Services Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {/* Card: Manajemen Software Standar */}
           <div
             onClick={() => router.push("/smki/software-standar")}
             className="group relative bg-white dark:bg-slate-900/90 rounded-2xl p-6 shadow-sm border border-slate-200/80 dark:border-slate-800 hover:border-emerald-500/60 hover:shadow-md transition-all cursor-pointer flex flex-col justify-between"
@@ -60,10 +61,34 @@ export default function SmkiPage() {
                 Manajemen Software Standar
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed font-medium mb-4">
-                Kelola inventaris perangkat lunak resmi, audit lisensi, serta otomatis ekspor formulir input ke dalam template dokumen resmi
+                Kelola inventaris perangkat lunak resmi, audit lisensi, serta otomatis ekspor formulir input ke dalam template dokumen resmi FR-017.
               </p>
             </div>
             <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-start text-xs font-bold text-emerald-600 dark:text-emerald-400">
+              <span className="inline-flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                <span>Buka Layanan</span>
+                <ArrowRight size={14} />
+              </span>
+            </div>
+          </div>
+
+          {/* Card: Daftar Aset TI */}
+          <div
+            onClick={() => router.push("/daftar-aset-ti")}
+            className="group relative bg-white dark:bg-slate-900/90 rounded-2xl p-6 shadow-sm border border-slate-200/80 dark:border-slate-800 hover:border-blue-500/60 hover:shadow-md transition-all cursor-pointer flex flex-col justify-between"
+          >
+            <div>
+              <div className="w-12 h-12 rounded-xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800/60 flex items-center justify-center text-blue-600 dark:text-blue-400 mb-4 group-hover:scale-105 transition-transform">
+                <Laptop size={24} />
+              </div>
+              <h3 className="text-base font-bold text-slate-800 dark:text-white mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                Daftar Aset TI
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed font-medium mb-4">
+                Sistem inventarisasi &amp; manajemen aset perangkat keras, monitoring masa pakai, pemantauan dukungan serta ekspor laporan Excel Bidang APTIKA.
+              </p>
+            </div>
+            <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-start text-xs font-bold text-blue-600 dark:text-blue-400">
               <span className="inline-flex items-center gap-1 group-hover:translate-x-1 transition-transform">
                 <span>Buka Layanan</span>
                 <ArrowRight size={14} />
