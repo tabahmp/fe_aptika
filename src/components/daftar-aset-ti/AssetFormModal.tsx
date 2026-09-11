@@ -5,6 +5,7 @@ import { X, Calendar, Loader2 } from "lucide-react";
 import {
   DaftarAsetTiItem,
   DaftarAsetTiLookupData,
+  getDaftarAsetTiLookup,
 } from "@/services/api";
 
 interface AssetFormModalProps {
@@ -53,6 +54,27 @@ export default function AssetFormModal({
     spesifikasi_teknis: "",
   });
 
+  const [activeLookups, setActiveLookups] = useState<DaftarAsetTiLookupData>(lookups);
+
+  useEffect(() => {
+    if (lookups && (lookups.kategoris?.length > 0 || lookups.mereks?.length > 0)) {
+      setActiveLookups(lookups);
+    }
+  }, [lookups]);
+
+  // Fallback: Jika modal dibuka tapi lookups masih kosong, fetch langsung dari API
+  useEffect(() => {
+    if (isOpen && (!activeLookups?.kategoris || activeLookups.kategoris.length === 0)) {
+      getDaftarAsetTiLookup()
+        .then((res) => {
+          if (res?.success && res?.data) {
+            setActiveLookups(res.data);
+          }
+        })
+        .catch((err) => console.error("AssetFormModal fetch lookups error:", err));
+    }
+  }, [isOpen, activeLookups]);
+
   const [customFields, setCustomFields] = useState({
     klasifikasi: false,
     jenis: false,
@@ -64,6 +86,8 @@ export default function AssetFormModal({
   });
 
   useEffect(() => {
+    if (!isOpen) return;
+
     if (initialData) {
       setFormData({
         kode: initialData.kode || "",
@@ -104,21 +128,21 @@ export default function AssetFormModal({
       setFormData({
         kode: "",
         nama_aset: "",
-        klasifikasi_id: lookups.klasifikasis[0]?.id ? String(lookups.klasifikasis[0].id) : "",
+        klasifikasi_id: activeLookups?.klasifikasis?.[0]?.id ? String(activeLookups.klasifikasis[0].id) : "",
         klasifikasi_baru: "",
-        jenis_id: lookups.jeniss[0]?.id ? String(lookups.jeniss[0].id) : "",
+        jenis_id: activeLookups?.jeniss?.[0]?.id ? String(activeLookups.jeniss[0].id) : "",
         jenis_baru: "",
-        kategori_id: lookups.kategoris[0]?.id ? String(lookups.kategoris[0].id) : "",
+        kategori_id: activeLookups?.kategoris?.[0]?.id ? String(activeLookups.kategoris[0].id) : "",
         kategori_baru: "",
         no_seri: "",
-        merek_id: lookups.mereks[0]?.id ? String(lookups.mereks[0].id) : "",
+        merek_id: activeLookups?.mereks?.[0]?.id ? String(activeLookups.mereks[0].id) : "",
         merek_baru: "",
         tipe_id: "",
         tipe_baru: "",
-        penyedia_id: lookups.penyedias[0]?.id ? String(lookups.penyedias[0].id) : "",
+        penyedia_id: activeLookups?.penyedias?.[0]?.id ? String(activeLookups.penyedias[0].id) : "",
         penyedia_baru: "",
         tahun_pembelian: String(new Date().getFullYear()),
-        penanggung_jawab_id: lookups.penanggung_jawabs[0]?.id ? String(lookups.penanggung_jawabs[0].id) : "",
+        penanggung_jawab_id: activeLookups?.penanggung_jawabs?.[0]?.id ? String(activeLookups.penanggung_jawabs[0].id) : "",
         penanggung_jawab_baru: "",
         lokasi: "Ruang Staff Bidang Aptika",
         garansi: "",
@@ -137,7 +161,7 @@ export default function AssetFormModal({
         penanggung_jawab: false,
       });
     }
-  }, [initialData, isOpen, lookups]);
+  }, [initialData, isOpen, activeLookups]);
 
   if (!isOpen) return null;
 
@@ -226,7 +250,7 @@ export default function AssetFormModal({
                   className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all"
                 >
                   <option value="">Pilih Klasifikasi</option>
-                  {lookups.klasifikasis.map((k) => (
+                  {(activeLookups?.klasifikasis || []).map((k) => (
                     <option key={k.id} value={k.id}>
                       {k.nama_klasifikasi}
                     </option>
@@ -263,7 +287,7 @@ export default function AssetFormModal({
                   className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all"
                 >
                   <option value="">Pilih Jenis</option>
-                  {lookups.jeniss.map((j) => (
+                  {(activeLookups?.jeniss || []).map((j) => (
                     <option key={j.id} value={j.id}>
                       {j.nama_jenis}
                     </option>
@@ -303,7 +327,7 @@ export default function AssetFormModal({
                   className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all"
                 >
                   <option value="">Pilih Kategori</option>
-                  {lookups.kategoris.map((k) => (
+                  {(activeLookups?.kategoris || []).map((k) => (
                     <option key={k.id} value={k.id}>
                       {k.nama_kategori}
                     </option>
@@ -357,7 +381,7 @@ export default function AssetFormModal({
                   className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all"
                 >
                   <option value="">Pilih Merek</option>
-                  {lookups.mereks.map((m) => (
+                  {(activeLookups?.mereks || []).map((m) => (
                     <option key={m.id} value={m.id}>
                       {m.nama_merek}
                     </option>
@@ -411,7 +435,7 @@ export default function AssetFormModal({
                   className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all"
                 >
                   <option value="">Pilih Penyedia</option>
-                  {lookups.penyedias.map((p) => (
+                  {(activeLookups?.penyedias || []).map((p) => (
                     <option key={p.id} value={p.id}>
                       {p.nama_penyedia}
                     </option>
@@ -465,7 +489,7 @@ export default function AssetFormModal({
                   className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all"
                 >
                   <option value="">Pilih Penanggung Jawab</option>
-                  {lookups.penanggung_jawabs.map((pj) => (
+                  {(activeLookups?.penanggung_jawabs || []).map((pj) => (
                     <option key={pj.id} value={pj.id}>
                       {pj.nama_pj}
                     </option>

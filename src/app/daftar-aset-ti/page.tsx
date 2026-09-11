@@ -186,11 +186,13 @@ export default function DaftarAsetTiPage() {
   };
 
   const handleOpenCreate = () => {
+    fetchLookupData();
     setEditingAsset(null);
     setFormModalOpen(true);
   };
 
   const handleOpenEdit = (item: DaftarAsetTiItem) => {
+    fetchLookupData();
     setEditingAsset(item);
     setFormModalOpen(true);
   };
