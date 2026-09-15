@@ -175,7 +175,7 @@ export default function AssetFormModal({
       <div className="relative w-full max-w-3xl my-8 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-800">
         {/* Header Bar: Dark Navy matching Mockup Page 2 & 5 */}
         <div className="bg-[#0f172a] px-6 py-4 flex items-center justify-between text-white">
-          <h2 className="text-lg font-bold tracking-wide">
+          <h2 className="text-lg font-bold tracking-wide text-white">
             {isEdit ? `Edit Aset — ${initialData?.nama_aset}` : "Tambah Aset"}
           </h2>
           <button
