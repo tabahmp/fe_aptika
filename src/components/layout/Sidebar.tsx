@@ -20,6 +20,7 @@ import {
   ChevronRight,
   ShieldCog,
   ShieldCheck,
+  ShieldAlert,
   Laptop,
   Box,
 } from "lucide-react";
@@ -237,6 +238,12 @@ export default function Sidebar() {
                 key: "smki/software-standar",
                 icon: Laptop,
                 iconColor: "text-teal-600 bg-teal-50 border border-teal-200/60",
+              },
+              {
+                name: "Formulir Hardening",
+                key: "smki/formulir-hardening",
+                icon: ShieldAlert,
+                iconColor: "text-amber-600 bg-amber-50 border border-amber-200/60",
               },
               {
                 name: "Daftar Aset TI",

@@ -3,9 +3,11 @@
 import { useRouter } from "next/navigation";
 import {
   ShieldCheck,
+  ShieldAlert,
   Building2,
   Clock,
   Laptop,
+  Box,
   ArrowRight,
 } from "lucide-react";
 import ServiceRouteGuard from "@/components/auth/ServiceRouteGuard";
@@ -29,7 +31,7 @@ export default function SmkiPage() {
                 SMKI Diskominfo Jawa Barat
               </h1>
               <p className="text-sm text-emerald-100 leading-relaxed">
-                Pusat tata kelola, inventarisasi software resmi, kepatuhan lisensi, dan penerbitan dokumen standardisasi keamanan informasi di lingkungan Pemerintah Provinsi Jawa Barat.
+                Pusat tata kelola, inventarisasi software resmi, kepatuhan lisensi, hardening aset, dan penerbitan dokumen standardisasi keamanan informasi di lingkungan Pemerintah Provinsi Jawa Barat.
               </p>
             </div>
 
@@ -72,6 +74,30 @@ export default function SmkiPage() {
             </div>
           </div>
 
+          {/* Card: Formulir Hardening Pengecekan Aset (FR-047) */}
+          <div
+            onClick={() => router.push("/smki/formulir-hardening")}
+            className="group relative bg-white dark:bg-slate-900/90 rounded-2xl p-6 shadow-sm border border-slate-200/80 dark:border-slate-800 hover:border-amber-500/60 hover:shadow-md transition-all cursor-pointer flex flex-col justify-between"
+          >
+            <div>
+              <div className="w-12 h-12 rounded-xl bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800/60 flex items-center justify-center text-amber-600 dark:text-amber-400 mb-4 group-hover:scale-105 transition-transform">
+                <ShieldAlert size={24} />
+              </div>
+              <h3 className="text-base font-bold text-slate-800 dark:text-white mb-2 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
+                Formulir Hardening Aset
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed font-medium mb-4">
+                Pemeriksaan kepatuhan hardening keamanan perangkat (Laptop/PC/Server) berstandar ISO 27001, verifikasi auditor, dan ekspor resmi dokumen FR-047.
+              </p>
+            </div>
+            <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-start text-xs font-bold text-amber-600 dark:text-amber-400">
+              <span className="inline-flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                <span>Buka Layanan</span>
+                <ArrowRight size={14} />
+              </span>
+            </div>
+          </div>
+
           {/* Card: Daftar Aset TI */}
           <div
             onClick={() => router.push("/daftar-aset-ti")}
@@ -79,7 +105,7 @@ export default function SmkiPage() {
           >
             <div>
               <div className="w-12 h-12 rounded-xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800/60 flex items-center justify-center text-blue-600 dark:text-blue-400 mb-4 group-hover:scale-105 transition-transform">
-                <Laptop size={24} />
+                <Box size={24} />
               </div>
               <h3 className="text-base font-bold text-slate-800 dark:text-white mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                 Daftar Aset TI
