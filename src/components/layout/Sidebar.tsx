@@ -239,6 +239,12 @@ export default function Sidebar() {
                 iconColor: "text-teal-600 bg-teal-50 border border-teal-200/60",
               },
               {
+                name: "Daftar Rekaman",
+                key: "smki/daftar-rekaman",
+                icon: FileText,
+                iconColor: "text-purple-600 bg-purple-50 border border-purple-200/60",
+              },
+              {
                 name: "Daftar Aset TI",
                 key: "daftar-aset-ti",
                 icon: Box,
@@ -539,4 +545,4 @@ export default function Sidebar() {
       </aside>
     </>
   );
-}
+}
