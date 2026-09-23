@@ -26,6 +26,11 @@ import {
   Loader2,
   ShieldCheck,
   Package,
+  Cpu,
+  Hash,
+  ClipboardList,
+  Monitor,
+  Ban,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import ServiceRouteGuard from "@/components/auth/ServiceRouteGuard";
@@ -224,9 +229,8 @@ export default function BeritaAcaraPenghancuranPage() {
     setIsEditMode(false);
     setEditingId(null);
     setFormNomorDokumen(lookups.recommended_doc_no || "");
-    // Default tanggal hari ini format YYYY-MM-DD
-    const todayStr = new Date().toISOString().split("T")[0];
-    setFormTanggalPelaksanaan(todayStr);
+    // Biarkan kosong agar placeholder dd/mm/yyyy tampil persis seperti mockup
+    setFormTanggalPelaksanaan("");
     setFormAlasan("");
     setFormPelaksanaId("");
     setFormPelaksanaCustom("");
@@ -289,6 +293,7 @@ export default function BeritaAcaraPenghancuranPage() {
   };
 
   // Simpan media dari child modal ke state parent form
+  // NOTE: Modal sengaja TIDAK ditutup agar user bisa terus menambah media
   const handleSaveChildMedia = (e: React.FormEvent) => {
     e.preventDefault();
     if (!mediaNama.trim()) {
@@ -306,22 +311,37 @@ export default function BeritaAcaraPenghancuranPage() {
       jenis_media: mediaJenis,
       serial_number: mediaSerial.trim() || null,
       jumlah: Number(mediaJumlah),
-      satuan: mediaSatuan.trim() || "Unit",
+      satuan: "Unit",
       keterangan: mediaKeterangan.trim() || null,
-      spesifikasi_serial_display: `${mediaSpesifikasi.trim()} / S/N: ${mediaSerial.trim()}`,
+      spesifikasi_serial_display: `${mediaSpesifikasi.trim()}${mediaSerial.trim() ? ` / S/N: ${mediaSerial.trim()}` : ""}`,
     };
 
     if (mediaModalMode === "add") {
       setMediaItems((prev) => [...prev, newItem]);
+      // Bersihkan form, JANGAN tutup modal
+      setMediaNama("");
+      setMediaSpesifikasi("");
+      setMediaJenis("Storage");
+      setMediaJumlah(1);
+      setMediaSerial("");
+      setMediaKeterangan("");
       toast.success("Media berhasil ditambahkan ke daftar.");
     } else if (mediaModalMode === "edit" && editingMediaIndex !== null) {
       const next = [...mediaItems];
       next[editingMediaIndex] = newItem;
       setMediaItems(next);
+      // Kembali ke mode add, bersihkan form, JANGAN tutup modal
+      setMediaModalMode("add");
+      setEditingMediaIndex(null);
+      setMediaNama("");
+      setMediaSpesifikasi("");
+      setMediaJenis("Storage");
+      setMediaJumlah(1);
+      setMediaSerial("");
+      setMediaKeterangan("");
       toast.success("Rincian media berhasil diperbarui.");
     }
-
-    setIsMediaModalOpen(false);
+    // Modal tetap terbuka — user tutup manual via tombol Batal atau X
   };
 
   // Submit Simpan / Update Berita Acara Utama
@@ -813,14 +833,14 @@ export default function BeritaAcaraPenghancuranPage() {
         {/* ============================================================ */}
         {isFormModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 overflow-y-auto">
-            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden">
               {/* Header Modal */}
               <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold">
-                    {isEditMode ? <Pencil size={18} /> : <Plus size={18} />}
+                  <div className="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold">
+                    {isEditMode ? <Pencil size={15} /> : <Plus size={15} strokeWidth={2.5} />}
                   </div>
-                  <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">
                     {isEditMode ? "Edit Data Berita Acara" : "Tambah Data Berita Acara"}
                   </h3>
                 </div>
@@ -828,7 +848,7 @@ export default function BeritaAcaraPenghancuranPage() {
                   onClick={() => setIsFormModalOpen(false)}
                   className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                 >
-                  <X size={18} />
+                  <X size={16} />
                 </button>
               </div>
 
@@ -837,7 +857,7 @@ export default function BeritaAcaraPenghancuranPage() {
                 {/* SECTION 1: DATA UTAMA */}
                 <div>
                   <div className="flex items-center gap-2 mb-4">
-                    <span className="w-1.5 h-5 bg-emerald-600 rounded-full" />
+                    <span className="w-1.5 h-4 bg-emerald-600 rounded-full" />
                     <h4 className="text-sm font-bold text-slate-800 dark:text-white">
                       Data Utama
                     </h4>
@@ -863,33 +883,26 @@ export default function BeritaAcaraPenghancuranPage() {
                       <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
                         Pelaksana <span className="text-rose-500">*</span>
                       </label>
-                      <div className="space-y-1.5">
-                        <select
-                          value={formPelaksanaId}
-                          onChange={(e) => {
-                            setFormPelaksanaId(e.target.value);
-                            if (e.target.value) {
-                              const found = lookups.users.find((u) => u.id === Number(e.target.value));
-                              if (found) setFormPelaksanaCustom(found.name);
-                            }
-                          }}
-                          className="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500"
-                        >
-                          <option value="">-- Pilih dari Daftar Pengguna --</option>
-                          {lookups.users.map((u) => (
-                            <option key={u.id} value={u.id}>
-                              {u.name} {u.position ? `(${u.position})` : ""}
-                            </option>
-                          ))}
-                        </select>
-                        <input
-                          type="text"
-                          value={formPelaksanaCustom}
-                          onChange={(e) => setFormPelaksanaCustom(e.target.value)}
-                          placeholder="Atau ketik nama pelaksana manual..."
-                          className="w-full px-3 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/70 text-slate-800 dark:text-white placeholder-slate-400"
-                        />
-                      </div>
+                      <select
+                        value={formPelaksanaId}
+                        onChange={(e) => {
+                          setFormPelaksanaId(e.target.value);
+                          if (e.target.value) {
+                            const found = lookups.users.find((u) => u.id === Number(e.target.value));
+                            if (found) setFormPelaksanaCustom(found.name);
+                          } else {
+                            setFormPelaksanaCustom("");
+                          }
+                        }}
+                        className="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500"
+                      >
+                        <option value="">Nama Pelaksana</option>
+                        {lookups.users.map((u) => (
+                          <option key={u.id} value={u.id}>
+                            {u.name} {u.position ? `(${u.position})` : ""}
+                          </option>
+                        ))}
+                      </select>
                     </div>
 
                     {/* Alasan Penghancuran */}
@@ -903,7 +916,7 @@ export default function BeritaAcaraPenghancuranPage() {
                         value={formAlasan}
                         onChange={(e) => setFormAlasan(e.target.value)}
                         placeholder="Masukkan alasan penghancuran media secara detail..."
-                        className="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500"
+                        className="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 resize-none h-[78px]"
                       />
                     </div>
 
@@ -913,6 +926,14 @@ export default function BeritaAcaraPenghancuranPage() {
                         Yang Mengetahui <span className="text-rose-500">*</span>
                       </label>
                       <div className="space-y-1.5">
+                        {/* Input custom dulu (sesuai mockup), lalu dropdown */}
+                        <input
+                          type="text"
+                          value={formDiketahuiCustom}
+                          onChange={(e) => setFormDiketahuiCustom(e.target.value)}
+                          placeholder="Nama pemberi izin..."
+                          className="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500"
+                        />
                         <select
                           value={formDiketahuiId}
                           onChange={(e) => {
@@ -924,42 +945,32 @@ export default function BeritaAcaraPenghancuranPage() {
                           }}
                           className="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500"
                         >
-                          <option value="">-- Pilih dari Pejabat/Pengawas --</option>
+                          <option value="">Nama Pengawas</option>
                           {lookups.users.map((u) => (
                             <option key={u.id} value={u.id}>
                               {u.name} {u.position ? `(${u.position})` : ""}
                             </option>
                           ))}
                         </select>
-                        <input
-                          type="text"
-                          value={formDiketahuiCustom}
-                          onChange={(e) => setFormDiketahuiCustom(e.target.value)}
-                          placeholder="Atau ketik nama pejabat pemberi izin/pengawas..."
-                          className="w-full px-3 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/70 text-slate-800 dark:text-white placeholder-slate-400"
-                        />
                       </div>
                     </div>
                   </div>
                 </div>
 
-                {/* SECTION 2: DETAIL MEDIA (DYNAMIC NESTED ARRAY) */}
+                {/* SECTION 2: DETAIL MEDIA */}
                 <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
-                      <span className="w-1.5 h-5 bg-emerald-600 rounded-full" />
+                      <span className="w-1.5 h-4 bg-emerald-600 rounded-full" />
                       <h4 className="text-sm font-bold text-slate-800 dark:text-white">
                         Detail Media
                       </h4>
-                      <span className="px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold">
-                        {mediaItems.length} Perangkat
-                      </span>
                     </div>
 
                     <button
                       type="button"
                       onClick={handleOpenAddMediaModal}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition-colors"
+                      className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white shadow-sm transition-colors"
                     >
                       <Plus size={14} />
                       <span>Tambah Media</span>
@@ -967,33 +978,39 @@ export default function BeritaAcaraPenghancuranPage() {
                   </div>
 
                   {/* Table Rincian Media */}
-                  <div className="rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
-                    {mediaItems.length === 0 ? (
-                      <div className="py-12 px-4 flex flex-col items-center justify-center text-center bg-slate-50/50 dark:bg-slate-800/30">
-                        <div className="w-12 h-12 rounded-xl border border-slate-300 dark:border-slate-700 flex items-center justify-center text-slate-400 mb-2">
-                          <Package size={22} />
-                        </div>
-                        <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                          Belum ada data media
-                        </p>
-                        <p className="text-[11px] text-slate-400 max-w-sm mt-0.5">
-                          Silakan klik tombol &apos;Tambah Media&apos; untuk mulai memasukkan rincian perangkat yang akan dihancurkan.
-                        </p>
-                      </div>
-                    ) : (
-                      <div className="overflow-x-auto">
-                        <table className="w-full text-left text-xs">
-                          <thead>
-                            <tr className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 font-semibold">
-                              <th className="py-2.5 px-3 w-10 text-center">No.</th>
-                              <th className="py-2.5 px-3">Nama Perangkat</th>
-                              <th className="py-2.5 px-3">Spesifikasi</th>
-                              <th className="py-2.5 px-3">Serial Number</th>
-                              <th className="py-2.5 px-3 text-center w-20">Jumlah</th>
-                              <th className="py-2.5 px-3">Keterangan</th>
-                              <th className="py-2.5 px-3 text-center w-20">Aksi</th>
+                  <div className="rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden bg-white dark:bg-slate-900">
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-xs">
+                        <thead>
+                          <tr className="bg-slate-50/70 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 font-semibold">
+                            <th className="py-2.5 px-3 w-10 text-center">No.</th>
+                            <th className="py-2.5 px-3">Nama Perangkat</th>
+                            <th className="py-2.5 px-3">Spesifikasi</th>
+                            <th className="py-2.5 px-3">Serial Number</th>
+                            <th className="py-2.5 px-3 text-center w-20">Jumlah</th>
+                            <th className="py-2.5 px-3">Keterangan</th>
+                            <th className="py-2.5 px-3 text-center w-20">Aksi</th>
+                          </tr>
+                        </thead>
+                        {mediaItems.length === 0 ? (
+                          <tbody>
+                            <tr>
+                              <td colSpan={7} className="py-12 px-4 text-center">
+                                <div className="flex flex-col items-center justify-center">
+                                  <div className="w-12 h-12 rounded-xl flex items-center justify-center text-slate-300 dark:text-slate-600 mb-2">
+                                    <Monitor size={32} strokeWidth={1.5} />
+                                  </div>
+                                  <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                                    Belum ada data media
+                                  </p>
+                                  <p className="text-[11px] text-slate-400 max-w-sm mt-1">
+                                    Silakan klik tombol &apos;Tambah Media&apos; untuk mulai memasukkan rincian perangkat yang akan dihancurkan.
+                                  </p>
+                                </div>
+                              </td>
                             </tr>
-                          </thead>
+                          </tbody>
+                        ) : (
                           <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
                             {mediaItems.map((m, idx) => (
                               <tr key={idx} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30">
@@ -1021,6 +1038,7 @@ export default function BeritaAcaraPenghancuranPage() {
                                       type="button"
                                       onClick={() => handleOpenEditMediaModal(idx)}
                                       className="p-1 text-blue-600 hover:bg-blue-50 rounded"
+                                      title="Edit media"
                                     >
                                       <Pencil size={13} />
                                     </button>
@@ -1028,6 +1046,7 @@ export default function BeritaAcaraPenghancuranPage() {
                                       type="button"
                                       onClick={() => handleDeleteMediaRow(idx)}
                                       className="p-1 text-rose-600 hover:bg-rose-50 rounded"
+                                      title="Hapus media"
                                     >
                                       <Trash2 size={13} />
                                     </button>
@@ -1036,28 +1055,33 @@ export default function BeritaAcaraPenghancuranPage() {
                               </tr>
                             ))}
                           </tbody>
-                        </table>
-                      </div>
-                    )}
+                        )}
+                      </table>
+                    </div>
                   </div>
                 </div>
 
                 {/* Footer Actions */}
-                <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-3">
+                <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-2.5">
                   <button
                     type="button"
                     onClick={() => setIsFormModalOpen(false)}
-                    className="px-4 py-2 text-xs font-semibold rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 text-slate-700 dark:text-slate-300 transition-colors"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 text-slate-700 dark:text-slate-300 transition-colors"
                   >
-                    Batal
+                    <Ban size={13} className="text-slate-400" />
+                    <span>Batal</span>
                   </button>
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="inline-flex items-center gap-2 px-5 py-2 text-xs font-bold rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white shadow-sm transition-all"
+                    className="inline-flex items-center gap-1.5 px-5 py-2 text-xs font-bold rounded-xl bg-emerald-700 hover:bg-emerald-800 disabled:opacity-50 text-white shadow-sm transition-all"
                   >
-                    {submitting ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
-                    <span>{isEditMode ? "Simpan Perubahan" : "Simpan Berita Acara"}</span>
+                    {submitting ? (
+                      <Loader2 size={13} className="animate-spin" />
+                    ) : (
+                      <CheckCircle2 size={13} />
+                    )}
+                    <span>{isEditMode ? "Simpan Perubahan" : "Simpan"}</span>
                   </button>
                 </div>
               </form>
@@ -1070,159 +1094,234 @@ export default function BeritaAcaraPenghancuranPage() {
         {/* ============================================================ */}
         {isMediaModalOpen && (
           <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/65 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 w-full max-w-xl overflow-hidden">
-              <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
+
+              {/* Header */}
+              <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between flex-shrink-0">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold">
+                  <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
                     <FileText size={18} />
                   </div>
                   <div>
                     <h3 className="text-sm font-bold text-slate-900 dark:text-white">
                       {mediaModalMode === "add" ? "Tambah Media" : "Edit Rincian Media"}
                     </h3>
-                    <p className="text-[11px] text-slate-400">
-                      Masukkan data media yang akan dihancurkan.
-                    </p>
+                    <p className="text-[11px] text-slate-400">Masukkan data media yang akan dihancurkan.</p>
                   </div>
                 </div>
                 <button
                   onClick={() => setIsMediaModalOpen(false)}
-                  className="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition-colors"
+                  className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                 >
                   <X size={18} />
                 </button>
               </div>
 
-              <form onSubmit={handleSaveChildMedia} className="p-6 space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {/* Nama Media */}
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                      Nama Media <span className="text-rose-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={mediaNama}
-                      onChange={(e) => setMediaNama(e.target.value)}
-                      placeholder="Contoh: Laptop, Harddisk, Flashdisk"
-                      className="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500"
-                    />
-                  </div>
+              {/* Scrollable Body */}
+              <div className="flex-1 overflow-y-auto">
+                <form onSubmit={handleSaveChildMedia} className="p-6 space-y-5">
 
-                  {/* Spesifikasi */}
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                      Spesifikasi <span className="text-rose-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={mediaSpesifikasi}
-                      onChange={(e) => setMediaSpesifikasi(e.target.value)}
-                      placeholder="Contoh: Intel Core i5, 1 TB, 32 GB"
-                      className="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500"
-                    />
-                  </div>
+                  {/* Form Fields */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
-                  {/* Jenis Media */}
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                      Jenis Media <span className="text-rose-500">*</span>
-                    </label>
-                    <select
-                      value={mediaJenis}
-                      onChange={(e) => setMediaJenis(e.target.value)}
-                      className="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500"
-                    >
-                      <option value="Storage">Storage / Penyimpanan (HDD, SSD, Flashdisk)</option>
-                      <option value="Laptop">Laptop / Notebook</option>
-                      <option value="PC">PC / Komputer Desktop</option>
-                      <option value="Tape">Magnetic Tape / LTO Cartridge</option>
-                      <option value="Optical">Optical Disc (CD/DVD/Blu-ray)</option>
-                      <option value="Smartphone">Smartphone / Tablet</option>
-                      <option value="Lainnya">Perangkat Elektronik Lainnya</option>
-                    </select>
-                  </div>
-
-                  {/* Jumlah & Satuan */}
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                      Jumlah <span className="text-rose-500">*</span>
-                    </label>
-                    <div className="flex gap-2">
-                      <input
-                        type="number"
-                        min={1}
-                        required
-                        value={mediaJumlah}
-                        onChange={(e) => setMediaJumlah(e.target.value === "" ? "" : Number(e.target.value))}
-                        placeholder="Masukkan jumlah"
-                        className="w-2/3 px-3.5 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500"
-                      />
-                      <input
-                        type="text"
-                        value={mediaSatuan}
-                        onChange={(e) => setMediaSatuan(e.target.value)}
-                        placeholder="Satuan (Unit)"
-                        className="w-1/3 px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-white"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Serial Number */}
-                  <div className="sm:col-span-2">
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                      Serial Number <span className="text-rose-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={mediaSerial}
-                      onChange={(e) => setMediaSerial(e.target.value)}
-                      placeholder="Contoh: SN123456 / SG-2021-001"
-                      className="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-white placeholder-slate-400 font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500"
-                    />
-                  </div>
-
-                  {/* Keterangan */}
-                  <div className="sm:col-span-2">
-                    <div className="flex justify-between items-center mb-1">
-                      <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                        Keterangan
+                    {/* Nama Media */}
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                        Nama Media <span className="text-rose-500">*</span>
                       </label>
-                      <span className="text-[10px] text-slate-400">
-                        {mediaKeterangan.length}/200
-                      </span>
+                      <div className="relative">
+                        <Laptop size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                        <input
+                          type="text"
+                          required
+                          value={mediaNama}
+                          onChange={(e) => setMediaNama(e.target.value)}
+                          placeholder="Contoh: Laptop, Harddisk, Flashdisk"
+                          className="w-full pl-9 pr-3.5 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500"
+                        />
+                      </div>
                     </div>
-                    <textarea
-                      rows={2}
-                      maxLength={200}
-                      value={mediaKeterangan}
-                      onChange={(e) => setMediaKeterangan(e.target.value)}
-                      placeholder="Masukkan keterangan tambahan (opsional)"
-                      className="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500"
-                    />
-                  </div>
-                </div>
 
-                <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-2.5">
-                  <button
-                    type="button"
-                    onClick={() => setIsMediaModalOpen(false)}
-                    className="px-4 py-2 text-xs font-semibold rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 text-slate-700 dark:text-slate-300"
-                  >
-                    Batal
-                  </button>
-                  <button
-                    type="submit"
-                    className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm"
-                  >
-                    <Plus size={14} />
-                    <span>{mediaModalMode === "add" ? "Simpan" : "Simpan Perubahan"}</span>
-                  </button>
-                </div>
-              </form>
+                    {/* Spesifikasi */}
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                        Spesifikasi <span className="text-rose-500">*</span>
+                      </label>
+                      <div className="relative">
+                        <Cpu size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                        <input
+                          type="text"
+                          required
+                          value={mediaSpesifikasi}
+                          onChange={(e) => setMediaSpesifikasi(e.target.value)}
+                          placeholder="Contoh: Intel Core i5, 1 TB, 32 GB"
+                          className="w-full pl-9 pr-3.5 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Jenis Media */}
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                        Jenis Media <span className="text-rose-500">*</span>
+                      </label>
+                      <div className="relative">
+                        <HardDrive size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                        <select
+                          value={mediaJenis}
+                          onChange={(e) => setMediaJenis(e.target.value)}
+                          className="w-full pl-9 pr-3.5 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 appearance-none"
+                        >
+                          <option value="">Pilih jenis media</option>
+                          <option value="Storage">Storage / Penyimpanan (HDD, SSD, Flashdisk)</option>
+                          <option value="Laptop">Laptop / Notebook</option>
+                          <option value="PC">PC / Komputer Desktop</option>
+                          <option value="Tape">Magnetic Tape / LTO Cartridge</option>
+                          <option value="Optical">Optical Disc (CD/DVD/Blu-ray)</option>
+                          <option value="Smartphone">Smartphone / Tablet</option>
+                          <option value="Lainnya">Perangkat Elektronik Lainnya</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Jumlah */}
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                        Jumlah <span className="text-rose-500">*</span>
+                      </label>
+                      <div className="relative">
+                        <Hash size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                        <input
+                          type="number"
+                          min={1}
+                          required
+                          value={mediaJumlah}
+                          onChange={(e) => setMediaJumlah(e.target.value === "" ? "" : Number(e.target.value))}
+                          placeholder="Masukkan jumlah"
+                          className="w-full pl-9 pr-3.5 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Keterangan - full width */}
+                    <div className="sm:col-span-2">
+                      <div className="flex justify-between items-center mb-1">
+                        <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Keterangan</label>
+                        <span className="text-[10px] text-slate-400">{mediaKeterangan.length}/200</span>
+                      </div>
+                      <div className="relative">
+                        <FileText size={14} className="absolute left-3 top-2.5 text-slate-400 pointer-events-none" />
+                        <textarea
+                          rows={2}
+                          maxLength={200}
+                          value={mediaKeterangan}
+                          onChange={(e) => setMediaKeterangan(e.target.value)}
+                          placeholder="Masukkan keterangan tambahan (opsional)"
+                          className="w-full pl-9 pr-3.5 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* ── Section: Daftar Media yang Ditambahkan ── */}
+                  <div className="pt-1">
+                    <h4 className="text-sm font-bold text-emerald-700 dark:text-emerald-400 mb-3">
+                      Daftar Media yang Ditambahkan
+                    </h4>
+                    <div className="rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+                      {mediaItems.length === 0 ? (
+                        <div className="py-10 px-4 flex flex-col items-center justify-center text-center bg-slate-50/50 dark:bg-slate-800/30">
+                          <div className="w-10 h-10 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-400 mb-2">
+                            <ClipboardList size={20} />
+                          </div>
+                          <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                            Belum ada data media yang ditambahkan.
+                          </p>
+                          <p className="text-[11px] text-slate-400 max-w-xs mt-0.5">
+                            Silakan isi formulir di atas dan klik simpan untuk menambahkan data ke daftar.
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-left text-xs">
+                            <thead>
+                              <tr className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-semibold">
+                                <th className="py-2.5 px-3 w-10 text-center">No.</th>
+                                <th className="py-2.5 px-3">Nama Media</th>
+                                <th className="py-2.5 px-3">Spesifikasi</th>
+                                <th className="py-2.5 px-3">Jenis</th>
+                                <th className="py-2.5 px-3 text-center w-20">Jumlah</th>
+                                <th className="py-2.5 px-3">Keterangan</th>
+                                <th className="py-2.5 px-3 text-center w-20">Aksi</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
+                              {mediaItems.map((m, idx) => (
+                                <tr
+                                  key={idx}
+                                  className={`transition-colors ${
+                                    editingMediaIndex === idx
+                                      ? "bg-emerald-50/60 dark:bg-emerald-950/20"
+                                      : "hover:bg-slate-50/50 dark:hover:bg-slate-800/30"
+                                  }`}
+                                >
+                                  <td className="py-2 px-3 text-center font-medium text-slate-500">{idx + 1}</td>
+                                  <td className="py-2 px-3 font-bold text-slate-800 dark:text-white">{m.nama_perangkat}</td>
+                                  <td className="py-2 px-3 text-slate-600 dark:text-slate-300">{m.spesifikasi || "-"}</td>
+                                  <td className="py-2 px-3 text-slate-600 dark:text-slate-300">{m.jenis_media || "-"}</td>
+                                  <td className="py-2 px-3 text-center font-bold text-slate-800 dark:text-white">
+                                    {m.jumlah} {m.satuan || "Unit"}
+                                  </td>
+                                  <td className="py-2 px-3 text-slate-600 dark:text-slate-300">{m.keterangan || "-"}</td>
+                                  <td className="py-2 px-3 text-center">
+                                    <div className="inline-flex items-center gap-1">
+                                      <button
+                                        type="button"
+                                        onClick={() => handleOpenEditMediaModal(idx)}
+                                        title="Edit media ini"
+                                        className="p-1 rounded text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/40 transition-colors"
+                                      >
+                                        <Pencil size={12} />
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleDeleteMediaRow(idx)}
+                                        title="Hapus media ini"
+                                        className="p-1 rounded text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
+                                      >
+                                        <Trash2 size={12} />
+                                      </button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Footer Buttons */}
+                  <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800">
+                    <button
+                      type="button"
+                      onClick={() => setIsMediaModalOpen(false)}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-colors"
+                    >
+                      <X size={13} />
+                      <span>Batal</span>
+                    </button>
+                    <button
+                      type="submit"
+                      className="inline-flex items-center gap-1.5 px-5 py-2 text-xs font-bold rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition-colors"
+                    >
+                      <Plus size={14} />
+                      <span>{mediaModalMode === "add" ? "Simpan" : "Simpan Perubahan"}</span>
+                    </button>
+                  </div>
+                </form>
+              </div>
             </div>
           </div>
         )}
@@ -1411,23 +1510,20 @@ export default function BeritaAcaraPenghancuranPage() {
         {isExportModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
             <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 w-full max-w-md overflow-hidden">
-              <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold">
-                    <FileText size={18} />
+              {/* Header hijau sesuai mockup */}
+              <div className="px-6 py-5 bg-emerald-700 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-white/15 flex items-center justify-center">
+                    <FileText size={20} className="text-white" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-                      Detail Dokumen FR-014
-                    </h3>
-                    <p className="text-[11px] text-slate-400">
-                      Isi informasi header sebelum ekspor
-                    </p>
+                    <h3 className="text-sm font-bold text-white">Detail Dokumen FR-014</h3>
+                    <p className="text-[11px] text-emerald-100/80">Isi informasi header sebelum ekspor</p>
                   </div>
                 </div>
                 <button
                   onClick={() => setIsExportModalOpen(false)}
-                  className="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition-colors"
+                  className="text-white/70 hover:text-white p-1.5 rounded-lg hover:bg-white/10 transition-colors"
                 >
                   <X size={18} />
                 </button>
