@@ -543,26 +543,22 @@ export default function DaftarRekamanPage() {
                           </span>
                         </td>
                         <td className="py-3.5 px-4 text-center">
-                          {isAdmin ? (
-                            <div className="flex items-center justify-center gap-1.5">
-                              <button
-                                onClick={() => handleEdit(item)}
-                                className="p-1.5 rounded-lg text-slate-600 dark:text-slate-300 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/60 transition-colors"
-                                title="Edit Data Rekaman"
-                              >
-                                <Pencil size={15} />
-                              </button>
-                              <button
-                                onClick={() => handleDeletePrompt(item)}
-                                className="p-1.5 rounded-lg text-slate-600 dark:text-slate-300 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/60 transition-colors"
-                                title="Hapus Data Rekaman"
-                              >
-                                <Trash2 size={15} />
-                              </button>
-                            </div>
-                          ) : (
-                            <span className="text-slate-400 text-xs font-semibold">-</span>
-                          )}
+                          <div className="flex items-center justify-center gap-1.5">
+                            <button
+                              onClick={() => handleEdit(item)}
+                              className="p-1.5 rounded-lg text-slate-600 dark:text-slate-300 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/60 transition-colors"
+                              title="Edit Data Rekaman"
+                            >
+                              <Pencil size={15} />
+                            </button>
+                            <button
+                              onClick={() => handleDeletePrompt(item)}
+                              className="p-1.5 rounded-lg text-slate-600 dark:text-slate-300 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/60 transition-colors"
+                              title="Hapus Data Rekaman"
+                            >
+                              <Trash2 size={15} />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     );
