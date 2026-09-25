@@ -387,15 +387,13 @@ export default function DaftarRekamanPage() {
                 <span>Ekspor (DOCX)</span>
               </button>
 
-              {isAdmin && (
-                <button
-                  onClick={handleCreate}
-                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md shadow-emerald-500/20 transition-all cursor-pointer"
-                >
-                  <Plus size={15} />
-                  <span>Tambah Rekaman</span>
-                </button>
-              )}
+              <button
+                onClick={handleCreate}
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md shadow-emerald-500/20 transition-all cursor-pointer"
+              >
+                <Plus size={15} />
+                <span>Tambah Rekaman</span>
+              </button>
             </div>
           </div>
 
