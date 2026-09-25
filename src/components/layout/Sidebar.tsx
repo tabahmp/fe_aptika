@@ -257,6 +257,12 @@ export default function Sidebar() {
                 icon: Box,
                 iconColor: "text-blue-600 bg-blue-50 border border-blue-200/60",
               },
+              {
+                name: "Penghancuran Media",
+                key: "smki/berita-acara",
+                icon: FileText,
+                iconColor: "text-emerald-600 bg-emerald-50 border border-emerald-200/60",
+              },
             ],
           },
         ]

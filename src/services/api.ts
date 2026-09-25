@@ -1721,6 +1721,149 @@ export const exportDaftarAsetTiExcel = async (params?: {
 };
 
 // ============================================================
+// BERITA ACARA PENGHANCURAN MEDIA (FR014-SMKI)
+// ============================================================
+
+export interface DetailMediaItem {
+  id_detail?: number;
+  id_pelaksanaan?: number;
+  no_urut?: number;
+  nama_perangkat: string;
+  spesifikasi?: string | null;
+  jenis_media?: string | null;
+  serial_number?: string | null;
+  jumlah: number;
+  satuan?: string;
+  keterangan?: string | null;
+  spesifikasi_serial_display?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface BeritaAcaraItem {
+  id_ba: number;
+  nomor_dokumen: string;
+  tanggal_pelaksanaan: string;
+  alasan_penghancuran: string;
+  id_pelaksana?: number | null;
+  id_diketahui?: number | null;
+  nama_pelaksana?: string | null;
+  nama_diketahui?: string | null;
+  nama_pelaksana_display: string;
+  nama_diketahui_display: string;
+  total_media_items?: number;
+  bidang_id?: number | null;
+  created_at?: string;
+  updated_at?: string;
+  deleted_at?: string | null;
+  detail_media?: DetailMediaItem[];
+  pelaksana?: {
+    id: number;
+    name: string;
+    email: string;
+    position?: string | null;
+  } | null;
+  diketahui?: {
+    id: number;
+    name: string;
+    email: string;
+    position?: string | null;
+  } | null;
+  bidang?: {
+    id: number;
+    name: string;
+    code: string;
+  } | null;
+}
+
+export interface BeritaAcaraStats {
+  total_data: number;
+  data_hari_ini: number;
+  data_dihapus: number;
+}
+
+export interface BeritaAcaraLookupData {
+  users: { id: number; name: string; email: string; position?: string | null }[];
+  recommended_doc_no: string;
+  default_revisi: string;
+  default_berlaku: string;
+}
+
+export interface BeritaAcaraPayload {
+  nomor_dokumen?: string;
+  tanggal_pelaksanaan: string;
+  alasan_penghancuran: string;
+  id_pelaksana?: number | null;
+  id_diketahui?: number | null;
+  nama_pelaksana?: string | null;
+  nama_diketahui?: string | null;
+  detail_media: {
+    nama_perangkat: string;
+    spesifikasi?: string | null;
+    jenis_media?: string | null;
+    serial_number?: string | null;
+    jumlah: number;
+    satuan?: string;
+    keterangan?: string | null;
+  }[];
+}
+
+export const getBeritaAcaraList = async (params?: {
+  search?: string;
+  date_from?: string;
+  date_to?: string;
+  page?: number;
+  per_page?: number;
+}) => {
+  const res = await api.get("/smki/berita-acara", { params });
+  return res.data;
+};
+
+export const getBeritaAcaraLookup = async () => {
+  const res = await api.get("/smki/berita-acara/lookup");
+  return res.data;
+};
+
+export const getBeritaAcaraDetail = async (id: number) => {
+  const res = await api.get(`/smki/berita-acara/${id}`);
+  return res.data;
+};
+
+export const createBeritaAcara = async (payload: BeritaAcaraPayload) => {
+  const res = await api.post("/smki/berita-acara", payload);
+  return res.data;
+};
+
+export const updateBeritaAcara = async (
+  id: number,
+  payload: Partial<BeritaAcaraPayload>
+) => {
+  const res = await api.put(`/smki/berita-acara/${id}`, payload);
+  return res.data;
+};
+
+export const deleteBeritaAcara = async (id: number) => {
+  const res = await api.delete(`/smki/berita-acara/${id}`);
+  return res.data;
+};
+
+export const downloadBeritaAcaraDocx = async (params?: {
+  id?: number;
+  no_dokumen?: string;
+  no_revisi?: string;
+  tanggal_berlaku?: string;
+}) => {
+  const url = params?.id
+    ? `/smki/berita-acara/${params.id}/export-docx`
+    : "/smki/berita-acara/export-docx";
+  const res = await api.get(url, {
+    params,
+    responseType: "blob",
+  });
+  return res.data;
+};
+
+// ============================================================
 // SMKI: FORMULIR HARDENING PENGECEKAN ASET (FR-047)
 // ============================================================
 
@@ -1852,6 +1995,7 @@ export const exportSmkiFormulirHardeningDocx = async (id: number) => {
   });
   return res.data;
 };
+
 
 
 
