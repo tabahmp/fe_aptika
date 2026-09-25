@@ -246,6 +246,12 @@ export default function Sidebar() {
                 iconColor: "text-amber-600 bg-amber-50 border border-amber-200/60",
               },
               {
+                name: "Daftar Rekaman",
+                key: "smki/daftar-rekaman",
+                icon: FileText,
+                iconColor: "text-purple-600 bg-purple-50 border border-purple-200/60",
+              },
+              {
                 name: "Daftar Aset TI",
                 key: "daftar-aset-ti",
                 icon: Box,
