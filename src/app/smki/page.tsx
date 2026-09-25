@@ -10,6 +10,7 @@ import {
   Box,
   ArrowRight,
   FileText,
+  
 } from "lucide-react";
 import ServiceRouteGuard from "@/components/auth/ServiceRouteGuard";
 import { useAuthStore } from "@/store/useAuthStore";
@@ -74,8 +75,7 @@ export default function SmkiPage() {
               </span>
             </div>
           </div>
-
-          {/* Card: Formulir Hardening Pengecekan Aset (FR-047) */}
+         {/* Card: Formulir Hardening Pengecekan Aset (FR-047) */}
           <div
             onClick={() => router.push("/smki/formulir-hardening")}
             className="group relative bg-white dark:bg-slate-900/90 rounded-2xl p-6 shadow-sm border border-slate-200/80 dark:border-slate-800 hover:border-amber-500/60 hover:shadow-md transition-all cursor-pointer flex flex-col justify-between"
@@ -122,7 +122,6 @@ export default function SmkiPage() {
               </span>
             </div>
           </div>
-
           {/* Card: Daftar Aset TI */}
           <div
             onClick={() => router.push("/daftar-aset-ti")}
