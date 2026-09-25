@@ -1863,6 +1863,140 @@ export const downloadBeritaAcaraDocx = async (params?: {
   return res.data;
 };
 
+// ============================================================
+// SMKI: FORMULIR HARDENING PENGECEKAN ASET (FR-047)
+// ============================================================
+
+export interface HardeningChecklistItem {
+  id?: number;
+  kategori: string;
+  item_pengecekan: string;
+  urutan?: number;
+  checklist: "Pass" | "Fail";
+  keterangan?: string | null;
+}
+
+export interface SmkiFormulirHardening {
+  id: number;
+  no_dokumen: string;
+  no_revisi?: string | null;
+  tanggal_terbit?: string | null;
+  aset_id?: number | null;
+  nomor_aset: string;
+  jenis_aset: string;
+  merek_tipe?: string | null;
+  lokasi?: string | null;
+  tanggal_check: string;
+  status: "Selesai" | "Dalam Proses" | "Menunggu" | "Draft";
+  kota: string;
+  tanggal_pengesahan?: string | null;
+  nama_auditor?: string | null;
+  nip_auditor?: string | null;
+  jabatan_auditor?: string | null;
+  compliance_rate: number;
+  items_passed: number;
+  items_failed: number;
+  bidang_id?: number | null;
+  user_id?: number | null;
+  checklists?: HardeningChecklistItem[];
+  aset?: {
+    id: number;
+    kode?: string;
+    nama_aset?: string;
+    lokasi?: string;
+  } | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface HardeningStats {
+  total_formulir: number;
+  total_selesai: number;
+  total_proses: number;
+  total_menunggu: number;
+  total_draft: number;
+  avg_compliance: number;
+}
+
+export const getSmkiFormulirHardeningList = async (params?: {
+  search?: string;
+  jenis_aset?: string;
+  status?: string;
+  date_from?: string;
+  date_to?: string;
+  page?: number;
+  per_page?: number;
+}) => {
+  const res = await api.get("/smki/formulir-hardening", { params });
+  return res.data;
+};
+
+export const getSmkiFormulirHardeningDetail = async (id: number) => {
+  const res = await api.get(`/smki/formulir-hardening/${id}`);
+  return res.data;
+};
+
+export const getSmkiFormulirHardeningLookup = async () => {
+  const res = await api.get("/smki/formulir-hardening/lookup");
+  return res.data;
+};
+
+export const createSmkiFormulirHardening = async (payload: {
+  no_dokumen?: string;
+  aset_id?: number | null;
+  nomor_aset: string;
+  jenis_aset?: string;
+  merek_tipe?: string | null;
+  lokasi?: string | null;
+  tanggal_check?: string;
+  status?: string;
+  kota?: string;
+  tanggal_pengesahan?: string;
+  nama_auditor?: string;
+  nip_auditor?: string;
+  jabatan_auditor?: string;
+  checklists: HardeningChecklistItem[];
+}) => {
+  const res = await api.post("/smki/formulir-hardening", payload);
+  return res.data;
+};
+
+export const updateSmkiFormulirHardening = async (
+  id: number,
+  payload: {
+    no_dokumen?: string;
+    aset_id?: number | null;
+    nomor_aset: string;
+    jenis_aset?: string;
+    merek_tipe?: string | null;
+    lokasi?: string | null;
+    tanggal_check?: string;
+    status?: string;
+    kota?: string;
+    tanggal_pengesahan?: string;
+    nama_auditor?: string;
+    nip_auditor?: string;
+    jabatan_auditor?: string;
+    checklists?: HardeningChecklistItem[];
+  }
+) => {
+  const res = await api.put(`/smki/formulir-hardening/${id}`, payload);
+  return res.data;
+};
+
+export const deleteSmkiFormulirHardening = async (id: number) => {
+  const res = await api.delete(`/smki/formulir-hardening/${id}`);
+  return res.data;
+};
+
+export const exportSmkiFormulirHardeningDocx = async (id: number) => {
+  const res = await api.get(`/smki/formulir-hardening/${id}/export-docx`, {
+    responseType: "blob",
+  });
+  return res.data;
+};
+
+
 
 
 
